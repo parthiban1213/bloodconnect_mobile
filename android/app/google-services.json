@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "587504872144",
+    "project_id": "hsblood-a4cd7",
+    "storage_bucket": "hsblood-a4cd7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:587504872144:android:a8c1fa42ce31f67515ccd5",
+        "android_client_info": {
+          "package_name": "com.hsblood.bloodconnect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnkrQkhLZ7xiW3U_jR6D79gS-PwXh6-7c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

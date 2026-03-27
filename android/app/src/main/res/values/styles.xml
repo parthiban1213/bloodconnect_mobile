@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- FIX: White background for BOTH LaunchTheme AND NormalTheme.
+         This eliminates the black screen that appears after the splash
+         while Flutter is initializing its first frame.
+         Previously NormalTheme used ?android:colorBackground which
+         defaults to black in some OS versions. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <!-- Remove flash of status bar color -->
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowTranslucentStatus">false</item>
+    </style>
+
+    <!-- NormalTheme: MUST use white to avoid black flash between splash and Flutter UI -->
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+</resources>
