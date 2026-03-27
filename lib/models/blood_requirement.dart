@@ -17,6 +17,10 @@ class BloodRequirement {
   final String createdBy;
   final DateTime createdAt;
   final DateTime updatedAt;
+  /// Usernames of every donor who has pledged to this requirement.
+  /// Populated from the `donations[].donorUsername` array returned by the server.
+  /// Used to show "Already Donated" without any client-side storage.
+  final List<String> donorUsernames;
 
   BloodRequirement({
     required this.id,
@@ -36,6 +40,7 @@ class BloodRequirement {
     this.createdBy = '',
     required this.createdAt,
     required this.updatedAt,
+    this.donorUsernames = const [],
   }) : remainingUnits = remainingUnits ?? unitsRequired;
 
   factory BloodRequirement.fromJson(Map<String, dynamic> json) {
@@ -52,6 +57,20 @@ class BloodRequirement {
             ? (json['donations'] as List).length
             : 0);
 
+    // Parse donor usernames from the donations array so the app can
+    // determine server-side whether the current user already donated.
+    final donorUsernames = <String>[];
+    if (json['donations'] is List) {
+      for (final d in (json['donations'] as List)) {
+        if (d is Map<String, dynamic>) {
+          final uname = d['donorUsername']?.toString();
+          if (uname != null && uname.isNotEmpty) {
+            donorUsernames.add(uname);
+          }
+        }
+      }
+    }
+
     return BloodRequirement(
       id:             json['_id']?.toString() ?? '',
       patientName:    json['patientName'] ?? '',
@@ -67,15 +86,16 @@ class BloodRequirement {
       requiredBy: json['requiredBy'] != null
           ? DateTime.tryParse(json['requiredBy'].toString())
           : null,
-      notes:     json['notes'] ?? '',
-      status:    json['status'] ?? 'Open',
-      createdBy: json['createdBy']?.toString() ?? '',
+      notes:          json['notes'] ?? '',
+      status:         json['status'] ?? 'Open',
+      createdBy:      json['createdBy']?.toString() ?? '',
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
       updatedAt: json['updatedAt'] != null
           ? DateTime.tryParse(json['updatedAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
+      donorUsernames: donorUsernames,
     );
   }
 
@@ -99,6 +119,7 @@ class BloodRequirement {
     int? unitsRequired, int? remainingUnits, int? donationsCount,
     String? urgency, DateTime? requiredBy, String? notes, String? status,
     String? createdBy, DateTime? createdAt, DateTime? updatedAt,
+    List<String>? donorUsernames,
   }) {
     return BloodRequirement(
       id:             id ?? this.id,
@@ -118,6 +139,7 @@ class BloodRequirement {
       createdBy:      createdBy ?? this.createdBy,
       createdAt:      createdAt ?? this.createdAt,
       updatedAt:      updatedAt ?? this.updatedAt,
+      donorUsernames: donorUsernames ?? this.donorUsernames,
     );
   }
 
@@ -137,4 +159,8 @@ class BloodRequirement {
       unitsRequired > 0
           ? (unitsFulfilled / unitsRequired).clamp(0.0, 1.0)
           : 0.0;
+
+  /// Returns true if [username] has already donated to this requirement.
+  bool hasDonatedBy(String username) =>
+      username.isNotEmpty && donorUsernames.contains(username);
 }

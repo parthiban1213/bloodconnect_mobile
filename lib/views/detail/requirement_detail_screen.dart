@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/blood_requirement.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/requirements_viewmodel.dart';
 import '../../utils/app_extensions.dart';
 import '../../utils/app_theme.dart';
@@ -414,9 +415,16 @@ class _RequirementDetailScreenState
 
   Widget _buildActionBar() {
     final vmState    = ref.read(requirementsViewModelProvider);
+    final authState  = ref.read(authViewModelProvider);
     final userBt     = vmState.userBloodType;
     final canDonate  = userBt.isNotEmpty && userBt == _requirement?.bloodType;
-    final hasDonated = vmState.hasDonated(_requirement?.id ?? '');
+    // Derive hasDonated from two sources:
+    //  1. The viewmodel's donatedIds set (populated from server on every feed load)
+    //  2. The requirement's own donorUsernames (from the individually fetched detail)
+    // Using both ensures correctness even if only one source is available.
+    final username   = authState.user?.username ?? '';
+    final hasDonated = vmState.hasDonated(_requirement?.id ?? '') ||
+        (_requirement?.hasDonatedBy(username) ?? false);
 
     // Show "Already Donated" badge if user already donated to this request
     if (hasDonated) {

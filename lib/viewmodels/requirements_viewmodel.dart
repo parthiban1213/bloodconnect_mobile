@@ -11,10 +11,13 @@ class RequirementsState {
   final String? error;
   final String selectedFilter;
   final String userBloodType;
-  final String searchQuery;         // ← NEW: live search text
+  final String searchQuery;
   final Set<String> donatingIds;
   final Set<String> declinedIds;
-  final Set<String> donatedIds; // fix #1: tracks IDs user has already donated to
+  /// IDs of requirements the current user has already donated to.
+  /// Derived from server data (donations[].donorUsername) on every load —
+  /// no local storage needed, survives logout/login automatically.
+  final Set<String> donatedIds;
 
   const RequirementsState({
     this.isLoading      = false,
@@ -64,10 +67,6 @@ class RequirementsState {
       base = base.where((r) => r.isOpen).toList();
     }
 
-    // NOTE: blood-type filter is no longer applied here so ALL requests are
-    // visible in the feed. The "I'll Donate" button is conditionally shown
-    // inside RequirementCard based on userBloodType match.
-
     // Step 3: chip filter
     if (selectedFilter != 'All') {
       if (selectedFilter == 'Open') {
@@ -84,7 +83,7 @@ class RequirementsState {
       }
     }
 
-    // Step 4: search query — matches hospital or blood type (case-insensitive)
+    // Step 4: search query
     if (searchQuery.trim().isNotEmpty) {
       final q = searchQuery.trim().toLowerCase();
       base = base.where((r) {
@@ -100,7 +99,7 @@ class RequirementsState {
 
   bool isDonating(String id) => donatingIds.contains(id);
   bool isDeclined(String id) => declinedIds.contains(id);
-  bool hasDonated(String id) => donatedIds.contains(id); // fix #1
+  bool hasDonated(String id) => donatedIds.contains(id);
 }
 
 class RequirementsViewModel extends StateNotifier<RequirementsState> {
@@ -114,7 +113,8 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
     _startAutoRefresh();
   }
 
-  // Auto-refresh every 3 seconds so new requirements appear without pull-to-refresh
+  // ── Auto-refresh ──────────────────────────────────────────────────────────
+
   void _startAutoRefresh() {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = Timer.periodic(
@@ -123,16 +123,33 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
     );
   }
 
-  // Refresh in background without showing the loading spinner
   Future<void> _silentRefresh() async {
     try {
       final reqs = await _service.getRequirements();
       _sortRequirements(reqs);
-      state = state.copyWith(requirements: reqs);
+      final donated = _deriveDonatedIds(reqs);
+      state = state.copyWith(requirements: reqs, donatedIds: donated);
     } catch (_) {
       // Silent — never surface auto-refresh errors
     }
   }
+
+  // ── Derive donated IDs from server data ───────────────────────────────────
+
+  /// Scans the freshly-loaded requirements list and returns IDs of all
+  /// requirements where the currently logged-in user appears in the
+  /// donations array.  Because this data comes from MongoDB, it persists
+  /// across app restarts, logouts, and device changes automatically.
+  Set<String> _deriveDonatedIds(List<BloodRequirement> reqs) {
+    final username = _ref.read(authViewModelProvider).user?.username ?? '';
+    if (username.isEmpty) return state.donatedIds; // keep existing if not logged in yet
+    return reqs
+        .where((r) => r.hasDonatedBy(username))
+        .map((r) => r.id)
+        .toSet();
+  }
+
+  // ── Public API ────────────────────────────────────────────────────────────
 
   void setUserBloodType(String bloodType) {
     if (state.userBloodType != bloodType) {
@@ -140,7 +157,6 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
     }
   }
 
-  // Called on every keystroke in the search bar
   void setSearchQuery(String query) {
     state = state.copyWith(searchQuery: query);
   }
@@ -153,7 +169,8 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
     try {
       final reqs = await _service.getRequirements();
       _sortRequirements(reqs);
-      state = state.copyWith(isLoading: false, requirements: reqs);
+      final donated = _deriveDonatedIds(reqs);
+      state = state.copyWith(isLoading: false, requirements: reqs, donatedIds: donated);
     } on ApiException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
     } catch (_) {
@@ -180,7 +197,8 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
     try {
       final updated = await _service.donateToRequirement(id);
       final updatedList = state.requirements.map((r) => r.id == id ? updated : r).toList();
-      // Fix #1: mark this requirement as already donated by user
+      // Mark as donated immediately (optimistic) — will also be confirmed on next load
+      // since the username is now in the donations array on the server.
       final donated = Set<String>.from(state.donatedIds)..add(id);
       state = state.copyWith(
         requirements: updatedList,
@@ -220,7 +238,7 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
     // Immediately hide card from feed (optimistic update)
     final hidden = Set<String>.from(state.declinedIds)..add(id);
     state = state.copyWith(declinedIds: hidden);
-    // Inform backend in background — UI already updated
+    // Inform backend in background
     _service.declineRequirement(id).catchError((_) {});
     return true;
   }
