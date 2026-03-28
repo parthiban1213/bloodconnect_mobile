@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../utils/app_constants.dart';
@@ -27,23 +26,12 @@ class ApiClient {
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
-        // Fix #6: log all outgoing API calls
-        debugPrint('[API] ▶ ${options.method} ${options.path}'
-            '${options.queryParameters.isNotEmpty ? ' | query: ${options.queryParameters}' : ''}'
-            '${options.data != null ? ' | body: ${options.data}' : ''}');
         handler.next(options);
       },
       onResponse: (response, handler) {
-        // Fix #6: log successful responses
-        debugPrint('[API] ✓ ${response.statusCode} ${response.requestOptions.method} '
-            '${response.requestOptions.path}');
         handler.next(response);
       },
       onError: (error, handler) async {
-        // Fix #6: log errors
-        debugPrint('[API] ✗ ${error.response?.statusCode ?? 'ERR'} '
-            '${error.requestOptions.method} ${error.requestOptions.path} '
-            '→ ${error.message}');
         if (error.response?.statusCode == 401) {
           await _storage.delete(key: AppConstants.tokenKey);
           handler.reject(DioException(

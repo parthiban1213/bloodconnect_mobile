@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../utils/app_theme.dart';
-import '../../utils/app_config.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -105,7 +103,7 @@ class AppDrawer extends ConsumerWidget {
 
             const SizedBox(height: 6),
 
-            // ── Nav items (Edit Profile removed) ─────────
+            // ── Nav items ─────────────────────────────────
             Expanded(
               child: ListView(
                 padding:
@@ -151,17 +149,13 @@ class AppDrawer extends ConsumerWidget {
                       context.go('/notifications');
                     },
                   ),
-                  // Fix #7: Support link
+                  // Support — navigates to in-app support screen
                   _Item(
                     icon: Icons.help_outline_rounded,
                     label: 'Support',
-                    onTap: () async {
+                    onTap: () {
                       Navigator.pop(context);
-                      final uri = Uri.parse(AppConfig.supportUrl);
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri,
-                            mode: LaunchMode.externalApplication);
-                      }
+                      context.push('/support'); // push so user can go back
                     },
                   ),
                   Padding(
@@ -178,7 +172,6 @@ class AppDrawer extends ConsumerWidget {
                       context.go('/profile');
                     },
                   ),
-                  // Edit Profile removed per requirement
                 ],
               ),
             ),

@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_config.dart';
@@ -132,7 +131,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  // ── Direct to /feed — no OTP intermediary ──────────────────
   Future<void> _doLogin() async {
     final u = _userCtrl.text.trim();
     final p = _pwdCtrl.text;
@@ -179,8 +177,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final auth = ref.watch(authViewModelProvider);
     final fwd  = _forward;
 
-    // During startup auth check only (not during sign-in button press)
-    // show plain white so there's no flash after the splash screen
     if (auth.isCheckingAuth) {
       return const Scaffold(backgroundColor: Colors.white, body: SizedBox.shrink());
     }
@@ -224,7 +220,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           pwdCtrl: _pwdCtrl,
           obscure: _obscurePwd,
           onToggle: () => setState(() => _obscurePwd = !_obscurePwd),
-          // Direct to feed — router redirect handles it automatically
           onLogin: _doLogin,
           onToOtp: () => _go(_LoginView.otp, forward: false),
           onForgot: () => _go(_LoginView.forgotPassword, forward: true),
@@ -281,13 +276,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
 // ════════════════════════════════════════════════════════════
 //  SHARED LAYOUT
-//  Top half: centred drop icon (or verification icon)
-//  Bottom half: form fields + buttons
+//  FIX: The layout no longer uses scrollable=true for the main
+//  OTP/Password views. Instead we use a fixed bottom panel so
+//  the "Get Support" link is always visible without scrolling.
+//  The top half shrinks via LayoutBuilder to fit everything.
 // ════════════════════════════════════════════════════════════
 
 class _LoginLayout extends StatelessWidget {
-  final Widget topContent;   // shown centred in the top half
-  final Widget bottomContent; // form area in the bottom half
+  final Widget topContent;
+  final Widget bottomContent;
+  // scrollable is kept for ForgotPassword which genuinely needs scroll
   final bool scrollable;
 
   const _LoginLayout({
@@ -298,26 +296,34 @@ class _LoginLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final body = Column(
-      children: [
-        // ── Top half — icon centred ────────────────────────
-        Expanded(
-          child: Center(child: topContent),
-        ),
-        // ── Bottom half — form ─────────────────────────────
-        bottomContent,
-      ],
-    );
-
     if (scrollable) {
+      // Only ForgotPassword uses this — full scrollable layout
       return SingleChildScrollView(child: SizedBox(
         height: MediaQuery.of(context).size.height -
             MediaQuery.of(context).padding.top -
             MediaQuery.of(context).padding.bottom,
-        child: body,
+        child: Column(
+          children: [
+            Expanded(child: Center(child: topContent)),
+            bottomContent,
+          ],
+        ),
       ));
     }
-    return body;
+
+    // ── Non-scrollable: top half is flexible, bottom is fixed ──
+    // This ensures the bottom content (including Support link) is
+    // always visible without any scrolling.
+    return Column(
+      children: [
+        // Top section shrinks as needed but never clips
+        Flexible(
+          child: Center(child: topContent),
+        ),
+        // Bottom form panel — always fully visible
+        bottomContent,
+      ],
+    );
   }
 }
 
@@ -342,52 +348,50 @@ class _OtpMobileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LoginLayout(
-      scrollable: true,
+      // scrollable: false (default) — bottom panel always visible
       topContent: BloodDropWidget(size: 90),
       bottomContent: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // "Welcome back" — single line, no subtitle
             Text('Welcome back',
               style: GoogleFonts.dmSans(
                 fontSize: 22, fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary)),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             if (sessionExpired) ...[
-              _SessionExpiredBanner(), const SizedBox(height: 12),
+              _SessionExpiredBanner(), const SizedBox(height: 10),
             ],
             if (apiError != null) ...[
-              _ErrorPill(apiError!), const SizedBox(height: 10),
+              _ErrorPill(apiError!), const SizedBox(height: 8),
             ],
             if (mobileError != null) ...[
-              _ErrorPill(mobileError!), const SizedBox(height: 10),
+              _ErrorPill(mobileError!), const SizedBox(height: 8),
             ],
             _FieldLabel('Mobile number'),
             const SizedBox(height: 8),
             _MobileField(ctrl: ctrl, onSubmit: onSend),
-            const SizedBox(height: 16),
-            // Inline loader button
+            const SizedBox(height: 14),
             _LoadingButton(
               label: AppConfig.otpContinueBtn,
               isLoading: isSending,
               onTap: isSending ? null : onSend,
             ),
-            const SizedBox(height: 16),
-            _OrDivider(),
             const SizedBox(height: 14),
+            _OrDivider(),
+            const SizedBox(height: 12),
             _SecondaryButton(
                 label: AppConfig.otpSwitchBtn, onTap: onToPassword),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _HintCard(
                 title: AppConfig.otpHintTitle,
                 body: AppConfig.otpHintBody),
-            const SizedBox(height: 12),
-            // Fix #7: Support link
+            const SizedBox(height: 10),
+            // Support link — always visible, no scroll needed
             _SupportLink(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             _Footer(),
           ],
         ),
@@ -459,7 +463,7 @@ class _OtpCodeView extends StatelessWidget {
         ],
       ),
       bottomContent: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -531,23 +535,23 @@ class _PasswordView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LoginLayout(
-      scrollable: true,
+      // scrollable: false (default) — bottom panel always visible
       topContent: BloodDropWidget(size: 90),
       bottomContent: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             _BackLink(label: 'Back', onTap: onToOtp),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text('Welcome back',
               style: GoogleFonts.dmSans(
                 fontSize: 22, fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary)),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             if (error != null) ...[
-              _ErrorPill(error!), const SizedBox(height: 12),
+              _ErrorPill(error!), const SizedBox(height: 10),
             ],
             _FieldLabel('Username'),
             const SizedBox(height: 8),
@@ -555,7 +559,7 @@ class _PasswordView extends StatelessWidget {
               ctrl: userCtrl, hint: 'Enter username',
               icon: Icons.person_outline_rounded,
               action: TextInputAction.next, autocorrect: false),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             _FieldLabel('Password'),
             const SizedBox(height: 8),
             _PlainField(
@@ -579,25 +583,25 @@ class _PasswordView extends StatelessWidget {
                     fontWeight: FontWeight.w500)),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             _LoadingButton(
               label: 'Sign in →',
               isLoading: isLoading,
               onTap: isLoading ? null : onLogin,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             _OrDivider(),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             _SecondaryButton(
                 label: 'Sign in with OTP instead', onTap: onToOtp),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             _HintCard(
                 title: AppConfig.pwdHintTitle,
                 body: AppConfig.pwdHintBody),
-            const SizedBox(height: 12),
-            // Fix #7: Support link
+            const SizedBox(height: 10),
+            // Support link — always visible, no scroll needed
             _SupportLink(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             _Footer(),
           ],
         ),
@@ -885,7 +889,7 @@ class _OtpCell extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════════════
-//  BUTTON — inline loader replaces label while loading
+//  BUTTON
 // ════════════════════════════════════════════════════════════
 
 class _LoadingButton extends StatelessWidget {
@@ -1013,17 +1017,12 @@ class _Footer extends StatelessWidget {
           fontSize: 10, color: AppColors.textVeryMuted)));
 }
 
-// Fix #7: Support link widget for login screen
+// ── Support link — now navigates to the in-app support screen ──
 class _SupportLink extends StatelessWidget {
   @override
   Widget build(BuildContext ctx) => Center(
     child: GestureDetector(
-      onTap: () async {
-        final uri = Uri.parse(AppConfig.supportUrl);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        }
-      },
+      onTap: () => ctx.push('/support'),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

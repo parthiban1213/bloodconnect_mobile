@@ -15,6 +15,7 @@ import '../views/my_requests/my_requests_screen.dart';
 import '../views/my_requests/add_requirement_screen.dart';
 import '../views/history/history_screen.dart';
 import '../views/shell/main_shell.dart';
+import '../views/support/support_screen.dart'; // ← NEW
 
 class _AuthRouterNotifier extends ChangeNotifier {
   _AuthRouterNotifier(this._ref) {
@@ -48,6 +49,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
       final isLoggedIn = notifier.isLoggedIn;
       final onAuthPage = state.matchedLocation == '/login';
+
+      // /support is accessible without login (pre-auth support)
+      final onSupport  = state.matchedLocation == '/support';
+      if (onSupport) return null;
+
       if (!isLoggedIn && !onAuthPage) return '/login';
       if (isLoggedIn && onAuthPage) return '/feed';
       return null;
@@ -58,6 +64,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/login',
         name: 'login',
         builder: (_, __) => const LoginScreen(),
+      ),
+
+      // ── Support — accessible pre-login and post-login ─────
+      GoRoute(
+        path: '/support',
+        name: 'support',
+        builder: (_, __) => const SupportScreen(),
       ),
 
       // ── Shell (bottom bar shown on ALL routes inside) ─────
