@@ -305,10 +305,8 @@ class AcceptedScreen extends StatelessWidget {
   }
 
   static const List<String> _bringItems = [
-    'Valid photo ID (Aadhaar / PAN)',
     'Eat a light meal before donating',
     'Stay hydrated — drink water now',
-    'Loose short-sleeved shirt preferred',
   ];
 }
 
