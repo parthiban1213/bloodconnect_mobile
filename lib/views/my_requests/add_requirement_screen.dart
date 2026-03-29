@@ -124,7 +124,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
         'bloodType':     _bloodType,
         'unitsRequired': _units,
         'urgency':       _urgency,
-        'status':        _status,
+        'status':        'Open',
         'notes':         _notesCtrl.text.trim(),
         if (_requiredBy != null)
           'requiredBy': _requiredBy!.toIso8601String(),
@@ -377,17 +377,19 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
             ),
             const SizedBox(height: 10),
 
-            // ── Status dropdown ──────────────────────────
-            _DropdownField<String>(
-              label: 'Status',
-              required: false,
-              value: _status,
-              items: AppConstants.requirementStatuses
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                  .toList(),
-              onChanged: (v) => setState(() => _status = v ?? 'Open'),
-            ),
-            const SizedBox(height: 10),
+            // ── Status dropdown (edit mode only) ─────────
+            if (_isEditing) ...[
+              _DropdownField<String>(
+                label: 'Status',
+                required: false,
+                value: _status,
+                items: AppConstants.requirementStatuses
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                    .toList(),
+                onChanged: (v) => setState(() => _status = v ?? 'Open'),
+              ),
+              const SizedBox(height: 10),
+            ],
 
             // ── Notes ────────────────────────────────────
             _FieldContainer(

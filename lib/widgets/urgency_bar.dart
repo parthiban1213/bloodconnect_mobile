@@ -16,38 +16,42 @@ class UrgencyBar extends StatelessWidget {
     final timeText = requirement.requiredBy != null
         ? UrgencyHelper.timeRemaining(requirement.requiredBy)
         : UrgencyHelper.urgencyLabel(requirement.urgency);
+    final isPlanned = requirement.urgency == 'Medium' && requirement.requiredBy == null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    // Dot count: 1 = low urgency, 2 = moderate, 3 = critical
+    final segments = isPlanned ? 1 : (progress >= 0.75 ? 3 : (progress >= 0.45 ? 2 : 1));
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              timeText,
-              style: GoogleFonts.dmSans(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: color,
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (i) {
+            final filled = i < segments;
+            return Container(
+              width: 6,
+              height: 6,
+              margin: const EdgeInsets.only(right: 3),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: filled ? color : const Color(0xFFE8E4DC),
               ),
-            ),
-            Text(
-              '${requirement.unitsRequired} unit${requirement.unitsRequired > 1 ? 's' : ''} needed',
-              style: GoogleFonts.dmSans(
-                fontSize: 10,
-                color: const Color(0xFFB8A898),
-              ),
-            ),
-          ],
+            );
+          }),
         ),
-        const SizedBox(height: 5),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(99),
-          child: LinearProgressIndicator(
-            value: progress,
-            backgroundColor: const Color(0xFFF1EFE8),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-            minHeight: 5,
+        Text(
+          timeText,
+          style: GoogleFonts.dmSans(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: color,
+          ),
+        ),
+        Text(
+          '${requirement.unitsRequired} unit${requirement.unitsRequired > 1 ? 's' : ''} needed',
+          style: GoogleFonts.dmSans(
+            fontSize: 10,
+            color: const Color(0xFFB8A898),
           ),
         ),
       ],

@@ -175,15 +175,25 @@ class _RequirementDetailScreenState
                                   ),
                                 ),
                                 const SizedBox(height: 2),
-                                Text(
-                                  req.location.isNotEmpty
-                                      ? req.location
-                                      : 'Location not specified',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 11,
-                                    color: AppColors.textSecondary,
+                                if (req.location.isNotEmpty)
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.location_on_outlined,
+                                          size: 12, color: AppColors.textMuted),
+                                      const SizedBox(width: 3),
+                                      Flexible(
+                                        child: Text(
+                                          req.location,
+                                          style: GoogleFonts.dmSans(
+                                            fontSize: 11,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
                                 const SizedBox(height: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(

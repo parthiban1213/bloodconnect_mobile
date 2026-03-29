@@ -311,6 +311,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
                   const SizedBox(height: 12),
 
+                  // ── Open request count ────────────────────────────────────
+                  if (!reqState.isLoading && reqState.error == null)
+                    _OpenRequestCount(count: reqState.filtered.where((r) => r.isOpen).length),
+
+                  const SizedBox(height: 12),
+
                   // ── Search bar + filter button row ─────────────────────────
                   Row(children: [
                     Expanded(
@@ -523,4 +529,45 @@ class _SectionLabel extends StatelessWidget {
       ]),
     );
   }
+}
+
+// ════════════════════════════════════════════════════════════
+//  OPEN REQUEST COUNT
+// ════════════════════════════════════════════════════════════
+
+class _OpenRequestCount extends StatelessWidget {
+  final int count;
+  const _OpenRequestCount({required this.count});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.bloodtype_outlined, size: 16, color: AppColors.primary),
+            const SizedBox(width: 10),
+            Text(
+              '$count',
+              style: GoogleFonts.syne(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'open blood requests',
+              style: GoogleFonts.dmSans(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
 }

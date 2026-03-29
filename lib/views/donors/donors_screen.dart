@@ -571,13 +571,11 @@ class _DonorCard extends StatelessWidget {
                 color: AppColors.urgentBg,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Center(
-                child: Text(
-                  donor.initials,
-                  style: GoogleFonts.syne(
-                    fontSize: 14, fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
+              child: const Center(
+                child: Icon(
+                  Icons.person_rounded,
+                  size: 24,
+                  color: AppColors.primary,
                 ),
               ),
             ),
@@ -745,12 +743,12 @@ class _DonorDetailPopup extends StatelessWidget {
                     border: const Border.fromBorderSide(
                         BorderSide(color: AppColors.urgentBorder)),
                   ),
-                  child: Center(
-                    child: Text(donor.initials,
-                        style: GoogleFonts.syne(
-                          fontSize: 16, fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        )),
+                  child: const Center(
+                    child: Icon(
+                      Icons.person_rounded,
+                      size: 28,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),

@@ -7,7 +7,6 @@ import '../../utils/app_extensions.dart';
 import '../../utils/app_theme.dart';
 import '../../viewmodels/requirements_viewmodel.dart';
 import '../../widgets/blood_type_badge.dart';
-import '../../widgets/urgency_bar.dart';
 
 class RequirementCard extends ConsumerWidget {
   final BloodRequirement requirement;
@@ -144,12 +143,7 @@ class RequirementCard extends ConsumerWidget {
 
               if (!_isClosed) ...[
                 const SizedBox(height: 12),
-                UrgencyBar(requirement: requirement),
-
-                if (requirement.unitsFulfilled > 0) ...[
-                  const SizedBox(height: 8),
-                  _ProgressRow(requirement: requirement),
-                ],
+                _ProgressRow(requirement: requirement),
 
                 const SizedBox(height: 12),
 

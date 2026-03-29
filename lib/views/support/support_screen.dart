@@ -96,7 +96,7 @@ class _SupportScreenState extends State<SupportScreen> {
 
     setState(() => _loading = true);
 
-    const String adminEmail = 'admin@hsblood.com';
+    const String adminEmail = 'hoffenmotoe2@gmail.com';
 
     // Build attachment note — same pattern as the website
     final attachNote = _attachments.isNotEmpty
@@ -117,8 +117,10 @@ class _SupportScreenState extends State<SupportScreen> {
 
     setState(() => _loading = false);
 
-    if (await canLaunchUrl(mailtoUri)) {
-      await launchUrl(mailtoUri);
+    try {
+      final launched = await launchUrl(mailtoUri);
+      if (!launched) throw Exception('Could not launch mail client.');
+
       if (mounted) {
         setState(() {
           _success = _attachments.isNotEmpty
@@ -131,11 +133,11 @@ class _SupportScreenState extends State<SupportScreen> {
           _attachments.clear();
         });
       }
-    } else {
+    } catch (_) {
       await Clipboard.setData(const ClipboardData(text: adminEmail));
       if (mounted) {
         setState(() =>
-            _error = 'Could not open mail client. Admin email copied to clipboard: $adminEmail');
+            _error = 'No mail app found. Admin email copied to clipboard: $adminEmail');
       }
     }
   }
@@ -238,7 +240,7 @@ class _SupportScreenState extends State<SupportScreen> {
                     _SendButton(isLoading: _loading, onTap: _loading ? null : _send),
                     const SizedBox(height: 20),
 
-                    _QuickHelpSection(),
+                    // _QuickHelpSection(),
                   ],
                 ),
               ),
