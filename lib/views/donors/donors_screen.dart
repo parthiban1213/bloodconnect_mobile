@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../models/donor_model.dart';
 import '../../viewmodels/donors_viewmodel.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 import '../../widgets/app_widgets.dart';
 
 class DonorsScreen extends ConsumerStatefulWidget {
@@ -81,7 +82,7 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Filter Donors',
+                        Text(AppConfig.donorsFilterTitle,
                             style: GoogleFonts.syne(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
@@ -104,7 +105,7 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                     const SizedBox(height: 16),
 
                     // Blood type section
-                    Text('Blood Type',
+                    Text(AppConfig.donorsFilterBloodType,
                         style: GoogleFonts.syne(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -154,7 +155,7 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                     const SizedBox(height: 16),
 
                     // Availability section
-                    Text('Availability',
+                    Text(AppConfig.donorsFilterAvailability,
                         style: GoogleFonts.syne(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -164,7 +165,7 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                     const SizedBox(height: 8),
                     Row(children: [
                       _AvailChip(
-                        label: 'Available',
+                        label: AppConfig.donorsFilterAvailable,
                         value: 'true',
                         selected: selAvail,
                         dotColor: AppColors.secondary,
@@ -173,7 +174,7 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                       ),
                       const SizedBox(width: 8),
                       _AvailChip(
-                        label: 'Unavailable',
+                        label: AppConfig.donorsFilterUnavailable,
                         value: 'false',
                         selected: selAvail,
                         dotColor: AppColors.primary,
@@ -203,7 +204,7 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                                 border: Border.all(color: AppColors.border),
                               ),
                               child: Center(
-                                child: Text('Clear',
+                                child: Text(AppConfig.donorsFilterClear,
                                     style: GoogleFonts.syne(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -230,7 +231,7 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Center(
-                              child: Text('Apply',
+                              child: Text(AppConfig.donorsFilterApply,
                                   style: GoogleFonts.syne(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
@@ -326,7 +327,7 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                                     fontSize: 12,
                                     color: AppColors.textPrimary),
                                 decoration: InputDecoration(
-                                  hintText: 'Search by name, phone, address…',
+                                  hintText: AppConfig.donorsSearchHint,
                                   hintStyle: GoogleFonts.dmSans(
                                       fontSize: 12,
                                       color: AppColors.textMuted),
@@ -421,9 +422,9 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                         )
                       : state.filtered.isEmpty
                           ? const EmptyView(
-                              title: 'No donors found',
+                              title: AppConfig.donorsEmptyTitle,
                               subtitle:
-                                  'Try adjusting your search or filters.',
+                                  AppConfig.donorsEmptySubtitle,
                               icon: Icons.person_search_outlined,
                             )
                           : RefreshIndicator(
@@ -654,7 +655,7 @@ class _DonorCard extends StatelessWidget {
                         const Icon(Icons.call_rounded,
                             size: 11, color: AppColors.plannedText),
                         const SizedBox(width: 4),
-                        Text('Call',
+                        Text(AppConfig.commonCallBtn,
                             style: GoogleFonts.dmSans(
                               fontSize: 10, fontWeight: FontWeight.w600,
                               color: AppColors.plannedText,
@@ -701,7 +702,7 @@ class _DonorDetailPopup extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Donor Details',
+                AppConfig.donorDetailTitle,
                 style: GoogleFonts.syne(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,

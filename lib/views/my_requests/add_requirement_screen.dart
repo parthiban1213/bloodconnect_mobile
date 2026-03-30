@@ -8,6 +8,7 @@ import '../../models/blood_requirement.dart';
 import '../../services/requirements_service.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 
 // ─────────────────────────────────────────────────────────────
 //  AddRequirementScreen
@@ -142,8 +143,8 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
             _isEditing
-                ? 'Request updated successfully!'
-                : 'Requirement created successfully!',
+                ? AppConfig.addReqUpdatedMsg
+                : AppConfig.addReqCreatedMsg,
             style: GoogleFonts.dmSans(fontSize: 13),
           ),
           backgroundColor: AppColors.secondary,
@@ -176,7 +177,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
               color: AppColors.textPrimary, size: 22),
         ),
         title: Text(
-          _isEditing ? 'Edit Blood Request' : 'New Blood Request',
+          _isEditing ? AppConfig.addReqTitleEdit : AppConfig.addReqTitleNew,
           style: GoogleFonts.syne(
             fontSize: 17,
             fontWeight: FontWeight.w700,
@@ -199,50 +200,50 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
             ],
 
             // ── Section: Patient ─────────────────────────
-            _SectionHeader('Patient Details'),
+            _SectionHeader(AppConfig.addReqSectionPatient),
             const SizedBox(height: 10),
             _Field(
-              label: 'Patient Name',
+              label: AppConfig.addReqPatientName,
               required: true,
-              hint: 'e.g. Ravi Kumar',
+              hint: AppConfig.addReqPatientHint,
               controller: _patientNameCtrl,
               validator: (v) =>
                   v == null || v.trim().isEmpty ? 'Patient name is required' : null,
             ),
             const SizedBox(height: 10),
             _Field(
-              label: 'Hospital / Centre',
+              label: AppConfig.addReqHospital,
               required: true,
-              hint: 'e.g. PSG Hospital',
+              hint: AppConfig.addReqHospitalHint,
               controller: _hospitalCtrl,
               validator: (v) =>
                   v == null || v.trim().isEmpty ? 'Hospital name is required' : null,
             ),
             const SizedBox(height: 10),
             _Field(
-              label: 'Location',
+              label: AppConfig.addReqLocation,
               required: false,
-              hint: 'e.g. Coimbatore, Tamil Nadu',
+              hint: AppConfig.addReqLocationHint,
               controller: _locationCtrl,
             ),
 
             const SizedBox(height: 18),
-            _SectionHeader('Contact Information'),
+            _SectionHeader(AppConfig.addReqSectionContact),
             const SizedBox(height: 10),
 
             _Field(
-              label: 'Contact Person',
+              label: AppConfig.addReqContactPerson,
               required: true,
-              hint: 'Name of coordinator',
+              hint: AppConfig.addReqContactHint,
               controller: _contactPersonCtrl,
               validator: (v) =>
                   v == null || v.trim().isEmpty ? 'Contact person is required' : null,
             ),
             const SizedBox(height: 10),
             _Field(
-              label: 'Contact Phone',
+              label: AppConfig.addReqContactPhone,
               required: true,
-              hint: '+91 98765 43210',
+              hint: AppConfig.addReqPhoneHint,
               controller: _contactPhoneCtrl,
               keyboardType: TextInputType.phone,
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+ ]'))],
@@ -254,15 +255,15 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
             ),
 
             const SizedBox(height: 18),
-            _SectionHeader('Requirement Details'),
+            _SectionHeader(AppConfig.addReqSectionDetails),
             const SizedBox(height: 10),
 
             // ── Blood Type dropdown ──────────────────────
             _DropdownField<String>(
-              label: 'Blood Type',
+              label: AppConfig.addReqBloodType,
               required: true,
               value: _bloodType.isEmpty ? null : _bloodType,
-              hint: 'Select blood type',
+              hint: AppConfig.addReqBloodTypeHint,
               items: AppConstants.bloodTypes
                   .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                   .toList(),
@@ -274,7 +275,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
 
             // ── Units Required ───────────────────────────
             _FieldContainer(
-              label: 'Units Required',
+              label: AppConfig.addReqUnits,
               required: true,
               child: Row(
                 children: [
@@ -332,7 +333,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
 
             // ── Urgency dropdown ─────────────────────────
             _DropdownField<String>(
-              label: 'Urgency',
+              label: AppConfig.addReqUrgency,
               required: true,
               value: _urgency,
               items: AppConstants.urgencyLevels
@@ -344,7 +345,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
 
             // ── Required By date picker ──────────────────
             _FieldContainer(
-              label: 'Required By Date',
+              label: AppConfig.addReqRequiredBy,
               required: false,
               child: GestureDetector(
                 onTap: _pickDate,
@@ -356,7 +357,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
                     Text(
                       _requiredBy != null
                           ? DateFormat('d MMM yyyy').format(_requiredBy!)
-                          : 'Select date (optional)',
+                          : AppConfig.addReqDateHint,
                       style: GoogleFonts.dmSans(
                         fontSize: 13,
                         color: _requiredBy != null
@@ -380,7 +381,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
             // ── Status dropdown (edit mode only) ─────────
             if (_isEditing) ...[
               _DropdownField<String>(
-                label: 'Status',
+                label: AppConfig.addReqStatus,
                 required: false,
                 value: _status,
                 items: AppConstants.requirementStatuses
@@ -393,7 +394,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
 
             // ── Notes ────────────────────────────────────
             _FieldContainer(
-              label: 'Additional Notes',
+              label: AppConfig.addReqNotes,
               required: false,
               child: TextFormField(
                 controller: _notesCtrl,
@@ -401,7 +402,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
                 style: GoogleFonts.dmSans(
                     fontSize: 13, color: AppColors.textPrimary),
                 decoration: InputDecoration(
-                  hintText: 'Any special instructions or context…',
+                  hintText: AppConfig.addReqNotesHint,
                   hintStyle: GoogleFonts.dmSans(
                       fontSize: 13, color: AppColors.textMuted),
                   border: InputBorder.none,
@@ -435,7 +436,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
                           ),
                         )
                       : Text(
-                          'Save Requirement',
+                          AppConfig.addReqSaveBtn,
                           style: GoogleFonts.syne(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,

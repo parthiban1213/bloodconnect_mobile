@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 
 class AcceptedScreen extends StatelessWidget {
   final String hospital;
@@ -83,7 +84,7 @@ class AcceptedScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            "You're confirmed!",
+                            AppConfig.acceptedTitle,
                             style: GoogleFonts.dmSans(
                               fontSize: 18,
                               fontWeight: FontWeight.w500,
@@ -92,7 +93,7 @@ class AcceptedScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'Hospital has been notified. Thank you.',
+                            AppConfig.acceptedSubtitle,
                             style: GoogleFonts.dmSans(
                               fontSize: 11,
                               color: Colors.white.withOpacity(0.75),
@@ -122,7 +123,7 @@ class AcceptedScreen extends StatelessWidget {
                       children: [
                         // Hospital row
                         _DetailRow(
-                          label: 'Donating at',
+                          label: AppConfig.acceptedDonatingAt,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -157,7 +158,7 @@ class AcceptedScreen extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'CONTACT',
+                                      AppConfig.acceptedContactLabel,
                                       style: GoogleFonts.dmSans(
                                         fontSize: 9,
                                         fontWeight: FontWeight.w500,
@@ -199,7 +200,7 @@ class AcceptedScreen extends StatelessWidget {
                                           color: AppColors.plannedText),
                                       const SizedBox(width: 6),
                                       Text(
-                                        'Call',
+                                        AppConfig.commonCallBtn,
                                         style: GoogleFonts.dmSans(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w500,
@@ -228,7 +229,7 @@ class AcceptedScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'What to bring',
+                          AppConfig.acceptedWhatToBring,
                           style: GoogleFonts.dmSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
@@ -285,7 +286,7 @@ class AcceptedScreen extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          'Back to Feed',
+                          AppConfig.acceptedBackBtn,
                           style: GoogleFonts.dmSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -304,10 +305,7 @@ class AcceptedScreen extends StatelessWidget {
     );
   }
 
-  static const List<String> _bringItems = [
-    'Eat a light meal before donating',
-    'Stay hydrated — drink water now',
-  ];
+  static List<String> get _bringItems => AppConfig.acceptedBringItems;
 }
 
 class _DetailRow extends StatelessWidget {

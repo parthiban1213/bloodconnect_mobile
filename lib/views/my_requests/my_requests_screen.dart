@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/blood_requirement.dart';
 import '../../viewmodels/my_requests_viewmodel.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/blood_type_badge.dart';
 import 'request_status_modal.dart';
@@ -89,7 +90,7 @@ class _MyRequestsScreenState extends ConsumerState<MyRequestsScreen>
                                         size: 17, color: Colors.white),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'Add Request',
+                                      AppConfig.myRequestsAddBtn,
                                       style: GoogleFonts.syne(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
@@ -108,9 +109,9 @@ class _MyRequestsScreenState extends ConsumerState<MyRequestsScreen>
                       Expanded(
                         child: state.requests.isEmpty
                             ? const EmptyView(
-                                title: 'No requests yet',
+                                title: AppConfig.myRequestsEmptyTitle,
                                 subtitle:
-                                    'Tap "Add Request" above to create your first blood requirement.',
+                                    AppConfig.myRequestsEmptySubtitle,
                                 icon: Icons.bloodtype_outlined,
                               )
                             : RefreshIndicator(
@@ -301,7 +302,7 @@ class _RequestCard extends ConsumerWidget {
             style: GoogleFonts.syne(
                 fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
         content: Text(
-          'Are you sure you want to close this request? It will be marked as Cancelled.',
+          AppConfig.myRequestsCloseBody,
           style: GoogleFonts.dmSans(fontSize: 13, color: AppColors.textSecondary),
         ),
         actions: [
@@ -325,7 +326,7 @@ class _RequestCard extends ConsumerWidget {
           .closeRequest(requirement.id);
       if (!ok && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to close request.',
+          content: Text(AppConfig.myRequestsCloseError,
               style: GoogleFonts.dmSans(fontSize: 13)),
           backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
@@ -452,7 +453,7 @@ class _RequestCard extends ConsumerWidget {
                       border: Border.all(color: AppColors.urgentBorder),
                     ),
                     child: Center(
-                      child: Text('View Status',
+                      child: Text(AppConfig.myRequestsViewStatus,
                           style: GoogleFonts.syne(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
@@ -480,7 +481,7 @@ class _RequestCard extends ConsumerWidget {
                       border: Border.all(color: AppColors.plannedBorder),
                     ),
                     child: Center(
-                      child: Text('Edit',
+                      child: Text(AppConfig.myRequestsEdit,
                           style: GoogleFonts.syne(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
@@ -545,7 +546,7 @@ class _RequestCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'View Status',
+                      AppConfig.myRequestsViewStatus,
                       style: GoogleFonts.syne(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,

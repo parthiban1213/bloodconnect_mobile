@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 import '../../utils/app_constants.dart';
 
 class SupportScreen extends StatefulWidget {
@@ -55,7 +56,7 @@ class _SupportScreenState extends State<SupportScreen> {
           .toList();
 
       if (_attachments.length + fresh.length > 5) {
-        setState(() => _error = 'You can attach a maximum of 5 files.');
+        setState(() => _error = AppConfig.supportMaxFilesError);
         return;
       }
 
@@ -64,7 +65,7 @@ class _SupportScreenState extends State<SupportScreen> {
         _error = null;
       });
     } catch (_) {
-      setState(() => _error = 'Could not open file picker. Please try again.');
+      setState(() => _error = AppConfig.supportPickerError);
     }
   }
 
@@ -96,7 +97,7 @@ class _SupportScreenState extends State<SupportScreen> {
 
     setState(() => _loading = true);
 
-    const String adminEmail = 'hoffenmotoe2@gmail.com';
+    final String adminEmail = AppConfig.supportAdminEmail;
 
     // Build attachment note — same pattern as the website
     final attachNote = _attachments.isNotEmpty
@@ -104,13 +105,13 @@ class _SupportScreenState extends State<SupportScreen> {
         : '';
 
     final body =
-        'From: $name <$email>\n\n$message$attachNote\n\n---\nSent via HSBlood Mobile App';
+        'From: $name <$email>\n\n$message$attachNote${AppConfig.supportEmailBodySuffix}';
 
     final mailtoUri = Uri(
       scheme: 'mailto',
       path: adminEmail,
       queryParameters: {
-        'subject': '[HSBlood Support] $subject',
+        'subject': '${AppConfig.supportEmailSubjectPrefix}$subject',
         'body': body,
       },
     );
@@ -124,8 +125,8 @@ class _SupportScreenState extends State<SupportScreen> {
       if (mounted) {
         setState(() {
           _success = _attachments.isNotEmpty
-              ? 'Mail client opened! Please attach the listed files and send the email.'
-              : 'Mail client opened! Please send the email.';
+              ? AppConfig.supportSentWithAttachMsg
+              : AppConfig.supportSentMsg;
           _nameCtrl.clear();
           _emailCtrl.clear();
           _subjectCtrl.clear();
@@ -134,10 +135,10 @@ class _SupportScreenState extends State<SupportScreen> {
         });
       }
     } catch (_) {
-      await Clipboard.setData(const ClipboardData(text: adminEmail));
+      await Clipboard.setData(ClipboardData(text: adminEmail));
       if (mounted) {
         setState(() =>
-            _error = 'No mail app found. Admin email copied to clipboard: $adminEmail');
+            _error = '${AppConfig.supportNoMailApp}$adminEmail');
       }
     }
   }
@@ -160,7 +161,7 @@ class _SupportScreenState extends State<SupportScreen> {
                         color: AppColors.textPrimary, size: 26),
                   ),
                   Text(
-                    'Contact Support',
+                    AppConfig.supportScreenTitle,
                     style: GoogleFonts.syne(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -189,21 +190,21 @@ class _SupportScreenState extends State<SupportScreen> {
                       const SizedBox(height: 14),
                     ],
 
-                    _SectionLabel('Your Name'),
+                    _SectionLabel(AppConfig.supportNameLabel),
                     const SizedBox(height: 8),
                     _InputField(
                       ctrl: _nameCtrl,
-                      hint: 'Your full name',
+                      hint: AppConfig.supportNameHint,
                       icon: Icons.person_outline_rounded,
                       action: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
 
-                    _SectionLabel('Your Email'),
+                    _SectionLabel(AppConfig.supportEmailLabel),
                     const SizedBox(height: 8),
                     _InputField(
                       ctrl: _emailCtrl,
-                      hint: 'your@email.com',
+                      hint: AppConfig.supportEmailHint,
                       icon: Icons.mail_outline_rounded,
                       keyboard: TextInputType.emailAddress,
                       action: TextInputAction.next,
@@ -211,21 +212,21 @@ class _SupportScreenState extends State<SupportScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    _SectionLabel('Subject'),
+                    _SectionLabel(AppConfig.supportSubjectLabel),
                     const SizedBox(height: 8),
                     _InputField(
                       ctrl: _subjectCtrl,
-                      hint: 'e.g. Cannot log in to my account',
+                      hint: AppConfig.supportSubjectHint,
                       icon: Icons.topic_outlined,
                       action: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
 
-                    _SectionLabel('Message'),
+                    _SectionLabel(AppConfig.supportMessageLabel),
                     const SizedBox(height: 8),
                     _MultilineField(
                       ctrl: _messageCtrl,
-                      hint: 'Describe your issue in detail…',
+                      hint: AppConfig.supportMessageHint,
                     ),
                     const SizedBox(height: 16),
 
@@ -312,10 +313,10 @@ class _AttachmentSection extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _SectionLabel('Attachments'),
+                  _SectionLabel(AppConfig.supportAttachLabel),
                   const SizedBox(height: 2),
                   Text(
-                    'Optional — screenshots or files (max 5)',
+                    AppConfig.supportAttachSubtitle,
                     style: GoogleFonts.dmSans(
                         fontSize: 11, color: AppColors.textMuted),
                   ),
@@ -339,7 +340,7 @@ class _AttachmentSection extends StatelessWidget {
                       const Icon(Icons.attach_file_rounded,
                           size: 14, color: AppColors.primary),
                       const SizedBox(width: 5),
-                      Text('Attach',
+                      Text(AppConfig.supportAttachBtn,
                           style: GoogleFonts.syne(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -371,11 +372,11 @@ class _AttachmentSection extends StatelessWidget {
                   const Icon(Icons.cloud_upload_outlined,
                       size: 28, color: AppColors.textMuted),
                   const SizedBox(height: 6),
-                  Text('Tap to attach a file',
+                  Text(AppConfig.supportAttachDropzone,
                       style: GoogleFonts.dmSans(
                           fontSize: 13, color: AppColors.textMuted)),
                   const SizedBox(height: 2),
-                  Text('Images, PDF, DOC, TXT',
+                  Text(AppConfig.supportAttachTypes,
                       style: GoogleFonts.dmSans(
                           fontSize: 11, color: AppColors.textVeryMuted)),
                 ],
@@ -495,7 +496,7 @@ class _InfoBanner extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('We\'re here to help',
+                  Text(AppConfig.supportInfoTitle,
                       style: GoogleFonts.syne(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -503,7 +504,7 @@ class _InfoBanner extends StatelessWidget {
                       )),
                   const SizedBox(height: 4),
                   Text(
-                    'Having trouble logging in or need help? Send a message to our support team and we\'ll get back to you.',
+                    AppConfig.supportInfoBody,
                     style: GoogleFonts.dmSans(
                         fontSize: 12, color: AppColors.urgentText, height: 1.5),
                   ),
@@ -738,7 +739,7 @@ class _SendButton extends StatelessWidget {
                       const Icon(Icons.send_rounded,
                           color: Colors.white, size: 16),
                       const SizedBox(width: 8),
-                      Text('Send Message',
+                      Text(AppConfig.supportSendBtn,
                           style: GoogleFonts.dmSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,

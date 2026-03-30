@@ -9,6 +9,7 @@ import '../../viewmodels/my_requests_viewmodel.dart';
 import '../../viewmodels/history_viewmodel.dart';
 import '../../viewmodels/donors_viewmodel.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 import '../drawer/app_drawer.dart';
 
 class MainShell extends ConsumerStatefulWidget {
@@ -27,17 +28,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     _Tab('/donors',      Icons.volunteer_activism_outlined,    Icons.volunteer_activism_rounded, 'Donors'),
   ];
 
-  static const _titles = {
-    '/feed':            'Feed',
-    '/my-requests':     'My Requests',
-    '/donors':          'Donors',
-    '/directory':       'Directory',
-    '/history':         'History',
-    '/profile':         'Profile',
-    '/notifications':   'Notifications',
-    '/add-requirement': 'New Blood Request',
-    '/edit-profile':    'Edit Profile',
-  };
+  static Map<String, String> get _titles => AppConfig.shellTitles;
 
   String _prevLocation = '';
 
@@ -52,7 +43,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     for (final entry in _titles.entries) {
       if (location.startsWith(entry.key)) return entry.value;
     }
-    return 'BloodConnect';
+    return AppConfig.shellDefaultTitle;
   }
 
   void _onTabTap(int index) {

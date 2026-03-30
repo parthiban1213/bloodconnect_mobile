@@ -6,6 +6,7 @@ import '../../viewmodels/notifications_viewmodel.dart';
 import '../../models/notification_model.dart';
 import '../../utils/app_extensions.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 import '../../widgets/app_widgets.dart';
 
 class NotificationsScreen extends ConsumerWidget {
@@ -35,7 +36,7 @@ class NotificationsScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Blood alerts',
+                            AppConfig.notifSubtitle,
                             style: GoogleFonts.dmSans(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
@@ -45,7 +46,7 @@ class NotificationsScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'Notifications',
+                            AppConfig.notifTitle,
                             style: GoogleFonts.dmSans(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
@@ -58,7 +59,7 @@ class NotificationsScreen extends ConsumerWidget {
                         GestureDetector(
                           onTap: () => vm.markAllAsRead(),
                           child: Text(
-                            'Mark all read',
+                            AppConfig.notifMarkAllRead,
                             style: GoogleFonts.dmSans(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
@@ -113,7 +114,7 @@ class NotificationsScreen extends ConsumerWidget {
                         )
                       : state.notifications.isEmpty
                           ? const EmptyView(
-                              title: 'No notifications yet',
+                              title: AppConfig.notifEmptyTitle,
                               subtitle:
                                   'You\'ll be notified when blood requests match your type.',
                               icon: Icons.notifications_none_rounded,

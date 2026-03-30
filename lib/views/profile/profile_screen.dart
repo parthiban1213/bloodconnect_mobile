@@ -163,7 +163,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     icon: Icons.person_outline_rounded,
                     iconBg: AppColors.plannedBg,
                     iconColor: AppColors.plannedText,
-                    label: 'Edit Profile',
+                    label: AppConfig.profileEditProfile,
                     value: user?.email.isNotEmpty == true ? user!.email : null,
                     onTap: () => context.push('/edit-profile'),
                     showDivider: true,
@@ -172,10 +172,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     icon: Icons.bloodtype_outlined,
                     iconBg: AppColors.urgentBg,
                     iconColor: AppColors.urgentText,
-                    label: 'Blood Type',
+                    label: AppConfig.profileBloodType,
                     value: user?.bloodType.isNotEmpty == true
                         ? user!.bloodType
-                        : 'Not set',
+                        : AppConfig.profileNotSet,
                     onTap: null,
                     showDivider: true,
                   ),
@@ -183,7 +183,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     icon: Icons.lock_outline_rounded,
                     iconBg: AppColors.closedBg,
                     iconColor: AppColors.closedText,
-                    label: 'Change Password',
+                    label: AppConfig.profileChangePassword,
                     onTap: () => _showChangePasswordDialog(context, ref),
                     showDivider: true,
                   ),
@@ -193,7 +193,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         : Icons.info_outline_rounded,
                     iconBg: AppColors.moderateBg,
                     iconColor: AppColors.moderateText,
-                    label: 'Account Role',
+                    label: AppConfig.profileAccountRole,
                     value: user?.role.isNotEmpty == true
                         ? user!.role[0].toUpperCase() + user.role.substring(1)
                         : 'User',
@@ -218,7 +218,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         size: 16, color: AppColors.primary),
                     const SizedBox(width: 10),
                     Text(
-                      'Last donation: ',
+                      AppConfig.profileLastDonation,
                       style: GoogleFonts.dmSans(
                           fontSize: 12, color: AppColors.textSecondary),
                     ),
@@ -248,7 +248,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      'Sign Out',
+                      AppConfig.profileSignOut,
                       style: GoogleFonts.syne(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -277,17 +277,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             style: GoogleFonts.syne(
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary)),
-        content: Text('Are you sure you want to sign out?',
+        content: Text(AppConfig.profileSignOutBody,
             style: GoogleFonts.dmSans(
                 fontSize: 13, color: AppColors.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel',
+            child: Text(AppConfig.profileSignOutCancel,
                 style: GoogleFonts.dmSans(color: AppColors.textSecondary))),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Sign out',
+            child: Text(AppConfig.profileSignOutConfirm,
                 style: GoogleFonts.dmSans(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600))),
@@ -332,7 +332,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
+            child: Text(AppConfig.profileSignOutCancel,
                 style:
                     GoogleFonts.dmSans(color: AppColors.textSecondary))),
           TextButton(
@@ -346,8 +346,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
                   content: Text(
                     ok
-                        ? 'Password changed!'
-                        : 'Failed to change password.',
+                        ? AppConfig.profilePwdChanged
+                        : AppConfig.profilePwdChangeFailed,
                   ),
                   backgroundColor:
                       ok ? AppColors.secondary : AppColors.primary,
@@ -424,7 +424,7 @@ class _DonationStatCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              'Thank you!',
+              AppConfig.profileThankYou,
               style: GoogleFonts.syne(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -475,7 +475,7 @@ class _AvailabilityCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Available to donate',
+                AppConfig.profileAvailableLabel,
                 style: GoogleFonts.syne(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -485,8 +485,8 @@ class _AvailabilityCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 isAvailable
-                    ? 'You will receive blood requests'
-                    : 'You are not available right now',
+                    ? AppConfig.profileAvailableOn
+                    : AppConfig.profileAvailableOff,
                 style: GoogleFonts.dmSans(
                     fontSize: 10, color: AppColors.textMuted),
               ),

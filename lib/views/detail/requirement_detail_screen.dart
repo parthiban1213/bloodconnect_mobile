@@ -8,6 +8,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/requirements_viewmodel.dart';
 import '../../utils/app_extensions.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/blood_type_badge.dart';
 import '../../widgets/urgency_bar.dart';
@@ -79,7 +80,7 @@ class _RequirementDetailScreenState
     } else if (mounted) {
       final err = ref.read(requirementsViewModelProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(err ?? 'Failed to confirm. Please try again.'),
+        content: Text(err ?? AppConfig.commonFailedConfirm),
         backgroundColor: AppColors.primary,
       ));
     }
@@ -288,7 +289,7 @@ class _RequirementDetailScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'HOSPITAL CONTACT',
+                      AppConfig.detailHospitalContact,
                       style: GoogleFonts.dmSans(
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
@@ -338,7 +339,7 @@ class _RequirementDetailScreenState
                                     color: AppColors.plannedText),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Call',
+                                  AppConfig.commonCallBtn,
                                   style: GoogleFonts.dmSans(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
@@ -390,7 +391,7 @@ class _RequirementDetailScreenState
                           size: 14, color: AppColors.textMuted),
                       const SizedBox(width: 8),
                       Text(
-                        'Required by: ',
+                        AppConfig.detailRequiredBy,
                         style: GoogleFonts.dmSans(
                           fontSize: 11,
                           color: AppColors.textSecondary,
@@ -461,7 +462,7 @@ class _RequirementDetailScreenState
                     size: 16, color: Color(0xFF085041)),
                 const SizedBox(width: 8),
                 Text(
-                  'Already Donated',
+                  AppConfig.detailAlreadyDonated,
                   style: GoogleFonts.dmSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -507,7 +508,7 @@ class _RequirementDetailScreenState
                                   color: Colors.white, strokeWidth: 2),
                             )
                           : Text(
-                              'Confirm donation',
+                              AppConfig.cardConfirmDonation,
                               style: GoogleFonts.dmSans(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -538,7 +539,7 @@ class _RequirementDetailScreenState
                   ),
                   child: Center(
                     child: Text(
-                      canDonate ? 'Decline' : 'Not my type',
+                      canDonate ? AppConfig.cardDeclineBtn : AppConfig.cardNotMyTypeBtn,
                       style: GoogleFonts.dmSans(
                         fontSize: 12,
                         color: canDonate

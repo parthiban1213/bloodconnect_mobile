@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../utils/app_constants.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 
 // ─────────────────────────────────────────────────────────────
 //  Edit Profile Screen
@@ -120,7 +121,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (!mounted) return;
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Profile updated!', style: GoogleFonts.dmSans(color: Colors.white)),
+        content: Text(AppConfig.editProfileSuccess, style: GoogleFonts.dmSans(color: Colors.white)),
         backgroundColor: AppColors.secondary));
       context.pop();
     } else {
@@ -157,7 +158,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 child: const Icon(Icons.chevron_left_rounded,
                     size: 22, color: AppColors.primary)),
               const SizedBox(width: 8),
-              Text('Edit Profile',
+              Text(AppConfig.editProfileTitle,
                 style: GoogleFonts.dmSans(fontSize: 18, fontWeight: FontWeight.w500,
                   color: AppColors.textPrimary)),
             ]),
@@ -174,22 +175,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   // ── Personal info fields ──────────────────────
                   _FieldCard(children: [
                     _Row(
-                      label: 'First name',
+                      label: AppConfig.editProfileFirstName,
                       child: _EditTextField(
                         ctrl: _firstNameCtrl,
-                        hint: 'Enter first name',
+                        hint: AppConfig.editProfileFirstHint,
                         cap: TextCapitalization.words)),
                     _Row(
-                      label: 'Last name',
+                      label: AppConfig.editProfileLastName,
                       child: _EditTextField(
                         ctrl: _lastNameCtrl,
-                        hint: 'Enter last name',
+                        hint: AppConfig.editProfileLastHint,
                         cap: TextCapitalization.words)),
                     _Row(
-                      label: 'Email',
+                      label: AppConfig.editProfileEmail,
                       child: _EditTextField(
                         ctrl: _emailCtrl,
-                        hint: 'Enter email address',
+                        hint: AppConfig.editProfileEmailHint,
                         keyboard: TextInputType.emailAddress,
                         validator: (v) {
                           if (v != null && v.isNotEmpty && !v.contains('@'))
@@ -197,18 +198,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           return null;
                         })),
                     _Row(
-                      label: 'Mobile',
+                      label: AppConfig.editProfileMobile,
                       child: _EditTextField(
                         ctrl: _mobileCtrl,
-                        hint: '+91 9876543210',
+                        hint: AppConfig.editProfileMobileHint,
                         keyboard: TextInputType.phone,
                         formatters: [FilteringTextInputFormatter.digitsOnly])),
                     _Row(
-                      label: 'Address',
+                      label: AppConfig.editProfileAddress,
                       isLast: true,
                       child: _EditTextField(
                         ctrl: _addressCtrl,
-                        hint: 'Enter your address',
+                        hint: AppConfig.editProfileAddressHint,
                         maxLines: 2)),
                   ]),
                   const SizedBox(height: 12),
@@ -222,7 +223,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       border: const Border.fromBorderSide(
                           BorderSide(color: AppColors.border))),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('BLOOD TYPE',
+                      Text(AppConfig.editProfileBloodType,
                         style: GoogleFonts.dmSans(fontSize: 9, fontWeight: FontWeight.w500,
                           color: AppColors.textMuted, letterSpacing: 0.5)),
                       const SizedBox(height: 12),
@@ -268,7 +269,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         ? const SizedBox(width: 20, height: 20,
                             child: CircularProgressIndicator(
                                 color: Colors.white, strokeWidth: 2))
-                        : Text('Save Changes',
+                        : Text(AppConfig.editProfileSaveBtn,
                             style: GoogleFonts.dmSans(fontSize: 14,
                               fontWeight: FontWeight.w500, color: Colors.white))),
                     ),

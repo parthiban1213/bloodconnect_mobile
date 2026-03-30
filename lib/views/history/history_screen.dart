@@ -7,6 +7,7 @@ import '../../models/donation_history.dart';
 import '../../models/blood_requirement.dart';
 import '../../viewmodels/history_viewmodel.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 import '../../widgets/app_widgets.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
@@ -75,7 +76,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                         children: [
                           const Icon(Icons.volunteer_activism_outlined, size: 14),
                           const SizedBox(width: 6),
-                          const Text('My Donations'),
+                          const Text(AppConfig.historyMyDonations),
                           if (state.myDonations.isNotEmpty) ...[
                             const SizedBox(width: 5),
                             _CountBadge(state.myDonations.length),
@@ -89,7 +90,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                         children: [
                           const Icon(Icons.check_circle_outline_rounded, size: 14),
                           const SizedBox(width: 6),
-                          const Text('Completed'),
+                          const Text(AppConfig.historyCompleted),
                           if (state.completedCount > 0) ...[
                             const SizedBox(width: 5),
                             _CountBadge(state.completedRequests.length),
@@ -148,9 +149,8 @@ class _DonationsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     if (donations.isEmpty) {
       return const EmptyView(
-        title: 'No donations yet',
-        subtitle: 'When you pledge to donate blood, '
-            'your donations will appear here.',
+        title: AppConfig.historyNoDonations,
+        subtitle: AppConfig.historyNoDonationsSubtitle,
         icon: Icons.volunteer_activism_outlined,
       );
     }
@@ -265,7 +265,7 @@ class _DonationCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              'Donated',
+              AppConfig.historyDonatedBadge,
               style: GoogleFonts.dmSans(
                 fontSize: 9,
                 fontWeight: FontWeight.w600,
@@ -301,9 +301,8 @@ class _CompletedTab extends StatelessWidget {
   Widget build(BuildContext context) {
     if (requests.isEmpty) {
       return const EmptyView(
-        title: 'No completed requests',
-        subtitle: 'Fulfilled and cancelled blood requests '
-            'will appear here.',
+        title: AppConfig.historyNoCompleted,
+        subtitle: AppConfig.historyNoCompletedSubtitle,
         icon: Icons.check_circle_outline_rounded,
       );
     }

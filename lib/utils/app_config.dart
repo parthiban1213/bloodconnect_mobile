@@ -33,28 +33,49 @@ class AppConfig {
   static const String otpPlaceholder   = '98765 43210';
   static const int    otpTimerSeconds  = 60;
 
+  // ── OTP Code screen ─────────────────────────────────────────
+  static const String otpCodeTitle     = 'Enter OTP';
+  static const String otpCodeSentTo    = 'Sent to ';
+  static const String otpChangeNumber  = 'Change number';
+  static const String otpResendTimer   = 'Resend OTP in ';
+  static const String otpResendBtn     = 'Resend OTP';
+  static const String otpVerifyBtn     = 'Verify & Sign In →';
+
   // ── Login — Password screen ──────────────────────────────────
-  static const String pwdHeading       = 'Welcome\nback';
-  static const String pwdSubtext       = 'Sign in to see blood requests\nnear you and save lives.';
-  static const String pwdSignInBtn     = 'Sign in →';
-  static const String pwdSwitchBtn     = 'Sign in with OTP instead';
-  static const String pwdHintTitle     = 'Need access?';
-  static const String pwdHintBody      = 'Contact your administrator for login credentials. All accounts are managed by $orgName admin.';
+  static const String pwdHeading              = 'Welcome\nback';
+  static const String pwdSubtext              = 'Sign in to see blood requests\nnear you and save lives.';
+  static const String pwdSignInBtn            = 'Sign in →';
+  static const String pwdSwitchBtn            = 'Sign in with OTP instead';
+  static const String pwdHintTitle            = 'Need access?';
+  static const String pwdHintBody             = 'Contact your administrator for login credentials. All accounts are managed by $orgName admin.';
+  static const String pwdUsernamePlaceholder  = 'Enter username';
+  static const String pwdPasswordPlaceholder  = 'Enter password';
+  static const String pwdForgotLink           = 'Forgot password?';
+  static const String pwdBackLink             = 'Back';
+  static const String pwdSignInLabel          = 'Sign in →';
 
   // ── Login — Forgot Password screen ──────────────────────────
-  static const String fpResetBtn       = 'Reset Password →';
-  static const String fpHintTitle      = 'Need help?';
-  static const String fpHintBody       = 'Make sure the email matches the one registered with your $orgName account. Contact your administrator if you have forgotten your username.';
-  static const String fpSuccessMsg     = 'Password reset successful! You can now sign in with your new password.';
+  static const String fpTitle                = 'Reset Password';
+  static const String fpBackLink             = 'Back to Sign In';
+  static const String fpResetBtn             = 'Reset Password →';
+  static const String fpHintTitle            = 'Need help?';
+  static const String fpHintBody             = 'Make sure the email matches the one registered with your $orgName account. Contact your administrator if you have forgotten your username.';
+  static const String fpSuccessMsg           = 'Password reset successful! You can now sign in with your new password.';
+  static const String fpUsernamePlaceholder  = 'Your username';
+  static const String fpEmailPlaceholder     = 'Email linked to your account';
+  static const String fpNewPwdPlaceholder    = 'Min. 6 characters';
+  static const String fpConfirmPlaceholder   = 'Re-enter new password';
+
+  // ── Session expired ──────────────────────────────────────────
+  static const String sessionExpiredTitle = 'Session expired';
+  static const String sessionExpiredBody  = 'Please sign in again to continue.';
 
   // ── Feed screen ──────────────────────────────────────────────
   static const String feedSearchHint   = 'Search hospital or blood type…';
+  static const String feedFilterTitle  = 'Filter Requests';
+  static const String feedOpenRequests = 'open blood requests';
 
   // Feed filter chips
-  // key = value the RequirementsViewModel.setFilter() expects
-  // label = display text in the horizontal scroll bar
-  // From HSBlood admin panel: urgency = Critical/High/Medium/Low,
-  // status = Open/Fulfilled/Cancelled
   static const List<Map<String, String>> feedFilters = [
     {'label': 'All',        'key': 'All'},
     {'label': 'Critical',   'key': 'Critical'},
@@ -66,6 +87,226 @@ class AppConfig {
     {'label': 'Cancelled',  'key': 'Cancelled'},
   ];
 
+  // ── Requirement card (feed) ──────────────────────────────────
+  static const String cardDonateBtn       = "I'll Donate";
+  static const String cardCantHelpBtn     = "Can't help";
+  static const String cardNotMyTypeBtn    = 'Not my type';
+  static const String cardAlreadyDonated  = 'Already Donated';
+  static const String cardDeclineBtn      = 'Decline';
+  static const String cardConfirmDonation = 'Confirm donation';
+  static const String cardBackToFeed      = 'Back to feed';
+
+  // ── Accepted screen ──────────────────────────────────────────
+  static const String acceptedTitle       = "You're confirmed!";
+  static const String acceptedSubtitle    = 'Hospital has been notified. Thank you.';
+  static const String acceptedDonatingAt  = 'Donating at';
+  static const String acceptedContactLabel = 'CONTACT';
+  static const String acceptedCallBtn     = 'Call';
+  static const String acceptedBackBtn     = 'Back to Feed';
+  static const String acceptedWhatToBring = 'What to bring';
+  static const List<String> acceptedBringItems = [
+    'Eat a light meal before donating',
+    'Stay hydrated — drink water now',
+  ];
+
+  // ── Requirement detail screen ────────────────────────────────
+  static const String detailHospitalContact = 'HOSPITAL CONTACT';
+  static const String detailRequiredBy      = 'Required by: ';
+  static const String detailAlreadyDonated  = 'Already Donated';
+
+  // ── Directory screen ─────────────────────────────────────────
+  static const String directoryTitle       = 'Directory';
+  static const String directorySearchHint  = 'Search hospitals, blood banks…';
+  static const String directoryEmptyTitle  = 'No entries found';
+  static const String directoryEmptyBody   = 'No hospitals or services match your search.';
+  static const List<Map<String, String>> directoryCategories = [
+    {'label': 'All',         'key': 'All'},
+    {'label': 'Hospitals',   'key': 'Hospital'},
+    {'label': 'Blood Banks', 'key': 'Blood Bank'},
+    {'label': 'Ambulance',   'key': 'Ambulance'},
+  ];
+
+  // ── Donors screen ────────────────────────────────────────────
+  static const String donorsTitle              = 'Donors';
+  static const String donorsSearchHint         = 'Search by name, phone, address…';
+  static const String donorsEmptyTitle         = 'No donors found';
+  static const String donorsEmptySubtitle      = 'Try adjusting your search or filters.';
+  static const String donorsFilterTitle        = 'Filter Donors';
+  static const String donorsFilterBloodType    = 'Blood Type';
+  static const String donorsFilterAvailability = 'Availability';
+  static const String donorsFilterAvailable    = 'Available';
+  static const String donorsFilterUnavailable  = 'Unavailable';
+  static const String donorsFilterApply        = 'Apply';
+  static const String donorsFilterClear        = 'Clear';
+  static const String donorDetailTitle         = 'Donor Details';
+
+  // ── History screen ───────────────────────────────────────────
+  static const String historyMyDonations          = 'My Donations';
+  static const String historyCompleted            = 'Completed';
+  static const String historyNoDonations          = 'No donations yet';
+  static const String historyNoDonationsSubtitle  =
+      'When you pledge to donate blood, your donations will appear here.';
+  static const String historyNoCompleted          = 'No completed requests';
+  static const String historyNoCompletedSubtitle  =
+      'Fulfilled and cancelled blood requests will appear here.';
+  static const String historyDonatedBadge         = 'Donated';
+
+  // ── My Requests screen ───────────────────────────────────────
+  static const String myRequestsAddBtn        = 'Add Request';
+  static const String myRequestsEmptyTitle    = 'No requests yet';
+  static const String myRequestsEmptySubtitle =
+      'Tap "Add Request" above to create your first blood requirement.';
+  static const String myRequestsViewStatus    = 'View Status';
+  static const String myRequestsEdit          = 'Edit';
+  static const String myRequestsClose         = 'Close';
+  static const String myRequestsCloseTitle    = 'Close Request';
+  static const String myRequestsCloseBody     =
+      'Are you sure you want to close this request? It will be marked as Cancelled.';
+  static const String myRequestsCloseCancel   = 'Cancel';
+  static const String myRequestsCloseConfirm  = 'Close Request';
+  static const String myRequestsCloseError    = 'Failed to close request.';
+
+  // ── Add/Edit Requirement screen ──────────────────────────────
+  static const String addReqTitleNew        = 'New Blood Request';
+  static const String addReqTitleEdit       = 'Edit Blood Request';
+  static const String addReqSaveBtn         = 'Save Requirement';
+  static const String addReqSectionPatient  = 'Patient Details';
+  static const String addReqSectionContact  = 'Contact Information';
+  static const String addReqSectionDetails  = 'Requirement Details';
+  static const String addReqPatientName     = 'Patient Name';
+  static const String addReqHospital        = 'Hospital / Centre';
+  static const String addReqLocation        = 'Location';
+  static const String addReqContactPerson   = 'Contact Person';
+  static const String addReqContactPhone    = 'Contact Phone';
+  static const String addReqBloodType       = 'Blood Type';
+  static const String addReqUnits           = 'Units Required';
+  static const String addReqUrgency         = 'Urgency';
+  static const String addReqRequiredBy      = 'Required By Date';
+  static const String addReqStatus          = 'Status';
+  static const String addReqNotes           = 'Additional Notes';
+  static const String addReqPatientHint     = 'e.g. Ravi Kumar';
+  static const String addReqHospitalHint    = 'e.g. PSG Hospital';
+  static const String addReqLocationHint    = 'e.g. Coimbatore, Tamil Nadu';
+  static const String addReqContactHint     = 'Name of coordinator';
+  static const String addReqPhoneHint       = '+91 98765 43210';
+  static const String addReqBloodTypeHint   = 'Select blood type';
+  static const String addReqDateHint        = 'Select date (optional)';
+  static const String addReqNotesHint       = 'Any special instructions or context…';
+  static const String addReqCreatedMsg      = 'Requirement created successfully!';
+  static const String addReqUpdatedMsg      = 'Request updated successfully!';
+
+  // ── Notifications screen ─────────────────────────────────────
+  static const String notifTitle         = 'Notifications';
+  static const String notifSubtitle      = 'Blood alerts';
+  static const String notifMarkAllRead   = 'Mark all read';
+  static const String notifUnreadSuffix  = ' unread';
+  static const String notifEmptyTitle    = 'No notifications yet';
+  static const String notifEmptySubtitle = "You'll be notified when blood requests match your type.";
+
   // ── Profile screen ───────────────────────────────────────────
-  static const String profileDonationLabel = 'Units\nDonated';
+  static const String profileDonationLabel   = 'Units\nDonated';
+  static const String profileAvailableLabel  = 'Available to donate';
+  static const String profileAvailableOn     = 'You will receive blood requests';
+  static const String profileAvailableOff    = 'You are not available right now';
+  static const String profileEditProfile     = 'Edit Profile';
+  static const String profileBloodType       = 'Blood Type';
+  static const String profileChangePassword  = 'Change Password';
+  static const String profileAccountRole     = 'Account Role';
+  static const String profileLastDonation    = 'Last donation: ';
+  static const String profileSignOut         = 'Sign Out';
+  static const String profileSignOutTitle    = 'Sign out';
+  static const String profileSignOutBody     = 'Are you sure you want to sign out?';
+  static const String profileSignOutCancel   = 'Cancel';
+  static const String profileSignOutConfirm  = 'Sign out';
+  static const String profileChangePwdTitle  = 'Change Password';
+  static const String profileNewPwdLabel     = 'New password';
+  static const String profileConfirmPwdLabel = 'Confirm new password';
+  static const String profilePwdChanged      = 'Password changed!';
+  static const String profilePwdChangeFailed = 'Failed to change password.';
+  static const String profileThankYou        = 'Thank you!';
+  static const String profileNotSet          = 'Not set';
+
+  // ── Edit Profile screen ──────────────────────────────────────
+  static const String editProfileTitle      = 'Edit Profile';
+  static const String editProfileSaveBtn    = 'Save Changes';
+  static const String editProfileFirstName  = 'First name';
+  static const String editProfileLastName   = 'Last name';
+  static const String editProfileEmail      = 'Email';
+  static const String editProfileMobile     = 'Mobile';
+  static const String editProfileAddress    = 'Address';
+  static const String editProfileBloodType  = 'BLOOD TYPE';
+  static const String editProfileSuccess    = 'Profile updated!';
+  static const String editProfileFirstHint  = 'Enter first name';
+  static const String editProfileLastHint   = 'Enter last name';
+  static const String editProfileEmailHint  = 'Enter email address';
+  static const String editProfileMobileHint = '+91 9876543210';
+  static const String editProfileAddressHint = 'Enter your address';
+
+  // ── Drawer ───────────────────────────────────────────────────
+  static const String drawerFeed           = 'Feed';
+  static const String drawerMyRequests     = 'My Requests';
+  static const String drawerHistory        = 'History';
+  static const String drawerDonorDirectory = 'Donor Directory';
+  static const String drawerNotifications  = 'Notifications';
+  static const String drawerSupport        = 'Support';
+  static const String drawerMyProfile      = 'My Profile';
+  static const String drawerSignOut        = 'Sign Out';
+
+  // ── Shell / AppBar ───────────────────────────────────────────
+  static const Map<String, String> shellTitles = {
+    '/feed':            'Feed',
+    '/my-requests':     'My Requests',
+    '/donors':          'Donors',
+    '/directory':       'Directory',
+    '/history':         'History',
+    '/profile':         'Profile',
+    '/notifications':   'Notifications',
+    '/add-requirement': 'New Blood Request',
+    '/edit-profile':    'Edit Profile',
+  };
+  static const String shellDefaultTitle = 'BloodConnect';
+
+  // ── Nav tabs ─────────────────────────────────────────────────
+  static const String navFeed     = 'Feed';
+  static const String navRequests = 'Requests';
+  static const String navDonors   = 'Donors';
+
+  // ── Support screen ───────────────────────────────────────────
+  static const String supportScreenTitle       = 'Contact Support';
+  static const String supportAdminEmail        = 'hoffenmotoe2@gmail.com';
+  static const String supportInfoTitle         = "We're here to help";
+  static const String supportInfoBody          =
+      "Having trouble logging in or need help? Send a message to our support team and we'll get back to you.";
+  static const String supportNameLabel         = 'Your Name';
+  static const String supportNameHint          = 'Your full name';
+  static const String supportEmailLabel        = 'Your Email';
+  static const String supportEmailHint         = 'your@email.com';
+  static const String supportSubjectLabel      = 'Subject';
+  static const String supportSubjectHint       = 'e.g. Cannot log in to my account';
+  static const String supportMessageLabel      = 'Message';
+  static const String supportMessageHint       = 'Describe your issue in detail…';
+  static const String supportAttachLabel       = 'Attachments';
+  static const String supportAttachSubtitle    = 'Optional — screenshots or files (max 5)';
+  static const String supportAttachBtn         = 'Attach';
+  static const String supportAttachDropzone    = 'Tap to attach a file';
+  static const String supportAttachTypes       = 'Images, PDF, DOC, TXT';
+  static const String supportSendBtn           = 'Send Message';
+  static const String supportSentMsg           = 'Mail client opened! Please send the email.';
+  static const String supportSentWithAttachMsg =
+      'Mail client opened! Please attach the listed files and send the email.';
+  static const String supportMaxFilesError     = 'You can attach a maximum of 5 files.';
+  static const String supportPickerError       = 'Could not open file picker. Please try again.';
+  static const String supportNoMailApp         = 'No mail app found. Admin email copied to clipboard: ';
+  static const String supportEmailSubjectPrefix = '[HSBlood Support] ';
+  static const String supportEmailBodySuffix    = '\n\n---\nSent via HSBlood Mobile App';
+
+  // ── Common / Shared ──────────────────────────────────────────
+  static const String commonCallBtn       = 'Call';
+  static const String commonBackToFeed    = 'Back to feed';
+  static const String commonClose         = 'Close';
+  static const String commonCancel        = 'Cancel';
+  static const String commonUpdate        = 'Update';
+  static const String commonTryAgain      = 'Try again';
+  static const String commonErrorRetry    = 'Something went wrong. Please try again.';
+  static const String commonFailedConfirm = 'Failed to confirm. Please try again.';
 }

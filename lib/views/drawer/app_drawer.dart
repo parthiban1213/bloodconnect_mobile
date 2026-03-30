@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -111,7 +112,7 @@ class AppDrawer extends ConsumerWidget {
                 children: [
                   _Item(
                     icon: Icons.grid_view_rounded,
-                    label: 'Feed',
+                    label: AppConfig.drawerFeed,
                     onTap: () {
                       Navigator.pop(context);
                       context.go('/feed');
@@ -119,7 +120,7 @@ class AppDrawer extends ConsumerWidget {
                   ),
                   _Item(
                     icon: Icons.bloodtype_outlined,
-                    label: 'My Requests',
+                    label: AppConfig.drawerMyRequests,
                     onTap: () {
                       Navigator.pop(context);
                       context.go('/my-requests');
@@ -127,7 +128,7 @@ class AppDrawer extends ConsumerWidget {
                   ),
                   _Item(
                     icon: Icons.history_rounded,
-                    label: 'History',
+                    label: AppConfig.drawerHistory,
                     onTap: () {
                       Navigator.pop(context);
                       context.go('/history');
@@ -135,7 +136,7 @@ class AppDrawer extends ConsumerWidget {
                   ),
                   _Item(
                     icon: Icons.people_outline_rounded,
-                    label: 'Donor Directory',
+                    label: AppConfig.drawerDonorDirectory,
                     onTap: () {
                       Navigator.pop(context);
                       context.go('/directory');
@@ -143,7 +144,7 @@ class AppDrawer extends ConsumerWidget {
                   ),
                   _Item(
                     icon: Icons.notifications_outlined,
-                    label: 'Notifications',
+                    label: AppConfig.drawerNotifications,
                     onTap: () {
                       Navigator.pop(context);
                       context.go('/notifications');
@@ -152,7 +153,7 @@ class AppDrawer extends ConsumerWidget {
                   // Support — navigates to in-app support screen
                   _Item(
                     icon: Icons.help_outline_rounded,
-                    label: 'Support',
+                    label: AppConfig.drawerSupport,
                     onTap: () {
                       Navigator.pop(context);
                       context.push('/support'); // push so user can go back
@@ -166,7 +167,7 @@ class AppDrawer extends ConsumerWidget {
                   ),
                   _Item(
                     icon: Icons.person_outline_rounded,
-                    label: 'My Profile',
+                    label: AppConfig.drawerMyProfile,
                     onTap: () {
                       Navigator.pop(context);
                       context.go('/profile');
@@ -184,7 +185,7 @@ class AppDrawer extends ConsumerWidget {
             ),
             _Item(
               icon: Icons.logout_rounded,
-              label: 'Sign Out',
+              label: AppConfig.drawerSignOut,
               textColor: AppColors.primary,
               iconColor: AppColors.primary,
               onTap: () async {

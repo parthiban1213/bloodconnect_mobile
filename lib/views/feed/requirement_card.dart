@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/blood_requirement.dart';
 import '../../utils/app_extensions.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 import '../../viewmodels/requirements_viewmodel.dart';
 import '../../widgets/blood_type_badge.dart';
 
@@ -26,7 +27,7 @@ class RequirementCard extends ConsumerWidget {
       final err = ref.read(requirementsViewModelProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(
-          err ?? 'Something went wrong. Please try again.',
+          err ?? AppConfig.commonErrorRetry,
           style: GoogleFonts.dmSans(fontSize: 13),
         ),
         backgroundColor: AppColors.primaryDark,
@@ -164,7 +165,7 @@ class RequirementCard extends ConsumerWidget {
                             size: 14, color: Color(0xFF085041)),
                         const SizedBox(width: 6),
                         Text(
-                          'Already Donated',
+                          AppConfig.cardAlreadyDonated,
                           style: GoogleFonts.syne(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -199,7 +200,7 @@ class RequirementCard extends ConsumerWidget {
                                           strokeWidth: 2, color: Colors.white),
                                     )
                                   : Text(
-                                      "I'll Donate",
+                                      AppConfig.cardDonateBtn,
                                       style: GoogleFonts.syne(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,
@@ -236,7 +237,7 @@ class RequirementCard extends ConsumerWidget {
                           ),
                           child: Center(
                             child: Text(
-                              canDonate ? "Can't help" : "Not my type",
+                              canDonate ? AppConfig.cardCantHelpBtn : "Not my type",
                               style: GoogleFonts.syne(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,

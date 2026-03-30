@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../viewmodels/directory_viewmodel.dart';
 import '../../models/info_entry.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 import '../../widgets/app_widgets.dart';
 
 class DirectoryScreen extends ConsumerStatefulWidget {
@@ -52,7 +53,7 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Directory',
+                    AppConfig.directoryTitle,
                     style: GoogleFonts.dmSans(
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
@@ -81,7 +82,7 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
                             style: GoogleFonts.dmSans(
                                 fontSize: 12, color: AppColors.textPrimary),
                             decoration: InputDecoration(
-                              hintText: 'Search hospitals, blood banks…',
+                              hintText: AppConfig.directorySearchHint,
                               hintStyle: GoogleFonts.dmSans(
                                   fontSize: 12,
                                   color: AppColors.textMuted),
@@ -168,9 +169,9 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
                         )
                       : state.filtered.isEmpty
                           ? const EmptyView(
-                              title: 'No entries found',
+                              title: AppConfig.directoryEmptyTitle,
                               subtitle:
-                                  'No hospitals or services match your search.',
+                                  AppConfig.directoryEmptyBody,
                               icon: Icons.local_hospital_outlined,
                             )
                           : RefreshIndicator(
@@ -353,7 +354,7 @@ class _DirCard extends StatelessWidget {
                       size: 12, color: AppColors.plannedText),
                   const SizedBox(width: 5),
                   Text(
-                    'Call',
+                    AppConfig.commonCallBtn,
                     style: GoogleFonts.dmSans(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,

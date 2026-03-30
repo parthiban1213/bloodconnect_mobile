@@ -276,16 +276,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
 // ════════════════════════════════════════════════════════════
 //  SHARED LAYOUT
-//  FIX: The layout no longer uses scrollable=true for the main
-//  OTP/Password views. Instead we use a fixed bottom panel so
-//  the "Get Support" link is always visible without scrolling.
-//  The top half shrinks via LayoutBuilder to fit everything.
 // ════════════════════════════════════════════════════════════
 
 class _LoginLayout extends StatelessWidget {
   final Widget topContent;
   final Widget bottomContent;
-  // scrollable is kept for ForgotPassword which genuinely needs scroll
   final bool scrollable;
 
   const _LoginLayout({
@@ -297,7 +292,6 @@ class _LoginLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (scrollable) {
-      // Only ForgotPassword uses this — full scrollable layout
       return SingleChildScrollView(child: SizedBox(
         height: MediaQuery.of(context).size.height -
             MediaQuery.of(context).padding.top -
@@ -311,16 +305,9 @@ class _LoginLayout extends StatelessWidget {
       ));
     }
 
-    // ── Non-scrollable: top half is flexible, bottom is fixed ──
-    // This ensures the bottom content (including Support link) is
-    // always visible without any scrolling.
     return Column(
       children: [
-        // Top section shrinks as needed but never clips
-        Flexible(
-          child: Center(child: topContent),
-        ),
-        // Bottom form panel — always fully visible
+        Flexible(child: Center(child: topContent)),
         bottomContent,
       ],
     );
@@ -348,7 +335,6 @@ class _OtpMobileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LoginLayout(
-      // scrollable: false (default) — bottom panel always visible
       topContent: BloodDropWidget(size: 90),
       bottomContent: Padding(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
@@ -356,7 +342,7 @@ class _OtpMobileView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Welcome back',
+            Text(AppConfig.otpHeading.replaceAll('\n', ' '),
               style: GoogleFonts.dmSans(
                 fontSize: 22, fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary)),
@@ -389,7 +375,6 @@ class _OtpMobileView extends StatelessWidget {
                 title: AppConfig.otpHintTitle,
                 body: AppConfig.otpHintBody),
             const SizedBox(height: 10),
-            // Support link — always visible, no scroll needed
             _SupportLink(),
             const SizedBox(height: 10),
             _Footer(),
@@ -444,7 +429,7 @@ class _OtpCodeView extends StatelessWidget {
                   color: AppColors.primary, size: 28)),
           ),
           const SizedBox(height: 16),
-          Text('Enter OTP',
+          Text(AppConfig.otpCodeTitle,
             style: GoogleFonts.dmSans(
               fontSize: 20, fontWeight: FontWeight.w500,
               color: AppColors.textPrimary)),
@@ -453,7 +438,7 @@ class _OtpCodeView extends StatelessWidget {
             style: GoogleFonts.dmSans(
                 fontSize: 12, color: AppColors.textSecondary),
             children: [
-              const TextSpan(text: 'Sent to '),
+              TextSpan(text: AppConfig.otpCodeSentTo),
               TextSpan(text: _fmt,
                 style: GoogleFonts.dmSans(
                     fontWeight: FontWeight.w600,
@@ -467,7 +452,7 @@ class _OtpCodeView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _BackLink(label: 'Change number', onTap: onBack),
+            _BackLink(label: AppConfig.otpChangeNumber, onTap: onBack),
             const SizedBox(height: 16),
             if (error != null) ...[
               _ErrorPill(error!), const SizedBox(height: 12),
@@ -488,7 +473,7 @@ class _OtpCodeView extends StatelessWidget {
                   style: GoogleFonts.dmSans(
                       fontSize: 12, color: AppColors.textMuted),
                   children: [
-                    const TextSpan(text: 'Resend OTP in '),
+                    TextSpan(text: AppConfig.otpResendTimer),
                     TextSpan(text: '${timerSec}s',
                       style: GoogleFonts.dmSans(
                           fontWeight: FontWeight.w500,
@@ -496,13 +481,13 @@ class _OtpCodeView extends StatelessWidget {
                   ]))
               : GestureDetector(
                   onTap: onResend,
-                  child: Text('Resend OTP',
+                  child: Text(AppConfig.otpResendBtn,
                     style: GoogleFonts.dmSans(
                         fontSize: 12, fontWeight: FontWeight.w500,
                         color: AppColors.primary))),
             const SizedBox(height: 20),
             _LoadingButton(
-              label: 'Verify & Sign In →',
+              label: AppConfig.otpVerifyBtn,
               isLoading: isVerifying,
               onTap: isVerifying ? null : onVerify,
             ),
@@ -535,7 +520,6 @@ class _PasswordView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LoginLayout(
-      // scrollable: false (default) — bottom panel always visible
       topContent: BloodDropWidget(size: 90),
       bottomContent: Padding(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
@@ -543,9 +527,9 @@ class _PasswordView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            _BackLink(label: 'Back', onTap: onToOtp),
+            _BackLink(label: AppConfig.pwdBackLink, onTap: onToOtp),
             const SizedBox(height: 10),
-            Text('Welcome back',
+            Text(AppConfig.pwdHeading.replaceAll('\n', ' '),
               style: GoogleFonts.dmSans(
                 fontSize: 22, fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary)),
@@ -556,14 +540,14 @@ class _PasswordView extends StatelessWidget {
             _FieldLabel('Username'),
             const SizedBox(height: 8),
             _PlainField(
-              ctrl: userCtrl, hint: 'Enter username',
+              ctrl: userCtrl, hint: AppConfig.pwdUsernamePlaceholder,
               icon: Icons.person_outline_rounded,
               action: TextInputAction.next, autocorrect: false),
             const SizedBox(height: 12),
             _FieldLabel('Password'),
             const SizedBox(height: 8),
             _PlainField(
-              ctrl: pwdCtrl, hint: 'Enter password',
+              ctrl: pwdCtrl, hint: AppConfig.pwdPasswordPlaceholder,
               icon: Icons.lock_outline_rounded,
               obscure: obscure, onToggleObscure: onToggle,
               action: TextInputAction.done,
@@ -573,11 +557,10 @@ class _PasswordView extends StatelessWidget {
               child: TextButton(
                 onPressed: onForgot,
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 0, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 6),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                child: Text('Forgot password?',
+                child: Text(AppConfig.pwdForgotLink,
                   style: GoogleFonts.dmSans(
                     fontSize: 12, color: AppColors.primary,
                     fontWeight: FontWeight.w500)),
@@ -585,7 +568,7 @@ class _PasswordView extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             _LoadingButton(
-              label: 'Sign in →',
+              label: AppConfig.pwdSignInLabel,
               isLoading: isLoading,
               onTap: isLoading ? null : onLogin,
             ),
@@ -593,13 +576,12 @@ class _PasswordView extends StatelessWidget {
             _OrDivider(),
             const SizedBox(height: 10),
             _SecondaryButton(
-                label: 'Sign in with OTP instead', onTap: onToOtp),
+                label: AppConfig.pwdSwitchBtn, onTap: onToOtp),
             const SizedBox(height: 12),
             _HintCard(
                 title: AppConfig.pwdHintTitle,
                 body: AppConfig.pwdHintBody),
             const SizedBox(height: 10),
-            // Support link — always visible, no scroll needed
             _SupportLink(),
             const SizedBox(height: 10),
             _Footer(),
@@ -636,7 +618,7 @@ class _ForgotPasswordView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _BackLink(label: 'Back to Sign In', onTap: onBack),
+          _BackLink(label: AppConfig.fpBackLink, onTap: onBack),
           const SizedBox(height: 20),
           Container(
             width: 60, height: 60,
@@ -648,7 +630,7 @@ class _ForgotPasswordView extends StatelessWidget {
                   color: AppColors.primary, size: 26)),
           ),
           const SizedBox(height: 16),
-          Text('Reset Password',
+          Text(AppConfig.fpTitle,
             style: GoogleFonts.dmSans(
               fontSize: 22, fontWeight: FontWeight.w500,
               color: AppColors.textPrimary)),
@@ -662,14 +644,14 @@ class _ForgotPasswordView extends StatelessWidget {
           _FieldLabel('Username'),
           const SizedBox(height: 8),
           _PlainField(
-            ctrl: userCtrl, hint: 'Your username',
+            ctrl: userCtrl, hint: AppConfig.fpUsernamePlaceholder,
             icon: Icons.person_outline_rounded,
             action: TextInputAction.next, autocorrect: false),
           const SizedBox(height: 14),
           _FieldLabel('Email address'),
           const SizedBox(height: 8),
           _PlainField(
-            ctrl: emailCtrl, hint: 'Email linked to your account',
+            ctrl: emailCtrl, hint: AppConfig.fpEmailPlaceholder,
             icon: Icons.mail_outline_rounded,
             keyboard: TextInputType.emailAddress,
             action: TextInputAction.next, autocorrect: false),
@@ -677,7 +659,7 @@ class _ForgotPasswordView extends StatelessWidget {
           _FieldLabel('New password'),
           const SizedBox(height: 8),
           _PlainField(
-            ctrl: newCtrl, hint: 'Min. 6 characters',
+            ctrl: newCtrl, hint: AppConfig.fpNewPwdPlaceholder,
             icon: Icons.lock_outline_rounded,
             obscure: newObscure, onToggleObscure: onToggleNew,
             action: TextInputAction.next),
@@ -685,7 +667,7 @@ class _ForgotPasswordView extends StatelessWidget {
           _FieldLabel('Confirm password'),
           const SizedBox(height: 8),
           _PlainField(
-            ctrl: cfmCtrl, hint: 'Re-enter new password',
+            ctrl: cfmCtrl, hint: AppConfig.fpConfirmPlaceholder,
             icon: Icons.lock_outline_rounded,
             obscure: cfmObscure, onToggleObscure: onToggleCfm,
             action: TextInputAction.done,
@@ -1017,7 +999,6 @@ class _Footer extends StatelessWidget {
           fontSize: 10, color: AppColors.textVeryMuted)));
 }
 
-// ── Support link — now navigates to the in-app support screen ──
 class _SupportLink extends StatelessWidget {
   @override
   Widget build(BuildContext ctx) => Center(
@@ -1130,11 +1111,11 @@ class _SessionExpiredBanner extends StatelessWidget {
       Expanded(child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Session expired',
+          Text(AppConfig.sessionExpiredTitle,
             style: GoogleFonts.dmSans(
               fontSize: 12, fontWeight: FontWeight.w500,
               color: AppColors.moderateText)),
-          Text('Please sign in again to continue.',
+          Text(AppConfig.sessionExpiredBody,
             style: GoogleFonts.dmSans(
               fontSize: 11, color: AppColors.moderateText, height: 1.4)),
         ])),

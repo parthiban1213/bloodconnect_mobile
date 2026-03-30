@@ -70,7 +70,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Filter Requests',
+                      Text(AppConfig.feedFilterTitle,
                           style: GoogleFonts.syne(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -561,7 +561,7 @@ class _OpenRequestCount extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              'open blood requests',
+              AppConfig.feedOpenRequests,
               style: GoogleFonts.dmSans(
                 fontSize: 12,
                 color: AppColors.textSecondary,
