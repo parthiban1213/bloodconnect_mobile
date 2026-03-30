@@ -135,7 +135,7 @@ class _SupportScreenState extends State<SupportScreen> {
         });
       }
     } catch (_) {
-      await Clipboard.setData(ClipboardData(text: adminEmail));
+      await Clipboard.setData( ClipboardData(text: adminEmail));
       if (mounted) {
         setState(() =>
             _error = '${AppConfig.supportNoMailApp}$adminEmail');
@@ -525,7 +525,7 @@ class _QuickHelpSection extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('QUICK HELP',
+          Text(AppConfig.quickHelpTitle,
               style: GoogleFonts.syne(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -537,24 +537,24 @@ class _QuickHelpSection extends StatelessWidget {
             icon: Icons.lock_outline_rounded,
             iconColor: AppColors.primary,
             iconBg: AppColors.urgentBg,
-            title: 'Login Issues',
-            body: 'Contact your HSBlood administrator to reset your credentials. Accounts are centrally managed.',
+            title: AppConfig.quickHelpLoginTitle,
+            body: AppConfig.quickHelpLoginBody,
           ),
           const SizedBox(height: 10),
           _HelpCard(
             icon: Icons.person_add_outlined,
             iconColor: AppColors.secondary,
             iconBg: AppColors.secondaryLight,
-            title: 'New Account',
-            body: 'To register as a donor, reach out to your HSBlood administrator. Self-registration is not available.',
+            title: AppConfig.quickHelpNewAccTitle,
+            body: AppConfig.quickHelpNewAccBody,
           ),
           const SizedBox(height: 10),
           _HelpCard(
             icon: Icons.notifications_none_rounded,
             iconColor: const Color(0xFF7C3AED),
             iconBg: const Color(0xFFF5F0FF),
-            title: 'Notifications',
-            body: 'Ensure notifications are enabled in your device Settings for BloodConnect to receive blood request alerts.',
+            title: AppConfig.quickHelpNotifTitle,
+            body: AppConfig.quickHelpNotifBody,
           ),
         ],
       );

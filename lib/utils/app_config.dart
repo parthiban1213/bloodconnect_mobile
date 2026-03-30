@@ -309,4 +309,60 @@ class AppConfig {
   static const String commonTryAgain      = 'Try again';
   static const String commonErrorRetry    = 'Something went wrong. Please try again.';
   static const String commonFailedConfirm = 'Failed to confirm. Please try again.';
+
+  // ── Requirement detail — info tile labels ───────────────────
+  static const String detailUnitsNeeded   = 'Units needed';
+  static const String detailPatient       = 'Patient';
+  static const String detailUrgency       = 'Urgency';
+  static const String detailStatus        = 'Status';
+  static const String detailNotFound      = 'Request not found.';
+  static const String detailNotSpecified  = 'Not specified';
+
+  // ── Directory — category keys (used in logic, not just labels) ─
+  static const String dirCatAll       = 'All';
+  static const String dirCatHospital  = 'Hospital';
+  static const String dirCatBloodBank = 'Blood Bank';
+  static const String dirCatAmbulance = 'Ambulance';
+
+  // ── Donor detail popup — field labels ───────────────────────
+  static const String donorFieldPhone       = 'Phone';
+  static const String donorFieldAddress     = 'Address';
+  static const String donorFieldLastDonation = 'Last Donation';
+  static const String donorFieldRegistered  = 'Registered';
+
+  // ── Feed filter popup buttons ────────────────────────────────
+  static const String feedFilterClear = 'Clear';
+  static const String feedFilterApply = 'Apply';
+
+  // ── My Requests — status labels and dialog ───────────────────
+  static const String myReqStatusFulfilled = 'Fulfilled';
+  static const String myReqStatusCancelled = 'Cancelled';
+  static const String myReqStatusOpen      = 'Open';
+  static const String myReqCloseAction     = 'Close';
+  static const String myReqCancelAction    = 'Cancel';
+
+  // ── Request status modal — stat card labels ──────────────────
+  static const String modalDonorsLabel        = 'Donors';
+  static const String modalUnitsRemainingLabel = 'Units Remaining';
+  static const String modalFulfilledLabel     = 'Fulfilled';
+  static const String modalUrgencyLabel       = 'Urgency';
+  static const String modalContactLabel       = 'Contact';
+  static const String modalLocationLabel      = 'Location';
+  static const String modalNotesLabel         = 'Notes';
+
+  // ── Profile dialog buttons ───────────────────────────────────
+  static const String profileDialogCancel = 'Cancel';
+  static const String profileDialogUpdate = 'Update';
+
+  // ── Support screen — Quick Help section ─────────────────────
+  static const String quickHelpTitle          = 'QUICK HELP';
+  static const String quickHelpLoginTitle     = 'Login Issues';
+  static const String quickHelpLoginBody      =
+      'Contact your HSBlood administrator to reset your credentials. Accounts are centrally managed.';
+  static const String quickHelpNewAccTitle    = 'New Account';
+  static const String quickHelpNewAccBody     =
+      'To register as a donor, reach out to your HSBlood administrator. Self-registration is not available.';
+  static const String quickHelpNotifTitle     = 'Notifications';
+  static const String quickHelpNotifBody      =
+      'Ensure notifications are enabled in your device Settings for BloodConnect to receive blood request alerts.';
 }

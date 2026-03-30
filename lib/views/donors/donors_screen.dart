@@ -794,16 +794,16 @@ class _DonorDetailPopup extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _DetailRow(label: 'Phone', value: donor.phone),
+                _DetailRow(label: AppConfig.donorFieldPhone, value: donor.phone),
                 _DetailRow(
-                    label: 'Address',
+                    label: AppConfig.donorFieldAddress,
                     value:
                         donor.address.isNotEmpty ? donor.address : '—'),
                 _DetailRow(
-                    label: 'Last Donation',
+                    label: AppConfig.donorFieldLastDonation,
                     value: _fmt(donor.lastDonationDate)),
                 _DetailRow(
-                    label: 'Registered',
+                    label: AppConfig.donorFieldRegistered,
                     value: _fmt(donor.createdAt),
                     isLast: true),
               ],
@@ -832,7 +832,7 @@ class _DonorDetailPopup extends StatelessWidget {
                   const Icon(Icons.call_rounded,
                       size: 16, color: AppColors.plannedText),
                   const SizedBox(width: 8),
-                  Text('Call ${donor.phone}',
+                  Text('${AppConfig.commonCallBtn} ${donor.phone}',
                       style: GoogleFonts.dmSans(
                         fontSize: 13, fontWeight: FontWeight.w600,
                         color: AppColors.plannedText,

@@ -143,7 +143,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                               border: Border.all(color: AppColors.border),
                             ),
                             child: Center(
-                              child: Text('Clear',
+                              child: Text(AppConfig.feedFilterClear,
                                   style: GoogleFonts.syne(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -168,7 +168,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(
-                            child: Text('Apply',
+                            child: Text(AppConfig.feedFilterApply,
                                 style: GoogleFonts.syne(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,

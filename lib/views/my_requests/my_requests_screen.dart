@@ -141,7 +141,7 @@ class _MyRequestsScreenState extends ConsumerState<MyRequestsScreen>
           const SizedBox(height: 12),
         ],
         if (state.fulfilledRequests.isNotEmpty) ...[
-          _SectionHeader('Fulfilled', state.fulfilledRequests.length,
+          _SectionHeader(AppConfig.myReqStatusFulfilled, state.fulfilledRequests.length,
               AppColors.secondary),
           const SizedBox(height: 8),
           ...state.fulfilledRequests
@@ -149,7 +149,7 @@ class _MyRequestsScreenState extends ConsumerState<MyRequestsScreen>
           const SizedBox(height: 12),
         ],
         if (state.cancelledRequests.isNotEmpty) ...[
-          _SectionHeader('Cancelled', state.cancelledRequests.length,
+          _SectionHeader(AppConfig.myReqStatusCancelled, state.cancelledRequests.length,
               AppColors.closedAccent),
           const SizedBox(height: 8),
           ...state.cancelledRequests
@@ -184,14 +184,14 @@ class _SummaryRow extends StatelessWidget {
         const SizedBox(width: 8),
         _Chip(
           count: state.fulfilledRequests.length,
-          label: 'Fulfilled',
+          label: AppConfig.myReqStatusFulfilled,
           bg: AppColors.secondaryLight,
           tc: AppColors.secondary,
         ),
         const SizedBox(width: 8),
         _Chip(
           count: state.cancelledRequests.length,
-          label: 'Cancelled',
+          label: AppConfig.myReqStatusCancelled,
           bg: AppColors.closedBg,
           tc: AppColors.closedText,
         ),
@@ -287,8 +287,8 @@ class _RequestCard extends ConsumerWidget {
   }
 
   String get _statusLabel {
-    if (requirement.isFulfilled) return 'Fulfilled';
-    if (requirement.isCancelled) return 'Cancelled';
+    if (requirement.isFulfilled) return AppConfig.myReqStatusFulfilled;
+    if (requirement.isCancelled) return AppConfig.myReqStatusCancelled;
     return 'Open';
   }
 
@@ -298,7 +298,7 @@ class _RequestCard extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Close Request',
+        title: Text(AppConfig.myRequestsCloseTitle,
             style: GoogleFonts.syne(
                 fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
         content: Text(
@@ -308,12 +308,12 @@ class _RequestCard extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel',
+            child: Text(AppConfig.myReqCancelAction,
                 style: GoogleFonts.dmSans(color: AppColors.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Close Request',
+            child: Text(AppConfig.myRequestsCloseConfirm,
                 style: GoogleFonts.dmSans(
                     color: AppColors.primary, fontWeight: FontWeight.w600)),
           ),
@@ -503,7 +503,7 @@ class _RequestCard extends ConsumerWidget {
                       border: Border.all(color: AppColors.closedBorder),
                     ),
                     child: Center(
-                      child: Text('Close',
+                      child: Text(AppConfig.myReqCloseAction,
                           style: GoogleFonts.syne(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,

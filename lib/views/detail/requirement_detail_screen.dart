@@ -102,7 +102,7 @@ class _RequirementDetailScreenState
                           onRetry: _fetchDetail,
                         )
                       : _requirement == null
-                          ? const ErrorView(message: 'Request not found.')
+                          ? const ErrorView(message: AppConfig.detailNotFound)
                           : _buildContent(),
             ),
             if (_requirement != null && _requirement!.isOpen)
@@ -255,20 +255,20 @@ class _RequirementDetailScreenState
                 mainAxisSpacing: 8,
                 children: [
                   _InfoTile(
-                      label: 'Units needed',
+                      label: AppConfig.detailUnitsNeeded,
                       value:
                           '${req.unitsRequired} unit${req.unitsRequired > 1 ? 's' : ''}'),
                   _InfoTile(
-                      label: 'Patient',
+                      label: AppConfig.detailPatient,
                       value: req.patientName.isNotEmpty
                           ? req.patientName
-                          : 'Not specified'),
-                  _InfoTile(label: 'Urgency', value: req.urgency,
+                          : AppConfig.detailNotSpecified),
+                  _InfoTile(label: AppConfig.detailUrgency, value: req.urgency,
                       valueColor: req.urgency == 'Critical'
                           ? AppColors.primary
                           : null),
                   _InfoTile(
-                      label: 'Status',
+                      label: AppConfig.detailStatus,
                       value: req.status,
                       valueColor: req.isOpen
                           ? AppColors.secondary

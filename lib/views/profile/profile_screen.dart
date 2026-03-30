@@ -273,7 +273,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         backgroundColor: Colors.white,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Sign out',
+        title: Text(AppConfig.profileSignOutTitle,
             style: GoogleFonts.syne(
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary)),
@@ -312,18 +312,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         backgroundColor: Colors.white,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Change Password',
+        title: Text(AppConfig.profileChangePwdTitle,
             style: GoogleFonts.syne(
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary)),
         content: Form(
           key: formKey,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            _PwdField(controller: newCtrl, label: 'New password'),
+            _PwdField(controller: newCtrl, label: AppConfig.profileNewPwdLabel),
             const SizedBox(height: 10),
             _PwdField(
               controller: confirmCtrl,
-              label: 'Confirm new password',
+              label: AppConfig.profileConfirmPwdLabel,
               validator: (v) =>
                   v != newCtrl.text ? 'Passwords do not match' : null,
             ),
@@ -354,7 +354,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ));
               }
             },
-            child: Text('Update',
+            child: Text(AppConfig.profileDialogUpdate,
                 style: GoogleFonts.dmSans(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600))),

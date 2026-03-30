@@ -34,12 +34,9 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
     final state = ref.watch(directoryViewModelProvider);
     final vm = ref.read(directoryViewModelProvider.notifier);
 
-    const categories = [
-      _Cat(label: 'All', key: 'All'),
-      _Cat(label: 'Hospitals', key: 'Hospital'),
-      _Cat(label: 'Blood Banks', key: 'Blood Bank'),
-      _Cat(label: 'Ambulance', key: 'Ambulance'),
-    ];
+    final categories = AppConfig.directoryCategories
+        .map((c) => _Cat(label: c['label']!, key: c['key']!))
+        .toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,

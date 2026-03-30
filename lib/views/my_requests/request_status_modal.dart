@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/blood_requirement.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_config.dart';
 import '../../widgets/blood_type_badge.dart';
 
 // ─────────────────────────────────────────────────────────────
@@ -177,7 +178,7 @@ class RequestStatusModal extends StatelessWidget {
                 child: _StatCard(
                   icon: Icons.people_outline_rounded,
                   value: '${requirement.donorCount}',
-                  label: 'Donors',
+                  label: AppConfig.modalDonorsLabel,
                   color: AppColors.plannedAccent,
                 ),
               ),
@@ -186,7 +187,7 @@ class RequestStatusModal extends StatelessWidget {
                 child: _StatCard(
                   icon: Icons.bloodtype_outlined,
                   value: '${requirement.remainingUnits}',
-                  label: 'Units Remaining',
+                  label: AppConfig.modalUnitsRemainingLabel,
                   color: requirement.remainingUnits == 0
                       ? const Color(0xFF1D9E75)
                       : AppColors.primary,
@@ -197,7 +198,7 @@ class RequestStatusModal extends StatelessWidget {
                 child: _StatCard(
                   icon: Icons.check_circle_outline_rounded,
                   value: '${requirement.unitsFulfilled}',
-                  label: 'Fulfilled',
+                  label: AppConfig.modalFulfilledLabel,
                   color: const Color(0xFF1D9E75),
                 ),
               ),
@@ -207,14 +208,14 @@ class RequestStatusModal extends StatelessWidget {
           const SizedBox(height: 20),
 
           // ── Details ───────────────────────────────────────
-          _DetailRow(label: 'Urgency', value: requirement.urgency),
+          _DetailRow(label: AppConfig.modalUrgencyLabel, value: requirement.urgency),
           _DetailRow(
-              label: 'Contact',
+              label: AppConfig.modalContactLabel,
               value: '${requirement.contactPerson} · ${requirement.contactPhone}'),
           if (requirement.location.isNotEmpty)
-            _DetailRow(label: 'Location', value: requirement.location),
+            _DetailRow(label: AppConfig.modalLocationLabel, value: requirement.location),
           if (requirement.notes.isNotEmpty)
-            _DetailRow(label: 'Notes', value: requirement.notes),
+            _DetailRow(label: AppConfig.modalNotesLabel, value: requirement.notes),
 
           const SizedBox(height: 8),
 
@@ -232,7 +233,7 @@ class RequestStatusModal extends StatelessWidget {
                 ),
               ),
               child: Text(
-                'Close',
+                AppConfig.commonClose,
                 style: GoogleFonts.dmSans(
                     fontSize: 14, fontWeight: FontWeight.w500),
               ),
