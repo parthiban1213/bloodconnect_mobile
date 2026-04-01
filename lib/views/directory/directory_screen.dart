@@ -40,6 +40,7 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

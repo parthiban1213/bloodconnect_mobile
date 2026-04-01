@@ -274,6 +274,8 @@ class AppConfig {
   // ── Support screen ───────────────────────────────────────────
   static const String supportScreenTitle       = 'Contact Support';
   static const String supportAdminEmail        = 'hoffenmotoe2@gmail.com';
+  // ── Support email is sent via Firebase Cloud Function (sendSupportEmail) ──
+  // No credentials needed here — the function reads them from Firebase config.
   static const String supportInfoTitle         = "We're here to help";
   static const String supportInfoBody          =
       "Having trouble logging in or need help? Send a message to our support team and we'll get back to you.";
@@ -291,8 +293,8 @@ class AppConfig {
   static const String supportAttachDropzone    = 'Tap to attach a file';
   static const String supportAttachTypes       = 'Images, PDF, DOC, TXT';
   static const String supportSendBtn           = 'Send Message';
-  static const String supportSentMsg           = 'Mail client opened! Please send the email.';
-  static const String supportSentWithAttachMsg =
+  static const String supportSentMsg           = 'Your message has been sent successfully! We\'ll get back to you soon.';
+  static const String supportSentWithAttachMsg_UNUSED =
       'Mail client opened! Please attach the listed files and send the email.';
   static const String supportMaxFilesError     = 'You can attach a maximum of 5 files.';
   static const String supportPickerError       = 'Could not open file picker. Please try again.';
@@ -365,4 +367,26 @@ class AppConfig {
   static const String quickHelpNotifTitle     = 'Notifications';
   static const String quickHelpNotifBody      =
       'Ensure notifications are enabled in your device Settings for BloodConnect to receive blood request alerts.';
+
+  // ── Share feature ────────────────────────────────────────────
+  static const String shareBtn             = 'Share';
+  static const String shareSubject         = 'Urgent Blood Request — $appName';
+
+  static String shareText({
+    required String bloodType,
+    required String hospital,
+    required String location,
+    required String urgency,
+    required String units,
+    required String contactPhone,
+  }) {
+    final loc = location.isNotEmpty ? '\n📍 $location' : '';
+    return '🩸 *$urgency Blood Request*\n\n'
+        'Blood Type: *$bloodType*\n'
+        'Hospital: $hospital$loc\n'
+        'Units needed: $units\n'
+        'Contact: $contactPhone\n\n'
+        'Please share to help save a life!\n'
+        'Download $appName to respond.';
+  }
 }

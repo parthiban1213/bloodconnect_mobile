@@ -248,6 +248,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
@@ -291,25 +292,26 @@ class _LoginLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (scrollable) {
-      return SingleChildScrollView(child: SizedBox(
-        height: MediaQuery.of(context).size.height -
-            MediaQuery.of(context).padding.top -
-            MediaQuery.of(context).padding.bottom,
-        child: Column(
-          children: [
-            Expanded(child: Center(child: topContent)),
-            bottomContent,
-          ],
-        ),
-      ));
-    }
-
-    return Column(
-      children: [
-        Flexible(child: Center(child: topContent)),
-        bottomContent,
-      ],
+    // Always use a scrollable layout so keyboard never barricades content.
+    // LayoutBuilder lets the inner Column fill the available space when the
+    // keyboard is hidden, and scroll freely when it is shown.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(
+              child: Column(
+                children: [
+                  Expanded(child: Center(child: topContent)),
+                  bottomContent,
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

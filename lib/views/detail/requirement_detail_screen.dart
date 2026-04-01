@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../models/blood_requirement.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/requirements_viewmodel.dart';
 import '../../utils/app_extensions.dart';
+import '../../services/reminder_service.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_config.dart';
 import '../../widgets/app_widgets.dart';
@@ -70,6 +72,8 @@ class _RequirementDetailScreenState
         .donate(_requirement!.id);
     setState(() => _isConfirming = false);
     if (updated != null && mounted) {
+      // Auto-schedule eligibility reminder for 56 days from now
+      await ReminderService().scheduleEligibilityReminder(DateTime.now());
       context.pushReplacement('/accepted', extra: {
         'hospital':      _requirement!.hospital,
         'contactPerson': _requirement!.contactPerson,
@@ -113,6 +117,19 @@ class _RequirementDetailScreenState
     );
   }
 
+
+  Future<void> _shareRequirement(BloodRequirement req) async {
+    final text = AppConfig.shareText(
+      bloodType: req.bloodType,
+      hospital:  req.hospital,
+      location:  req.location,
+      urgency:   req.urgency,
+      units:     '${req.remainingUnits}',
+      contactPhone: req.contactPhone,
+    );
+    await Share.share(text);
+  }
+
   Widget _buildContent() {
     final req = _requirement!;
     return CustomScrollView(
@@ -123,24 +140,50 @@ class _RequirementDetailScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Back button
-                GestureDetector(
-                  onTap: () => context.pop(),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.chevron_left_rounded,
-                          size: 18, color: AppColors.primary),
-                      Text(
-                        'Back to feed',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.primary,
-                        ),
+                // Back + Share row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () => context.pop(),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.chevron_left_rounded,
+                              size: 18, color: AppColors.primary),
+                          Text(
+                            AppConfig.cardBackToFeed,
+                            style: GoogleFonts.dmSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    GestureDetector(
+                      onTap: () => _shareRequirement(req),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.plannedBg,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.plannedBorder),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          const Icon(Icons.share_rounded,
+                              size: 13, color: AppColors.plannedText),
+                          const SizedBox(width: 5),
+                          Text(AppConfig.shareBtn,
+                            style: GoogleFonts.dmSans(
+                              fontSize: 11, fontWeight: FontWeight.w500,
+                              color: AppColors.plannedText)),
+                        ]),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 // Hero card

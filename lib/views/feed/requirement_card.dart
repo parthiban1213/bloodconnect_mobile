@@ -7,6 +7,9 @@ import '../../utils/app_extensions.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_config.dart';
 import '../../viewmodels/requirements_viewmodel.dart';
+import '../../services/reminder_service.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/blood_type_badge.dart';
 
 class RequirementCard extends ConsumerWidget {
@@ -37,6 +40,9 @@ class RequirementCard extends ConsumerWidget {
       return;
     }
 
+    // Auto-schedule eligibility reminder
+    await ReminderService().scheduleEligibilityReminder(DateTime.now());
+
     if (context.mounted) {
       context.push('/accepted', extra: {
         'hospital':      requirement.hospital,
@@ -46,6 +52,19 @@ class RequirementCard extends ConsumerWidget {
         'bloodType':     requirement.bloodType,
       });
     }
+  }
+
+
+  Future<void> _shareRequirement(BuildContext context) async {
+    final text = AppConfig.shareText(
+      bloodType: requirement.bloodType,
+      hospital:  requirement.hospital,
+      location:  requirement.location,
+      urgency:   requirement.urgency,
+      units:     '${requirement.remainingUnits}',
+      contactPhone: requirement.contactPhone,
+    );
+    await Share.share(text);
   }
 
   @override
@@ -139,6 +158,21 @@ class RequirementCard extends ConsumerWidget {
                       ],
                     ),
                   ),
+                  // Share icon
+                  if (!_isClosed)
+                    GestureDetector(
+                      onTap: () => _shareRequirement(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.urgentBorder),
+                        ),
+                        child: const Icon(Icons.share_rounded,
+                            size: 13, color: AppColors.primary),
+                      ),
+                    ),
                 ],
               ),
 

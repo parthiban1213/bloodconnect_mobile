@@ -7,6 +7,8 @@ import '../../utils/app_extensions.dart';
 import '../../utils/app_config.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/app_widgets.dart';
+import '../../widgets/eligibility_card.dart';
+import '../../services/reminder_service.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -233,6 +235,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ]),
                 ),
               ],
+
+              const SizedBox(height: 10),
+
+              // ── Eligibility card ─────────────────────────
+              EligibilityCard(lastDonationDate: user == null ? null : user!.lastDonationDate),
 
               const SizedBox(height: 10),
 

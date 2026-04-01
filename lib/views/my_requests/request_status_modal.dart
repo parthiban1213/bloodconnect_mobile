@@ -12,11 +12,15 @@ import '../../widgets/blood_type_badge.dart';
 // ─────────────────────────────────────────────────────────────
 
 void showRequestStatusModal(BuildContext context, BloodRequirement req) {
-  showModalBottomSheet(
+  showDialog(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => RequestStatusModal(requirement: req),
+    barrierDismissible: true,
+    barrierColor: Colors.black.withOpacity(0.45),
+    builder: (_) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+      child: RequestStatusModal(requirement: req),
+    ),
   );
 }
 
@@ -39,31 +43,48 @@ class RequestStatusModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = requirement.fulfillmentProgress;
-    // 62px nav pill + 14px bottom margin + extra safe area
-    final navBarHeight = 76.0 + MediaQuery.of(context).padding.bottom;
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.circular(28),
       ),
-      padding: EdgeInsets.fromLTRB(24, 12, 24, navBarHeight),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Handle
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Dialog title row
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Request Status',
+                    style: GoogleFonts.syne(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 32, height: 32,
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.close_rounded,
+                          size: 18, color: AppColors.textSecondary),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
           // ── Header ────────────────────────────────────────
           Row(
@@ -217,29 +238,9 @@ class RequestStatusModal extends StatelessWidget {
           if (requirement.notes.isNotEmpty)
             _DetailRow(label: AppConfig.modalNotesLabel, value: requirement.notes),
 
-          const SizedBox(height: 8),
-
-          // ── Close ─────────────────────────────────────────
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.textSecondary,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  side: const BorderSide(color: AppColors.border),
-                ),
-              ),
-              child: Text(
-                AppConfig.commonClose,
-                style: GoogleFonts.dmSans(
-                    fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-            ),
-          ),
+          const SizedBox(height: 4),
         ],
+      ),
       ),
     );
   }

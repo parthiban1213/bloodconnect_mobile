@@ -264,11 +264,11 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
       },
       child: Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
               child: Column(

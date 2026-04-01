@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../services/api_client.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_config.dart';
 import '../../utils/app_constants.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 
-class SupportScreen extends StatefulWidget {
+class SupportScreen extends ConsumerStatefulWidget {
   const SupportScreen({super.key});
 
   @override
-  State<SupportScreen> createState() => _SupportScreenState();
+  ConsumerState<SupportScreen> createState() => _SupportScreenState();
 }
 
-class _SupportScreenState extends State<SupportScreen> {
+class _SupportScreenState extends ConsumerState<SupportScreen> {
   final _nameCtrl    = TextEditingController();
   final _emailCtrl   = TextEditingController();
   final _subjectCtrl = TextEditingController();
@@ -25,7 +27,6 @@ class _SupportScreenState extends State<SupportScreen> {
 
   bool    _loading = false;
   String? _error;
-  String? _success;
 
   @override
   void dispose() {
@@ -80,7 +81,7 @@ class _SupportScreenState extends State<SupportScreen> {
     final subject = _subjectCtrl.text.trim();
     final message = _messageCtrl.text.trim();
 
-    setState(() { _error = null; _success = null; });
+    setState(() { _error = null; });
 
     if (name.isEmpty) {
       setState(() => _error = 'Your name is required.'); return;
@@ -97,56 +98,114 @@ class _SupportScreenState extends State<SupportScreen> {
 
     setState(() => _loading = true);
 
-    final String adminEmail = AppConfig.supportAdminEmail;
-
-    // Build attachment note — same pattern as the website
-    final attachNote = _attachments.isNotEmpty
-        ? '\n\n[Attachments: ${_attachments.map((f) => '"${f.name}"').join(', ')} — please attach these files manually after your mail client opens]'
-        : '';
-
-    final body =
-        'From: $name <$email>\n\n$message$attachNote${AppConfig.supportEmailBodySuffix}';
-
-    final mailtoUri = Uri(
-      scheme: 'mailto',
-      path: adminEmail,
-      queryParameters: {
-        'subject': '${AppConfig.supportEmailSubjectPrefix}$subject',
-        'body': body,
-      },
-    );
-
-    setState(() => _loading = false);
-
     try {
-      final launched = await launchUrl(mailtoUri);
-      if (!launched) throw Exception('Could not launch mail client.');
+      await ApiClient.instance.post('/support/send', data: {
+        'fromName':    name,
+        'fromEmail':   email,
+        'subject':     subject,
+        'message':     message,
+        'attachments': _attachments.isNotEmpty
+            ? _attachments.map((f) => f.name).join(', ')
+            : '',
+      });
 
       if (mounted) {
-        setState(() {
-          _success = _attachments.isNotEmpty
-              ? AppConfig.supportSentWithAttachMsg
-              : AppConfig.supportSentMsg;
-          _nameCtrl.clear();
-          _emailCtrl.clear();
-          _subjectCtrl.clear();
-          _messageCtrl.clear();
-          _attachments.clear();
-        });
+        _nameCtrl.clear();
+        _emailCtrl.clear();
+        _subjectCtrl.clear();
+        _messageCtrl.clear();
+        setState(() { _attachments.clear(); });
+        _showSuccessDialog();
       }
-    } catch (_) {
-      await Clipboard.setData( ClipboardData(text: adminEmail));
-      if (mounted) {
-        setState(() =>
-            _error = '${AppConfig.supportNoMailApp}$adminEmail');
-      }
+    } catch (e) {
+      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _showSuccessDialog() {
+    final isLoggedIn = ref.read(authViewModelProvider).isLoggedIn;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64, height: 64,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEDFBF3),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(Icons.check_circle_rounded,
+                      color: Color(0xFF1D9E75), size: 36),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Message Sent!',
+                style: GoogleFonts.syne(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                AppConfig.supportSentMsg,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.dmSans(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    if (isLoggedIn) {
+                      context.go('/feed');
+                    } else {
+                      context.go('/login');
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Done',
+                    style: GoogleFonts.dmSans(
+                        fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
           children: [
@@ -183,10 +242,6 @@ class _SupportScreenState extends State<SupportScreen> {
 
                     if (_error != null) ...[
                       _FeedbackPill(msg: _error!, isError: true),
-                      const SizedBox(height: 14),
-                    ],
-                    if (_success != null) ...[
-                      _FeedbackPill(msg: _success!, isError: false),
                       const SizedBox(height: 14),
                     ],
 
