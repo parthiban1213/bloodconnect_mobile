@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../utils/app_extensions.dart';
 import '../../utils/app_config.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/app_widgets.dart';
-import '../../widgets/eligibility_card.dart';
 import '../../services/reminder_service.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -146,13 +146,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _DonationStatCard(count: user?.donationCount ?? 0),
               const SizedBox(height: 10),
 
-              // ── Availability toggle (fixed) ──────────────
-              _AvailabilityCard(
-                isAvailable: user?.isAvailable ?? false,
-                onToggle: (val) => authVm.updateAvailability(val),
-              ),
-              const SizedBox(height: 10),
-
               // ── Menu ─────────────────────────────────────
               Container(
                 decoration: BoxDecoration(
@@ -205,41 +198,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ]),
               ),
 
-              if (user?.lastDonationDate != null) ...[
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 15, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(children: [
-                    const Icon(Icons.favorite_outline_rounded,
-                        size: 16, color: AppColors.primary),
-                    const SizedBox(width: 10),
-                    Text(
-                      AppConfig.profileLastDonation,
-                      style: GoogleFonts.dmSans(
-                          fontSize: 12, color: AppColors.textSecondary),
-                    ),
-                    Text(
-                      user!.lastDonationDate!.formatted,
-                      style: GoogleFonts.dmSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ]),
-                ),
-              ],
-
               const SizedBox(height: 10),
 
-              // ── Eligibility card ─────────────────────────
-              EligibilityCard(lastDonationDate: user == null ? null : user!.lastDonationDate),
+              // ── Donation eligibility info ─────────────────
+              _DonationEligibilityCard(lastDonationDate: user?.lastDonationDate),
 
               const SizedBox(height: 10),
 
@@ -444,106 +406,133 @@ class _DonationStatCard extends StatelessWidget {
   }
 }
 
-// ── Availability toggle — fixed UI ───────────────────────────
-// Uses a custom toggle instead of Flutter's Switch to avoid the
-// "fully filled" look that confuses users. Shows a clear
-// ON/OFF label next to an outlined pill toggle.
-class _AvailabilityCard extends StatelessWidget {
-  final bool isAvailable;
-  final ValueChanged<bool> onToggle;
+// ── Donation Eligibility Card ─────────────────────────────────
+// Shown on the Profile screen. Displays next eligible date and
+// days remaining until the user can donate again (90-day cooldown).
+class _DonationEligibilityCard extends StatelessWidget {
+  final DateTime? lastDonationDate;
 
-  const _AvailabilityCard({
-    required this.isAvailable,
-    required this.onToggle,
-  });
+  const _DonationEligibilityCard({this.lastDonationDate});
 
   @override
   Widget build(BuildContext context) {
+    final nextDate = ReminderService.nextEligibleDate(lastDonationDate);
+    final daysLeft = ReminderService.daysUntilEligible(lastDonationDate);
+    final isEligible = ReminderService.isEligible(lastDonationDate);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.border),
       ),
-      child: Row(children: [
-        // Status dot
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: isAvailable ? AppColors.secondary : AppColors.closedAccent,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppConfig.profileAvailableLabel,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: isEligible ? AppColors.secondaryLight : AppColors.moderateBg,
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Center(
+                child: Icon(
+                  isEligible
+                      ? Icons.volunteer_activism_rounded
+                      : Icons.hourglass_top_rounded,
+                  size: 18,
+                  color: isEligible ? AppColors.secondary : AppColors.moderateAccent,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Donation Eligibility',
                 style: GoogleFonts.syne(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                isAvailable
-                    ? AppConfig.profileAvailableOn
-                    : AppConfig.profileAvailableOff,
-                style: GoogleFonts.dmSans(
-                    fontSize: 10, color: AppColors.textMuted),
-              ),
-            ],
-          ),
-        ),
-        // Custom pill toggle — clear ON/OFF, not a filled block
-        GestureDetector(
-          onTap: () => onToggle(!isAvailable),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 56,
-            height: 28,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: isAvailable
-                  ? AppColors.secondary.withOpacity(0.12)
-                  : AppColors.closedBg,
-              border: Border.all(
-                color: isAvailable
-                    ? AppColors.secondary
-                    : AppColors.closedBorder,
-                width: 1.5,
-              ),
             ),
-            child: Stack(
-              children: [
-                AnimatedAlign(
-                  duration: const Duration(milliseconds: 200),
-                  alignment: isAvailable
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Container(
-                    width: 22,
-                    height: 22,
-                    margin: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isAvailable
-                          ? AppColors.secondary
-                          : AppColors.closedAccent,
-                    ),
-                  ),
-                ),
-              ],
+          ]),
+          const SizedBox(height: 14),
+          const Divider(height: 1, color: AppColors.borderSoft),
+          const SizedBox(height: 14),
+          // Last donation date row
+          if (lastDonationDate != null) ...[
+            _EligibilityRow(
+              icon: Icons.favorite_outline_rounded,
+              label: AppConfig.profileLastDonation.replaceAll(': ', ''),
+              value: DateFormat('d MMM yyyy').format(lastDonationDate!),
             ),
+            const SizedBox(height: 10),
+          ],
+          // Next eligible date row
+          _EligibilityRow(
+            icon: Icons.event_available_rounded,
+            label: AppConfig.profileNextEligible,
+            value: isEligible
+                ? 'Now'
+                : (nextDate != null
+                    ? DateFormat('d MMM yyyy').format(nextDate)
+                    : '—'),
+            valueColor: isEligible ? AppColors.secondary : AppColors.textPrimary,
           ),
-        ),
-      ]),
+          const SizedBox(height: 10),
+          // Days remaining row
+          _EligibilityRow(
+            icon: Icons.timer_outlined,
+            label: AppConfig.profileDaysUntil,
+            value: isEligible ? 'Eligible now!' : '$daysLeft days',
+            valueColor: isEligible ? AppColors.secondary : AppColors.moderateAccent,
+          ),
+        ],
+      ),
     );
+  }
+}
+
+class _EligibilityRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  const _EligibilityRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Icon(icon, size: 14, color: AppColors.textMuted),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Text(
+          label,
+          style: GoogleFonts.dmSans(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ),
+      Text(
+        value,
+        style: GoogleFonts.dmSans(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: valueColor ?? AppColors.textPrimary,
+        ),
+      ),
+    ]);
   }
 }
 

@@ -120,7 +120,7 @@ class _EligibilityCardState extends State<EligibilityCard> {
               Text('0',
                 style: GoogleFonts.dmSans(
                     fontSize: 10, color: AppColors.textVeryMuted)),
-              Text('56 days',
+              Text('90 days',
                 style: GoogleFonts.dmSans(
                     fontSize: 10, color: AppColors.textVeryMuted)),
             ],

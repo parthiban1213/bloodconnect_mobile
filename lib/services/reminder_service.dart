@@ -54,8 +54,8 @@ class ReminderService {
 
     if (lastDonationDate == null) return;
 
-    // Blood donation: 56-day (8-week) minimum gap
-    final eligibleDate = lastDonationDate.add(const Duration(days: 56));
+    // Blood donation: 90-day (3-month) minimum gap
+    final eligibleDate = lastDonationDate.add(const Duration(days: 90));
     final reminderDate =
         eligibleDate.subtract(Duration(days: _daysBeforeReminder));
 
@@ -100,7 +100,7 @@ class ReminderService {
 
   // ── Eligibility helpers (pure logic, no async) ───────────────
 
-  static const int donationGapDays = 56;
+  static const int donationGapDays = 90;
 
   /// Returns the date the donor is next eligible to donate.
   static DateTime? nextEligibleDate(DateTime? lastDonationDate) {

@@ -205,6 +205,11 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
         donatingIds:  Set<String>.from(state.donatingIds)..remove(id),
         donatedIds:   donated,
       );
+      // Persist lastDonationDate to server and update local state.
+      // Awaited so the server has the value before refreshProfile() re-fetches.
+      final donationDate = DateTime.now();
+      await _ref.read(authViewModelProvider.notifier).persistLastDonationDate(donationDate);
+      // Now refresh from server — it should now return the saved lastDonationDate.
       _ref.read(authViewModelProvider.notifier).refreshProfile();
       load();
       return updated;

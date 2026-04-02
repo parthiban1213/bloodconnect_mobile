@@ -223,14 +223,15 @@ class _RequirementDetailScreenState
                                   Row(
                                     children: [
                                       const Icon(Icons.location_on_outlined,
-                                          size: 12, color: AppColors.textMuted),
+                                          size: 12, color: AppColors.primary),
                                       const SizedBox(width: 3),
                                       Flexible(
                                         child: Text(
-                                          req.location,
+                                          req.location.toUpperCase(),
                                           style: GoogleFonts.dmSans(
                                             fontSize: 11,
-                                            color: AppColors.textSecondary,
+                                            color: AppColors.primary,
+                                              fontWeight: FontWeight.bold,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -480,6 +481,10 @@ class _RequirementDetailScreenState
     final hasDonated = vmState.hasDonated(_requirement?.id ?? '') ||
         (_requirement?.hasDonatedBy(username) ?? false);
 
+    // Eligibility: user is ineligible if within 90-day cooldown after donation
+    final lastDonation = authState.user?.lastDonationDate;
+    final isInCooldown = !ReminderService.isEligible(lastDonation);
+
     // Show "Already Donated" badge if user already donated to this request
     if (hasDonated) {
       return Container(
@@ -510,6 +515,45 @@ class _RequirementDetailScreenState
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF085041),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Show "Not Eligible" banner only when blood type matches but user is in cooldown
+    if (canDonate && isInCooldown) {
+      return Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: AppColors.border)),
+        ),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+        child: SafeArea(
+          top: false,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: AppColors.moderateBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.moderateBorder),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.block_rounded,
+                    size: 16, color: AppColors.moderateAccent),
+                const SizedBox(width: 8),
+                Text(
+                  AppConfig.cardNotEligibleBtn,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.moderateAccent,
                   ),
                 ),
               ],

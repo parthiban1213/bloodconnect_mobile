@@ -7,6 +7,7 @@ import '../../utils/app_extensions.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_config.dart';
 import '../../viewmodels/requirements_viewmodel.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 import '../../services/reminder_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -70,10 +71,14 @@ class RequirementCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state           = ref.watch(requirementsViewModelProvider);
+    final authState       = ref.watch(authViewModelProvider);
     final isDonating      = state.isDonating(requirement.id);
     final hasDonated      = state.hasDonated(requirement.id);
     final canDonate       = state.userBloodType.isNotEmpty &&
                             state.userBloodType == requirement.bloodType;
+    // Eligibility: user is ineligible if within 90-day cooldown after donation
+    final lastDonation    = authState.user?.lastDonationDate;
+    final isInCooldown    = !ReminderService.isEligible(lastDonation);
     // Fix #1: show "Already Donated" when user already donated to this multi-unit request
     final showAlreadyDonated = hasDonated && !_isClosed;
 
@@ -123,13 +128,13 @@ class RequirementCard extends ConsumerWidget {
                           Row(
                             children: [
                               const Icon(Icons.location_on_outlined,
-                                  size: 11, color: AppColors.textMuted),
+                                  size: 11, color: AppColors.primary),
                               const SizedBox(width: 3),
                               Flexible(
                                 child: Text(
-                                  requirement.location,
+                                  requirement.location.toUpperCase(),
                                   style: GoogleFonts.dmSans(
-                                      fontSize: 11, color: AppColors.textMuted),
+                                      fontSize: 11, color: AppColors.primary,fontWeight: FontWeight.bold),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -141,7 +146,7 @@ class RequirementCard extends ConsumerWidget {
                         Text(
                           '${requirement.remainingUnits} unit${requirement.remainingUnits != 1 ? 's' : ''} still needed',
                           style: GoogleFonts.dmSans(
-                              fontSize: 11, color: AppColors.textSecondary),
+                              fontSize: 11, color: AppColors.primary),
                         ),
                         if (requirement.patientName.isNotEmpty)
                           Text(
@@ -204,6 +209,33 @@ class RequirementCard extends ConsumerWidget {
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF085041),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                // "Not Eligible" only when blood type matches but user is in cooldown
+                else if (canDonate && isInCooldown)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    decoration: BoxDecoration(
+                      color: AppColors.moderateBg,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.moderateBorder),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.block_rounded,
+                            size: 14, color: AppColors.moderateAccent),
+                        const SizedBox(width: 6),
+                        Text(
+                          AppConfig.cardNotEligibleBtn,
+                          style: GoogleFonts.syne(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.moderateAccent,
                           ),
                         ),
                       ],

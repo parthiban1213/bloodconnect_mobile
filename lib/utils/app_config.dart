@@ -88,6 +88,7 @@ class AppConfig {
   ];
 
   // ── Requirement card (feed) ──────────────────────────────────
+  static const String cardNotEligibleBtn   = 'Not Eligible';
   static const String cardDonateBtn       = "I'll Donate";
   static const String cardCantHelpBtn     = "Can't help";
   static const String cardNotMyTypeBtn    = 'Not my type';
@@ -213,6 +214,8 @@ class AppConfig {
   static const String profileChangePassword  = 'Change Password';
   static const String profileAccountRole     = 'Account Role';
   static const String profileLastDonation    = 'Last donation: ';
+  static const String profileNextEligible    = 'Next Eligible Date';
+  static const String profileDaysUntil       = 'Days until next donation';
   static const String profileSignOut         = 'Sign Out';
   static const String profileSignOutTitle    = 'Sign out';
   static const String profileSignOutBody     = 'Are you sure you want to sign out?';

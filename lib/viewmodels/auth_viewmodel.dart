@@ -227,6 +227,27 @@ class AuthViewModel extends StateNotifier<AuthState> {
 
   void clearError() => state = state.copyWith(clearError: true);
 
+  /// Persists [donationDate] to the server via PUT /auth/profile so it
+  /// survives app restarts and re-logins. Also updates local state immediately.
+  /// Awaited before refreshProfile() in the donate flow so the server has the
+  /// value before we re-fetch the profile.
+  Future<void> persistLastDonationDate(DateTime donationDate) async {
+    // Update local state immediately (replaces the old recordDonationNow call)
+    if (state.user != null) {
+      state = state.copyWith(
+        user: state.user!.copyWith(lastDonationDate: donationDate),
+      );
+    }
+    try {
+      await _authService.updateProfile({
+        'lastDonationDate': donationDate.toIso8601String(),
+      });
+    } catch (_) {
+      // Non-critical — local optimistic value is already set;
+      // the profile screen will still show the correct date this session.
+    }
+  }
+
   /// Re-fetches profile from server — called on ProfileScreen mount and after donate.
   /// Sets isLoading so the screen can show a shimmer on first load.
   Future<void> refreshProfile() async {
@@ -237,9 +258,17 @@ class AuthViewModel extends StateNotifier<AuthState> {
     try {
       final user  = await _authService.getProfile();
       final count = await _fetchDonationCount();
+      // Preserve the optimistically-set lastDonationDate if the server returns
+      // null (e.g. the write hasn't propagated yet). Once the server returns a
+      // real date, that takes over naturally.
+      final resolvedLastDonation =
+          user.lastDonationDate ?? state.user?.lastDonationDate;
       state = state.copyWith(
         isLoading: false,
-        user: user.copyWith(donationCount: count),
+        user: user.copyWith(
+          donationCount: count,
+          lastDonationDate: resolvedLastDonation,
+        ),
       );
     } on ApiException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
