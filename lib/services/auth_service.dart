@@ -1,4 +1,5 @@
 import '../models/user_model.dart';
+import '../utils/api_exception.dart';
 import 'api_client.dart';
 
 class AuthService {
@@ -17,28 +18,107 @@ class AuthService {
     return (token: token, user: user);
   }
 
-  // ── OTP: send ───────────────────────────────────────────────
-  /// Returns true if the OTP was sent successfully.
+  // ── OTP: send (login — requires existing account) ───────────
   Future<bool> sendOtp(String mobile) async {
     final res = await _client.post('/auth/otp/send', data: {'mobile': mobile});
-
-    // DEBUG: print the full response so you can see what your backend returns.
-    // Remove this line once OTP flow is working correctly.
     print('[AuthService] sendOtp response: $res');
-
-    // Accept the OTP as sent if ANY of these common success indicators are present.
-    // Adjust the condition below to match your backend's actual response shape.
-    final isExistingUser = res['isExistingUser'] == true;
+    final isExistingUser  = res['isExistingUser']  == true;
     final isExistingDonor = res['isExistingDonor'] == true;
-    final success = res['success'] == true;
-    final sent = res['sent'] == true;
-    final otpSent = res['otpSent'] == true;
-
+    final success         = res['success']          == true;
+    final sent            = res['sent']             == true;
+    final otpSent         = res['otpSent']          == true;
     if (!isExistingUser && !isExistingDonor && !success && !sent && !otpSent) {
       throw OtpNoAccountException();
     }
-
     return true;
+  }
+
+  // ── OTP: send (register — server blocks if mobile already exists) ─────
+  Future<void> sendOtpForRegister(String mobile) async {
+    // The server checks for existing users before sending the OTP.
+    // If the mobile is already registered it returns success:false / HTTP 409
+    // which ApiClient maps to an ApiException — caught in the register screen
+    // and shown as a MobileAlreadyExistsException.
+    try {
+      final res = await _client.post('/auth/otp/send', data: {
+        'mobile':  mobile,
+        'purpose': 'register',
+      });
+      print('[AuthService] sendOtpForRegister response: $res');
+    } on ApiException catch (e) {
+      // HTTP 409 = mobile already registered
+      if (e.statusCode == 409) throw MobileAlreadyExistsException();
+      rethrow;
+    }
+  }
+
+  // ── OTP: pre-verify for register (no-op if server validates on submit) ──
+  Future<void> verifyRegisterOtp({
+    required String mobile,
+    required String otp,
+  }) async {
+    // HSBlood server validates OTP inside /auth/otp/register.
+    // Add a call here if you add a dedicated pre-verify endpoint later.
+  }
+
+  // ── OTP: register new HS Employee (with custom username) ────
+  Future<({String token, UserModel user})> registerDirect({
+    required String mobile,
+    required String otp,
+    required String username,
+    required String firstName,
+    required String lastName,
+    required String bloodType,
+    required String email,
+    String? address,
+    DateTime? lastDonationDate,
+  }) async {
+    final res = await _client.post('/auth/register-direct', data: {
+      'mobile':    mobile,
+      'otp':       otp,
+      'username':  username,
+      'firstName': firstName,
+      'lastName':  lastName,
+      'bloodType': bloodType,
+      'email':     email,
+      if (address != null && address.isNotEmpty) 'address': address,
+      if (lastDonationDate != null)
+        'lastDonationDate': lastDonationDate.toIso8601String(),
+    });
+    final token = res['token'] as String;
+    final user  = UserModel.fromJson(res['user'] as Map<String, dynamic>);
+    await _client.setToken(token);
+    return (token: token, user: user);
+  }
+
+  // ── OTP: register new HS Employee ───────────────────────────
+  Future<({String token, UserModel user})> registerWithOtp({
+    required String mobile,
+    required String otp,
+    required String firstName,
+    required String lastName,
+    required String bloodType,
+    String? email,
+    String? address,
+    required bool isAvailable,
+    DateTime? lastDonationDate,
+  }) async {
+    final res = await _client.post('/auth/otp/register', data: {
+      'mobile':    mobile,
+      'otp':       otp,
+      'firstName': firstName,
+      'lastName':  lastName,
+      'bloodType': bloodType,
+      if (email   != null && email.isNotEmpty)   'email':   email,
+      if (address != null && address.isNotEmpty) 'address': address,
+      'isAvailable': isAvailable,
+      if (lastDonationDate != null)
+        'lastDonationDate': lastDonationDate.toIso8601String(),
+    });
+    final token = res['token'] as String;
+    final user  = UserModel.fromJson(res['user'] as Map<String, dynamic>);
+    await _client.setToken(token);
+    return (token: token, user: user);
   }
 
   // ── OTP: verify & login ─────────────────────────────────────
@@ -46,10 +126,10 @@ class AuthService {
       String mobile, String otp) async {
     final res = await _client.post('/auth/otp/login', data: {
       'mobile': mobile,
-      'otp': otp,
+      'otp':    otp,
     });
     final token = res['token'] as String;
-    final user = UserModel.fromJson(res['user'] as Map<String, dynamic>);
+    final user  = UserModel.fromJson(res['user'] as Map<String, dynamic>);
     await _client.setToken(token);
     return (token: token, user: user);
   }
@@ -71,15 +151,13 @@ class AuthService {
   }
 
   Future<void> updateAvailability(bool isAvailable) async {
-    await _client
-        .post('/auth/availability', data: {'isAvailable': isAvailable});
+    await _client.post('/auth/availability', data: {'isAvailable': isAvailable});
   }
 
-  Future<void> changePassword(
-      String currentPassword, String newPassword) async {
+  Future<void> changePassword(String currentPassword, String newPassword) async {
     await _client.post('/auth/change-password', data: {
       'currentPassword': currentPassword,
-      'newPassword': newPassword,
+      'newPassword':     newPassword,
     });
   }
 
@@ -89,20 +167,15 @@ class AuthService {
     required String newPassword,
   }) async {
     await _client.post('/auth/forgot-password', data: {
-      'username': username.trim(),
-      'email': email.trim(),
+      'username':    username.trim(),
+      'email':       email.trim(),
       'newPassword': newPassword,
     });
   }
 
-  Future<void> logout() async {
-    await _client.clearToken();
-  }
+  Future<void> logout() async => _client.clearToken();
 
-  Future<bool> isLoggedIn() async {
-    final token = await _client.getToken();
-    return token != null;
-  }
+  Future<bool> isLoggedIn() async => (await _client.getToken()) != null;
 }
 
 /// Thrown when the mobile number has no registered account.

@@ -277,6 +277,20 @@ class AuthViewModel extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false);
     }
   }
+  // ── Called after successful OTP registration ────────────────
+  /// Hydrates the auth state directly from a registration result
+  /// (token already stored by AuthService.registerWithOtp).
+  Future<void> loginFromRegistration(String token, UserModel user) async {
+    final count = await _fetchDonationCount();
+    state = state.copyWith(
+      isLoading:      false,
+      isLoggedIn:     true,
+      user:           user.copyWith(donationCount: count),
+      sessionExpired: false,
+      clearError:     true,
+    );
+  }
+
 }
 
 final authViewModelProvider =

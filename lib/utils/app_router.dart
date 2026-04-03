@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../views/auth/login_screen.dart';
+import '../views/auth/register_screen.dart';
 import '../views/feed/feed_screen.dart';
 import '../views/detail/requirement_detail_screen.dart';
 import '../views/detail/accepted_screen.dart';
@@ -51,8 +52,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       final onAuthPage = state.matchedLocation == '/login';
 
       // /support is accessible without login (pre-auth support)
-      final onSupport  = state.matchedLocation == '/support';
-      if (onSupport) return null;
+      final onSupport   = state.matchedLocation == '/support';
+      final onRegister  = state.matchedLocation == '/register';
+      if (onSupport || onRegister) return null;
 
       if (!isLoggedIn && !onAuthPage) return '/login';
       if (isLoggedIn && onAuthPage) return '/feed';
@@ -64,6 +66,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/login',
         name: 'login',
         builder: (_, __) => const LoginScreen(),
+      ),
+
+      // ── Register — accessible pre-login ──────────────────
+      GoRoute(
+        path: '/register',
+        name: 'register',
+        builder: (_, __) => const RegisterScreen(),
       ),
 
       // ── Support — accessible pre-login and post-login ─────

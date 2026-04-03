@@ -191,6 +191,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           isSending: auth.otpSending,
           onSend: _sendOtp,
           onToPassword: () => _go(_LoginView.password, forward: true),
+          onRegister: () => context.push('/register'),
           onClearError: () =>
               ref.read(authViewModelProvider.notifier).clearError(),
         ),
@@ -324,14 +325,14 @@ class _OtpMobileView extends StatelessWidget {
   final TextEditingController ctrl;
   final String? mobileError, apiError;
   final bool isSending, sessionExpired;
-  final VoidCallback onSend, onToPassword, onClearError;
+  final VoidCallback onSend, onToPassword, onRegister, onClearError;
 
   const _OtpMobileView({
     super.key, required this.ctrl,
     this.mobileError, this.apiError,
     required this.isSending, required this.sessionExpired,
     required this.onSend, required this.onToPassword,
-    required this.onClearError,
+    required this.onRegister, required this.onClearError,
   });
 
   @override
@@ -372,6 +373,10 @@ class _OtpMobileView extends StatelessWidget {
             const SizedBox(height: 12),
             _SecondaryButton(
                 label: AppConfig.otpSwitchBtn, onTap: onToPassword),
+            const SizedBox(height: 10),
+            _OrDivider(),
+            const SizedBox(height: 10),
+            _RegisterButton(onTap: onRegister),
             const SizedBox(height: 14),
             _HintCard(
                 title: AppConfig.otpHintTitle,
@@ -999,6 +1004,41 @@ class _Footer extends StatelessWidget {
     child: Text(AppConfig.footerText,
       style: GoogleFonts.dmSans(
           fontSize: 10, color: AppColors.textVeryMuted)));
+}
+
+class _RegisterButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _RegisterButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: Material(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.person_add_alt_1_outlined,
+                    size: 16, color: AppColors.primary),
+                const SizedBox(width: 8),
+                Text('Register',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13, fontWeight: FontWeight.w600,
+                    color: AppColors.primary)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _SupportLink extends StatelessWidget {

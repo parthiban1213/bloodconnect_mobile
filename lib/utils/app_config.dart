@@ -26,8 +26,9 @@ class AppConfig {
   static const String otpSubtext       = 'Sign in with your registered mobile\nnumber to see blood requests near you.';
   static const String otpContinueBtn   = 'Continue with OTP →';
   static const String otpSwitchBtn     = 'Sign in with Username & Password';
-  static const String otpHintTitle     = 'New here?';
-  static const String otpHintBody      = 'Contact your $orgName administrator to register as a donor. All accounts are managed centrally.';
+  static const String otpRegisterBtn   = 'Register';
+  static const String otpHintTitle     = 'Need any help?';
+  static const String otpHintBody      = 'Contact your $orgName administrator. All accounts are managed centrally.';
   static const String otpCountryFlag   = '🇮🇳';
   static const String otpCountryCode   = '+91';
   static const String otpPlaceholder   = '98765 43210';
@@ -69,6 +70,65 @@ class AppConfig {
   // ── Session expired ──────────────────────────────────────────
   static const String sessionExpiredTitle = 'Session expired';
   static const String sessionExpiredBody  = 'Please sign in again to continue.';
+
+  // ── Register screen ──────────────────────────────────────────
+  // Step 1 — Mobile entry
+  static const String regBrandSub          = 'Donor Registry';
+  static const String regHeading           = 'Create your account';
+  static const String regSubtext           = 'Register as an $orgName donor';
+  static const String regHintBody          = 'Enter your mobile number. We\'ll send you a one-time passcode to verify your identity.';
+  static const String regSendOtpBtn        = 'Send OTP';
+  static const String regSignInDivider     = 'Already have an account?';
+  static const String regSignInBtn         = 'Sign in';
+
+  // Step 2 — OTP verification
+  static const String regOtpIconTitle      = 'Check your SMS';
+  static const String regOtpSentPrefix     = 'Code sent to +91 ';
+  static const String regOtpChangeNumber   = 'Change number';
+  static const String regOtpHeading        = 'Enter verification code';
+  static const String regOtpSubtext        = 'Enter the 6-digit OTP sent to your mobile.';
+  static const String regVerifyBtn         = 'Verify OTP';
+  static const String regResendBtn         = 'Resend OTP';
+  static const String regResendTimerPrefix = 'Resend code in ';
+  static const String regResendTimerSuffix = 's';
+
+  // Step 3 — Details form
+  static const String regVerifiedSuffix    = ' verified';
+  static const String regDetailsHeading    = 'Complete your profile';
+  static const String regDetailsSubtitle   = 'New $orgName registration';
+  static const String regSectionPersonal   = 'Personal Information';
+  static const String regSectionDonor      = '🩸 Donor Information';
+  static const String regSectionContact    = 'Contact Details';
+  static const String regSectionOptional   = 'Additional Details (optional)';
+  static const String regFirstNameLabel    = 'First Name *';
+  static const String regLastNameLabel     = 'Last Name *';
+  static const String regFirstNameHint     = 'e.g. Arjun';
+  static const String regLastNameHint      = 'e.g. Kumar';
+  static const String regBloodTypeLabel    = 'Blood Type *';
+  static const String regBloodTypeHint     = 'Select blood type';
+  static const String regUsernameLabel     = 'Username *';
+  static const String regUsernameHint      = 'e.g. arjun_kumar';
+  static const String regEmailLabel        = 'Email Address *';
+  static const String regEmailHint         = 'you@example.com';
+  static const String regAddressLabel      = 'Address (optional)';
+  static const String regAddressHint       = 'Street, City, State';
+  static const String regLastDonationLabel = 'Last Donation Date';
+  static const String regLastDonationHint  = 'Select date';
+  static const String regAvailabilityLabel = 'Availability Status';
+  static const String regAvailableOption   = '✅  Available';
+  static const String regUnavailableOption = '❌  Not Available';
+  static const String regSubmitBtn         = 'Complete Registration ✨';
+  static const String regBackBtn           = 'Back';
+
+  // Validation messages
+  static const String regErrFirstLast      = 'First name and last name are required.';
+  static const String regErrBloodType      = 'Please select your blood type.';
+  static const String regErrUsername       = 'Username must be at least 3 characters.';
+  static const String regErrEmail          = 'Please enter a valid email address.';
+  static const String regErrEmailRequired  = 'Email address is required.';
+  static const String regErrOtpSend        = 'Failed to send OTP. Please try again.';
+  static const String regErrMobileEmpty    = 'Please enter your mobile number.';
+  static const String regErrMobileInvalid  = 'Enter a valid 10-digit Indian mobile number.';
 
   // ── Feed screen ──────────────────────────────────────────────
   static const String feedSearchHint   = 'Search hospital or blood type…';
@@ -277,8 +337,6 @@ class AppConfig {
   // ── Support screen ───────────────────────────────────────────
   static const String supportScreenTitle       = 'Contact Support';
   static const String supportAdminEmail        = 'hoffenmotoe2@gmail.com';
-  // ── Support email is sent via Firebase Cloud Function (sendSupportEmail) ──
-  // No credentials needed here — the function reads them from Firebase config.
   static const String supportInfoTitle         = "We're here to help";
   static const String supportInfoBody          =
       "Having trouble logging in or need help? Send a message to our support team and we'll get back to you.";
@@ -297,8 +355,6 @@ class AppConfig {
   static const String supportAttachTypes       = 'Images, PDF, DOC, TXT';
   static const String supportSendBtn           = 'Send Message';
   static const String supportSentMsg           = 'Your message has been sent successfully! We\'ll get back to you soon.';
-  static const String supportSentWithAttachMsg_UNUSED =
-      'Mail client opened! Please attach the listed files and send the email.';
   static const String supportMaxFilesError     = 'You can attach a maximum of 5 files.';
   static const String supportPickerError       = 'Could not open file picker. Please try again.';
   static const String supportNoMailApp         = 'No mail app found. Admin email copied to clipboard: ';
