@@ -33,7 +33,11 @@ class ApiClient {
       },
       onError: (error, handler) async {
         if (error.response?.statusCode == 401) {
-          await _storage.delete(key: AppConstants.tokenKey);
+          // Do NOT delete the token here. Throwing UnauthorizedException lets
+          // the viewmodel decide whether this is a real session expiry
+          // (e.g. during _checkAuth) or a transient failure during a background
+          // call. Deleting here caused tokens to be wiped on any 401, including
+          // ones that fire mid-login before the token is fully propagated.
           handler.reject(DioException(
             requestOptions: error.requestOptions,
             error: UnauthorizedException(),
@@ -112,7 +116,17 @@ class ApiClient {
         e.type == DioExceptionType.connectionError) {
       return NetworkException();
     }
-    if (e.response?.statusCode == 401) return UnauthorizedException();
+    // For 401s, try to use the server's error message first.
+    // Only fall back to UnauthorizedException (session expired) when there
+    // is no server-provided message — i.e. a true expired-token rejection.
+    if (e.response?.statusCode == 401) {
+      final serverMsg = (e.response?.data as Map<String, dynamic>?)?['error']
+          ?.toString();
+      if (serverMsg != null && serverMsg.isNotEmpty) {
+        return ApiException(serverMsg, statusCode: 401);
+      }
+      return UnauthorizedException();
+    }
     final msg = (e.response?.data as Map<String, dynamic>?)?['error']
             ?.toString() ??
         e.message ??

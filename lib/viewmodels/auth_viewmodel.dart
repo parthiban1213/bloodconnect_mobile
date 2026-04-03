@@ -73,8 +73,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
     try {
       final isLoggedIn = await _authService.isLoggedIn();
       if (isLoggedIn) {
-        final user = await _authService.getProfile(); // getProfile returns firstName+lastName+bloodType
-        // Compute donationCount from /my-donations on startup
+        final user = await _authService.getProfile();
         final count = await _fetchDonationCount();
         state = state.copyWith(
           isLoading: false,
@@ -85,8 +84,27 @@ class AuthViewModel extends StateNotifier<AuthState> {
       } else {
         state = state.copyWith(isLoading: false, isCheckingAuth: false, isLoggedIn: false);
       }
-    } catch (_) {
+    } on UnauthorizedException {
+      // Token is present but server rejected it — clear it and go to login
+      await _authService.logout();
       state = state.copyWith(isLoading: false, isCheckingAuth: false, isLoggedIn: false);
+    } on NetworkException {
+      // No connectivity — keep the token, don't log the user out
+      // They'll retry naturally when the network is available
+      final hasToken = await _authService.isLoggedIn();
+      state = state.copyWith(
+        isLoading: false,
+        isCheckingAuth: false,
+        isLoggedIn: hasToken,
+      );
+    } catch (_) {
+      // Unknown error — keep token if present, avoid false logouts
+      final hasToken = await _authService.isLoggedIn();
+      state = state.copyWith(
+        isLoading: false,
+        isCheckingAuth: false,
+        isLoggedIn: hasToken,
+      );
     }
   }
 
@@ -112,11 +130,23 @@ class AuthViewModel extends StateNotifier<AuthState> {
         sessionExpired: false,
       );
       return true;
+    } on UnauthorizedException {
+      // 401 with no server body — treat as invalid credentials, not session expiry
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Invalid username or password.',
+      );
+      return false;
     } on ApiException catch (e) {
-      state = state.copyWith(isLoading: false, error: e.message);
+      // Use server message but normalise any session-expiry wording that leaks
+      // through (e.g. if the server returns "Session expired" on a login 401)
+      final msg = (e.statusCode == 401)
+          ? 'Invalid username or password.'
+          : e.message;
+      state = state.copyWith(isLoading: false, error: msg);
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Login failed: ${e.toString()}');
+      state = state.copyWith(isLoading: false, error: 'Login failed. Please try again.');
       return false;
     }
   }
@@ -279,13 +309,14 @@ class AuthViewModel extends StateNotifier<AuthState> {
   }
   // ── Called after successful OTP registration ────────────────
   /// Hydrates the auth state directly from a registration result
-  /// (token already stored by AuthService.registerWithOtp).
+  /// (token already stored by AuthService.registerDirect).
+  /// A freshly registered user always has 0 donations — skip the network
+  /// call that could fail and corrupt the session.
   Future<void> loginFromRegistration(String token, UserModel user) async {
-    final count = await _fetchDonationCount();
     state = state.copyWith(
       isLoading:      false,
       isLoggedIn:     true,
-      user:           user.copyWith(donationCount: count),
+      user:           user.copyWith(donationCount: 0),
       sessionExpired: false,
       clearError:     true,
     );
