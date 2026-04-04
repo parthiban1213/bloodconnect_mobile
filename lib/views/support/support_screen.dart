@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/app_extensions.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
@@ -76,6 +77,7 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
 
   // ── Send ────────────────────────────────────────────────────
   Future<void> _send() async {
+    context.dismissKeyboard();
     final name    = _nameCtrl.text.trim();
     final email   = _emailCtrl.text.trim();
     final subject = _subjectCtrl.text.trim();

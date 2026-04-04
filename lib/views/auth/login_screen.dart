@@ -8,6 +8,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_config.dart';
 import '../../widgets/blood_drop_widget.dart';
+import '../../utils/app_extensions.dart';
 
 enum _LoginView { otp, otpCode, password, forgotPassword }
 
@@ -89,6 +90,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       setState(() => _mobileError = 'Enter a valid 10-digit Indian mobile number.'); return;
     }
     setState(() => _mobileError = null);
+    context.dismissKeyboard();
     final ok = await ref.read(authViewModelProvider.notifier).sendOtp(m);
     if (ok && mounted) {
       for (final c in _otpCtrls) c.clear();
@@ -101,6 +103,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _verifyOtp() async {
     final code = _otpCtrls.map((c) => c.text).join();
+    context.dismissKeyboard();
     if (code.length < 6) return;
     final ok = await ref.read(authViewModelProvider.notifier).verifyOtp(code);
     if (ok && mounted) context.go('/feed');
@@ -108,6 +111,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _resendOtp() async {
     for (final c in _otpCtrls) c.clear();
+    context.dismissKeyboard();
     ref.read(authViewModelProvider.notifier).clearError();
     await ref.read(authViewModelProvider.notifier)
         .sendOtp(ref.read(authViewModelProvider).otpMobile);
@@ -135,6 +139,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final u = _userCtrl.text.trim();
     final p = _pwdCtrl.text;
     if (u.isEmpty || p.isEmpty) return;
+    context.dismissKeyboard();
     final ok = await ref.read(authViewModelProvider.notifier).login(u, p);
     if (ok && mounted) context.go('/feed');
   }
@@ -156,6 +161,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
     if (n != c) { setState(() => _fpError = 'Passwords do not match.'); return; }
     setState(() => _fpLoading = true);
+    context.dismissKeyboard();
     try {
       await ref.read(authViewModelProvider.notifier)
           .forgotPassword(username: u, email: e, newPassword: n, confirmPassword: c);
@@ -177,13 +183,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final auth = ref.watch(authViewModelProvider);
     final fwd  = _forward;
 
-    // NOTE: Do NOT guard on auth.isCheckingAuth here.
-    // The SplashScreen overlay (in main.dart) already covers the UI while
-    // _checkAuth runs. Returning a blank Scaffold here meant the login form
-    // was never built — so when isCheckingAuth finished and the splash faded
-    // away, the screen stayed white and unresponsive until a lifecycle event
-    // (e.g. minimize/maximize) forced a rebuild. The fix: always build the
-    // login form; the splash hides it during startup automatically.
+    if (auth.isCheckingAuth) {
+      return const Scaffold(backgroundColor: Colors.white, body: SizedBox.shrink());
+    }
 
     Widget view = switch (_view) {
       _LoginView.otp => _OtpMobileView(

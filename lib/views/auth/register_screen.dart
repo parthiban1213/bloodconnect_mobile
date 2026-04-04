@@ -9,6 +9,7 @@ import '../../services/auth_service.dart';
 import '../../utils/api_exception.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_config.dart';
+import '../../utils/app_extensions.dart';
 import '../../utils/prefs_service.dart';
 import '../../widgets/blood_drop_widget.dart';
 
@@ -98,6 +99,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       return;
     }
     setState(() { _mobileError = null; _otpSending = true; _error = null; });
+    context.dismissKeyboard();;
     try {
       await AuthService().sendOtpForRegister(m);
       if (!mounted) return;
@@ -122,6 +124,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   // ── Verify OTP ────────────────────────────────────────────
   Future<void> _verifyOtp() async {
     final code = _otpCtrls.map((c) => c.text).join();
+    context.dismissKeyboard();
     if (code.length < 6) return;
     setState(() { _otpVerifying = true; _error = null; });
     try {
@@ -157,6 +160,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 
   Future<void> _resendOtp() async {
     for (final c in _otpCtrls) c.clear();
+    context.dismissKeyboard();
     setState(() => _error = null);
     await _sendOtp();
   }
@@ -190,6 +194,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     }
 
     setState(() { _registering = true; _error = null; });
+    context.dismissKeyboard();
     try {
       final mobile = _mobileCtrl.text.trim();
       final otp    = _otpCtrls.map((c) => c.text).join();

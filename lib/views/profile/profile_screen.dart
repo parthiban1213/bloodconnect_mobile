@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/app_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -777,6 +778,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    context.dismissKeyboard();
     final ok = await widget.ref
         .read(authViewModelProvider.notifier)
         .changePassword(_newCtrl.text, _confirmCtrl.text);

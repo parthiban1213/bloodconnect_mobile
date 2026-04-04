@@ -107,3 +107,14 @@ class StatusHelper {
     }
   }
 }
+
+extension BuildContextExtensions on BuildContext {
+  /// Dismisses the soft keyboard if it is currently open.
+  /// Call this at the start of every user-initiated button action
+  /// (form submit, login, OTP send, save, etc.) so the keyboard
+  /// is gone before any loading state or navigation occurs.
+  void dismissKeyboard() {
+    final focus = FocusScope.of(this);
+    if (!focus.hasPrimaryFocus) focus.unfocus();
+  }
+}
