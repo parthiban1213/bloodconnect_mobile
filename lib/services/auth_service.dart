@@ -35,10 +35,6 @@ class AuthService {
 
   // ── OTP: send (register — server blocks if mobile already exists) ─────
   Future<void> sendOtpForRegister(String mobile) async {
-    // The server checks for existing users before sending the OTP.
-    // If the mobile is already registered it returns success:false / HTTP 409
-    // which ApiClient maps to an ApiException — caught in the register screen
-    // and shown as a MobileAlreadyExistsException.
     try {
       final res = await _client.post('/auth/otp/send', data: {
         'mobile':  mobile,
@@ -46,20 +42,16 @@ class AuthService {
       });
       print('[AuthService] sendOtpForRegister response: $res');
     } on ApiException catch (e) {
-      // HTTP 409 = mobile already registered
       if (e.statusCode == 409) throw MobileAlreadyExistsException();
       rethrow;
     }
   }
 
-  // ── OTP: pre-verify for register (no-op if server validates on submit) ──
+  // ── OTP: pre-verify for register ────────────────────────────
   Future<void> verifyRegisterOtp({
     required String mobile,
     required String otp,
-  }) async {
-    // HSBlood server validates OTP inside /auth/otp/register.
-    // Add a call here if you add a dedicated pre-verify endpoint later.
-  }
+  }) async {}
 
   // ── OTP: register new HS Employee (with custom username) ────
   Future<({String token, UserModel user})> registerDirect({
@@ -154,10 +146,10 @@ class AuthService {
     await _client.post('/auth/availability', data: {'isAvailable': isAvailable});
   }
 
-  Future<void> changePassword(String currentPassword, String newPassword) async {
+  Future<void> changePassword(String newPassword, String confirmPassword) async {
     await _client.post('/auth/change-password', data: {
-      'currentPassword': currentPassword,
       'newPassword':     newPassword,
+      'confirmPassword': confirmPassword,
     });
   }
 
@@ -165,12 +157,22 @@ class AuthService {
     required String username,
     required String email,
     required String newPassword,
+    required String confirmPassword,
   }) async {
     await _client.post('/auth/forgot-password', data: {
-      'username':    username.trim(),
-      'email':       email.trim(),
+      'username':     username.trim(),
+      'email':        email.trim(),
       'newPassword': newPassword,
+      'confirmPassword': confirmPassword,
     });
+  }
+
+  // ── Delete own account ──────────────────────────────────────
+  // Mirrors the web: DELETE /auth/account
+  // Server removes the user, their linked donor record, and all notifications.
+  // Admins are blocked server-side (403) so no extra guard needed here.
+  Future<void> deleteAccount() async {
+    await _client.delete('/auth/account');
   }
 
   Future<void> logout() async => _client.clearToken();

@@ -64,7 +64,11 @@ class AuthViewModel extends StateNotifier<AuthState> {
   final AuthService _authService = AuthService();
   final RequirementsService _reqService = RequirementsService();
 
-  AuthViewModel() : super(const AuthState()) {
+  // Start with isCheckingAuth: true immediately so the router redirect never
+  // sees a false/false state before _checkAuth runs. Without this, there is a
+  // one-frame window where isCheckingAuth is false AND isLoggedIn is false,
+  // which can confuse the router into thinking auth is settled when it isn't.
+  AuthViewModel() : super(const AuthState(isCheckingAuth: true)) {
     _checkAuth();
   }
 
@@ -85,12 +89,9 @@ class AuthViewModel extends StateNotifier<AuthState> {
         state = state.copyWith(isLoading: false, isCheckingAuth: false, isLoggedIn: false);
       }
     } on UnauthorizedException {
-      // Token is present but server rejected it — clear it and go to login
       await _authService.logout();
       state = state.copyWith(isLoading: false, isCheckingAuth: false, isLoggedIn: false);
     } on NetworkException {
-      // No connectivity — keep the token, don't log the user out
-      // They'll retry naturally when the network is available
       final hasToken = await _authService.isLoggedIn();
       state = state.copyWith(
         isLoading: false,
@@ -98,7 +99,6 @@ class AuthViewModel extends StateNotifier<AuthState> {
         isLoggedIn: hasToken,
       );
     } catch (_) {
-      // Unknown error — keep token if present, avoid false logouts
       final hasToken = await _authService.isLoggedIn();
       state = state.copyWith(
         isLoading: false,
@@ -108,7 +108,6 @@ class AuthViewModel extends StateNotifier<AuthState> {
     }
   }
 
-  /// Fetch the number of donations made by this user from /my-donations
   Future<int> _fetchDonationCount() async {
     try {
       final donations = await _reqService.getMyDonations();
@@ -131,15 +130,12 @@ class AuthViewModel extends StateNotifier<AuthState> {
       );
       return true;
     } on UnauthorizedException {
-      // 401 with no server body — treat as invalid credentials, not session expiry
       state = state.copyWith(
         isLoading: false,
         error: 'Invalid username or password.',
       );
       return false;
     } on ApiException catch (e) {
-      // Use server message but normalise any session-expiry wording that leaks
-      // through (e.g. if the server returns "Session expired" on a login 401)
       final msg = (e.statusCode == 401)
           ? 'Invalid username or password.'
           : e.message;
@@ -234,10 +230,10 @@ class AuthViewModel extends StateNotifier<AuthState> {
     }
   }
 
-  Future<bool> changePassword(String currentPassword, String newPassword) async {
+  Future<bool> changePassword(String newPassword, String confirmPassword) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      await _authService.changePassword(currentPassword, newPassword);
+      await _authService.changePassword(newPassword, confirmPassword);
       state = state.copyWith(isLoading: false);
       return true;
     } on ApiException catch (e) {
@@ -250,19 +246,15 @@ class AuthViewModel extends StateNotifier<AuthState> {
     required String username,
     required String email,
     required String newPassword,
+    required String confirmPassword
   }) async {
     await _authService.forgotPassword(
-        username: username, email: email, newPassword: newPassword);
+        username: username, email: email, newPassword: newPassword, confirmPassword: confirmPassword);
   }
 
   void clearError() => state = state.copyWith(clearError: true);
 
-  /// Persists [donationDate] to the server via PUT /auth/profile so it
-  /// survives app restarts and re-logins. Also updates local state immediately.
-  /// Awaited before refreshProfile() in the donate flow so the server has the
-  /// value before we re-fetch the profile.
   Future<void> persistLastDonationDate(DateTime donationDate) async {
-    // Update local state immediately (replaces the old recordDonationNow call)
     if (state.user != null) {
       state = state.copyWith(
         user: state.user!.copyWith(lastDonationDate: donationDate),
@@ -272,25 +264,16 @@ class AuthViewModel extends StateNotifier<AuthState> {
       await _authService.updateProfile({
         'lastDonationDate': donationDate.toIso8601String(),
       });
-    } catch (_) {
-      // Non-critical — local optimistic value is already set;
-      // the profile screen will still show the correct date this session.
-    }
+    } catch (_) {}
   }
 
-  /// Re-fetches profile from server — called on ProfileScreen mount and after donate.
-  /// Sets isLoading so the screen can show a shimmer on first load.
   Future<void> refreshProfile() async {
-    // Only show loading spinner if we have no user data yet
     if (state.user == null) {
       state = state.copyWith(isLoading: true);
     }
     try {
       final user  = await _authService.getProfile();
       final count = await _fetchDonationCount();
-      // Preserve the optimistically-set lastDonationDate if the server returns
-      // null (e.g. the write hasn't propagated yet). Once the server returns a
-      // real date, that takes over naturally.
       final resolvedLastDonation =
           user.lastDonationDate ?? state.user?.lastDonationDate;
       state = state.copyWith(
@@ -303,15 +286,10 @@ class AuthViewModel extends StateNotifier<AuthState> {
     } on ApiException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
     } catch (_) {
-      // Non-critical — keep existing user data if refresh fails
       state = state.copyWith(isLoading: false);
     }
   }
-  // ── Called after successful OTP registration ────────────────
-  /// Hydrates the auth state directly from a registration result
-  /// (token already stored by AuthService.registerDirect).
-  /// A freshly registered user always has 0 donations — skip the network
-  /// call that could fail and corrupt the session.
+
   Future<void> loginFromRegistration(String token, UserModel user) async {
     state = state.copyWith(
       isLoading:      false,
@@ -322,6 +300,59 @@ class AuthViewModel extends StateNotifier<AuthState> {
     );
   }
 
+  // ── Session validation on app resume ───────────────────────
+  // Called by main.dart's WidgetsBindingObserver whenever the app comes back
+  // to the foreground. Silently re-validates the stored token against the
+  // server. If the account was deleted from the backend (401/404) the token
+  // is cleared and auth state resets — the router then redirects to /login.
+  // Skipped if already loading or not logged in (no token to validate).
+  Future<void> validateSessionOnResume() async {
+    if (!state.isLoggedIn) return;
+    if (state.isLoading || state.isCheckingAuth) return;
+    try {
+      final user  = await _authService.getProfile();
+      final count = await _fetchDonationCount();
+      state = state.copyWith(
+        user: user.copyWith(
+          donationCount: count,
+          lastDonationDate:
+              user.lastDonationDate ?? state.user?.lastDonationDate,
+        ),
+      );
+    } on UnauthorizedException {
+      // Token rejected — account deleted or revoked on the backend
+      await _authService.logout();
+      state = const AuthState();
+    } on NetworkException {
+      // No connectivity on resume — keep existing session, try again next time
+    } catch (_) {
+      // Any other transient error — don't log the user out
+    }
+  }
+
+    // ── Delete own account ──────────────────────────────────────
+  // Calls DELETE /auth/account. On success, clears local token and resets
+  // auth state (same as logout) so the router redirects to /login.
+  // Returns true on success, false on any error (caller shows snackbar).
+  Future<bool> deleteAccount() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      await _authService.deleteAccount();
+      // Clear stored token and wipe state — same path as logout
+      await _authService.logout();
+      state = const AuthState();
+      return true;
+    } on ApiException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      return false;
+    } catch (_) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Could not delete account. Please try again.',
+      );
+      return false;
+    }
+  }
 }
 
 final authViewModelProvider =

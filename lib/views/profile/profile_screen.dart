@@ -21,7 +21,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Refresh profile every time this screen is shown so data is always current
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(authViewModelProvider.notifier).refreshProfile();
     });
@@ -33,7 +32,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authVm    = ref.read(authViewModelProvider.notifier);
     final user      = authState.user;
 
-    // Show shimmer while profile is loading for the first time (no user data yet)
     if (user == null && authState.isLoading) {
       return PopScope(
         canPop: false,
@@ -52,7 +50,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       );
     }
 
-    // Fix #5: back button on profile screen navigates to feed, not app exit
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -61,12 +58,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.primary,
-          backgroundColor: Colors.white,
-          onRefresh: () => authVm.refreshProfile(),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(14, 8, 14, 110),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ── Profile hero ────────────────────────────
               Container(
@@ -198,12 +193,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ]),
               ),
 
-              const SizedBox(height: 10),
-
-              // ── Donation eligibility info ─────────────────
-              _DonationEligibilityCard(lastDonationDate: user?.lastDonationDate),
-
-              const SizedBox(height: 10),
+              const Spacer(),
 
               // ── Sign out ─────────────────────────────────
               GestureDetector(
@@ -227,11 +217,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
               ),
+
+              // ── Delete account — hidden for admins ────────
+              if (user?.isAdmin != true) ...[
+                const SizedBox(height: 10),
+                _DeleteAccountSection(
+                  onDelete: () => _confirmDeleteAccount(context, authVm),
+                ),
+              ],
             ],
           ),
         ),
       ),
-      ), // closes PopScope (fix #5)
+      ),
     );
   }
 
@@ -269,69 +267,225 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  Future<void> _showChangePasswordDialog(
-      BuildContext context, WidgetRef ref) async {
-    final newCtrl     = TextEditingController();
-    final confirmCtrl = TextEditingController();
-    final formKey     = GlobalKey<FormState>();
-
-    await showDialog(
+  // ── Delete account confirmation dialog ───────────────────────
+  // Two-step confirmation: first dialog warns, second confirms with
+  // destructive styling — mirrors the HS_Blood web confirmDeleteAccount flow.
+  Future<void> _confirmDeleteAccount(
+      BuildContext context, AuthViewModel vm) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(AppConfig.profileChangePwdTitle,
-            style: GoogleFonts.syne(
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary)),
-        content: Form(
-          key: formKey,
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            _PwdField(controller: newCtrl, label: AppConfig.profileNewPwdLabel),
-            const SizedBox(height: 10),
-            _PwdField(
-              controller: confirmCtrl,
-              label: AppConfig.profileConfirmPwdLabel,
-              validator: (v) =>
-                  v != newCtrl.text ? 'Passwords do not match' : null,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.urgentBg,
+              borderRadius: BorderRadius.circular(10),
             ),
-          ]),
+            child: const Icon(Icons.warning_amber_rounded,
+                size: 18, color: AppColors.primary),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            AppConfig.profileDeleteAccountTitle,
+            style: GoogleFonts.syne(
+                fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          ),
+        ]),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This will permanently:',
+              style: GoogleFonts.dmSans(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            _BulletRow(text: 'Delete your login account'),
+            _BulletRow(text: 'Remove you from the donor list'),
+            _BulletRow(text: 'Delete all your notifications'),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.urgentBg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.urgentBorder),
+              ),
+              child: Text(
+                'This action cannot be undone.',
+                style: GoogleFonts.dmSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.urgentText),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(AppConfig.profileSignOutCancel,
-                style:
-                    GoogleFonts.dmSans(color: AppColors.textSecondary))),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(AppConfig.profileDeleteAccountCancel,
+                style: GoogleFonts.dmSans(color: AppColors.textSecondary)),
+          ),
           TextButton(
-            onPressed: () async {
-              if (!formKey.currentState!.validate()) return;
-              final ok = await ref
-                  .read(authViewModelProvider.notifier)
-                  .changePassword('', newCtrl.text);
-              if (ctx.mounted) {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                  content: Text(
-                    ok
-                        ? AppConfig.profilePwdChanged
-                        : AppConfig.profilePwdChangeFailed,
-                  ),
-                  backgroundColor:
-                      ok ? AppColors.secondary : AppColors.primary,
-                ));
-              }
-            },
-            child: Text(AppConfig.profileDialogUpdate,
-                style: GoogleFonts.dmSans(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600))),
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+              backgroundColor: AppColors.urgentBg,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text(
+              AppConfig.profileDeleteAccountConfirm,
+              style: GoogleFonts.syne(
+                  color: AppColors.primary, fontWeight: FontWeight.w700),
+            ),
+          ),
         ],
       ),
     );
-    newCtrl.dispose();
-    confirmCtrl.dispose();
+
+    if (confirmed != true || !context.mounted) return;
+
+    // Perform deletion
+    final ok = await vm.deleteAccount();
+
+    if (!context.mounted) return;
+    if (ok) {
+      // Account wiped — navigate to login
+      context.go('/login');
+    } else {
+      final errMsg = ref.read(authViewModelProvider).error ??
+          'Failed to delete account. Please try again.';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(errMsg),
+        backgroundColor: AppColors.primary,
+      ));
+    }
+  }
+
+  Future<void> _showChangePasswordDialog(
+      BuildContext context, WidgetRef ref) async {
+    final outerContext = context;
+    final ok = await showDialog<bool>(
+      context: outerContext,
+      builder: (_) => _ChangePasswordDialog(ref: ref),
+    );
+    if (!outerContext.mounted) return;
+    if (ok == true) {
+      ScaffoldMessenger.of(outerContext).showSnackBar(SnackBar(
+        content: Text(AppConfig.profilePwdChanged),
+        backgroundColor: AppColors.secondary,
+      ));
+    } else if (ok == false) {
+      ScaffoldMessenger.of(outerContext).showSnackBar(SnackBar(
+        content: Text(AppConfig.profilePwdChangeFailed),
+        backgroundColor: AppColors.primary,
+      ));
+    }
+  }
+}
+
+// ── Delete Account section ────────────────────────────────────
+// Shown below the Sign Out button — hidden for admin accounts.
+// Styled as a low-profile danger zone so it's discoverable but not alarming.
+class _DeleteAccountSection extends StatelessWidget {
+  final VoidCallback onDelete;
+
+  const _DeleteAccountSection({required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppColors.urgentBg,
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: const Icon(Icons.delete_outline_rounded,
+              size: 18, color: AppColors.primary),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppConfig.profileDeleteAccount,
+                style: GoogleFonts.dmSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary),
+              ),
+              Text(
+                'Removes your account and donor record',
+                style: GoogleFonts.dmSans(
+                    fontSize: 11, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        ),
+        GestureDetector(
+          onTap: onDelete,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: AppColors.urgentBg,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.urgentBorder),
+            ),
+            child: Text(
+              'Delete',
+              style: GoogleFonts.syne(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.urgentText),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+// ── Bullet row (used in delete confirmation dialog) ───────────
+class _BulletRow extends StatelessWidget {
+  final String text;
+  const _BulletRow({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('• ',
+              style: GoogleFonts.dmSans(
+                  fontSize: 13, color: AppColors.textSecondary)),
+          Expanded(
+            child: Text(text,
+                style: GoogleFonts.dmSans(
+                    fontSize: 13, color: AppColors.textSecondary)),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -407,8 +561,6 @@ class _DonationStatCard extends StatelessWidget {
 }
 
 // ── Donation Eligibility Card ─────────────────────────────────
-// Shown on the Profile screen. Displays next eligible date and
-// days remaining until the user can donate again (90-day cooldown).
 class _DonationEligibilityCard extends StatelessWidget {
   final DateTime? lastDonationDate;
 
@@ -463,7 +615,6 @@ class _DonationEligibilityCard extends StatelessWidget {
           const SizedBox(height: 14),
           const Divider(height: 1, color: AppColors.borderSoft),
           const SizedBox(height: 14),
-          // Last donation date row
           if (lastDonationDate != null) ...[
             _EligibilityRow(
               icon: Icons.favorite_outline_rounded,
@@ -472,7 +623,6 @@ class _DonationEligibilityCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
           ],
-          // Next eligible date row
           _EligibilityRow(
             icon: Icons.event_available_rounded,
             label: AppConfig.profileNextEligible,
@@ -484,7 +634,6 @@ class _DonationEligibilityCard extends StatelessWidget {
             valueColor: isEligible ? AppColors.secondary : AppColors.textPrimary,
           ),
           const SizedBox(height: 10),
-          // Days remaining row
           _EligibilityRow(
             icon: Icons.timer_outlined,
             label: AppConfig.profileDaysUntil,
@@ -602,6 +751,77 @@ class _MenuItem extends StatelessWidget {
             color: AppColors.borderSoft,
             indent: 15),
     ]);
+  }
+}
+
+// ── Change Password Dialog ────────────────────────────────────
+class _ChangePasswordDialog extends StatefulWidget {
+  final WidgetRef ref;
+  const _ChangePasswordDialog({required this.ref});
+
+  @override
+  State<_ChangePasswordDialog> createState() => _ChangePasswordDialogState();
+}
+
+class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
+  final _newCtrl     = TextEditingController();
+  final _confirmCtrl = TextEditingController();
+  final _formKey     = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _newCtrl.dispose();
+    _confirmCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    final ok = await widget.ref
+        .read(authViewModelProvider.notifier)
+        .changePassword(_newCtrl.text, _confirmCtrl.text);
+    if (mounted) Navigator.of(context).pop(ok);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text(
+        AppConfig.profileChangePwdTitle,
+        style: GoogleFonts.syne(
+            fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+      ),
+      content: Form(
+        key: _formKey,
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          _PwdField(controller: _newCtrl, label: AppConfig.profileNewPwdLabel),
+          const SizedBox(height: 10),
+          _PwdField(
+            controller: _confirmCtrl,
+            label: AppConfig.profileConfirmPwdLabel,
+            validator: (v) =>
+                v != _newCtrl.text ? 'Passwords do not match' : null,
+          ),
+        ]),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: Text(AppConfig.profileSignOutCancel,
+              style: GoogleFonts.dmSans(color: AppColors.textSecondary)),
+        ),
+        TextButton(
+          onPressed: _submit,
+          child: Text(
+            AppConfig.profileDialogUpdate,
+            style: GoogleFonts.dmSans(
+                color: AppColors.primary, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    );
   }
 }
 

@@ -44,36 +44,41 @@ class BloodConnectApp extends ConsumerStatefulWidget {
   ConsumerState<BloodConnectApp> createState() => _BloodConnectAppState();
 }
 
-class _BloodConnectAppState extends ConsumerState<BloodConnectApp> {
+// WidgetsBindingObserver lets us detect app resume (foreground) events.
+// On resume we re-validate the stored token against the server — this covers
+// the case where the account was deleted from the backend while the app was
+// running or backgrounded. If the server returns 401, _checkAuth clears the
+// token and the router redirects to /login automatically.
+class _BloodConnectAppState extends ConsumerState<BloodConnectApp>
+    with WidgetsBindingObserver {
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Listen for login/logout to init/teardown FCM
       ref.listenManual<AuthState>(authViewModelProvider, (previous, next) {
         if (next.isLoggedIn && !(previous?.isLoggedIn ?? false)) {
-          // Logged in — init FCM with blood type
           FcmService().init(bloodType: next.user?.bloodType ?? '');
         } else if (next.isLoggedIn && previous?.isLoggedIn == true) {
-          // Blood type may have changed (profile update)
           final bt = next.user?.bloodType ?? '';
           if (bt.isNotEmpty) FcmService().init(bloodType: bt);
         } else if (!next.isLoggedIn && (previous?.isLoggedIn ?? false)) {
-          // Logged out — unsubscribe
           FcmService().unsubscribeAll();
         }
       });
 
       // Already logged in on cold start — init FCM immediately.
-      // We also schedule a retry after 2 seconds to handle the case where
-      // auth state restores from storage slightly after this callback fires.
       final authState = ref.read(authViewModelProvider);
       if (authState.isLoggedIn) {
         FcmService().init(bloodType: authState.user?.bloodType ?? '');
       }
 
-      // Retry init after a short delay to catch delayed auth restoration
+      // Retry init after a short delay to catch delayed auth restoration.
       Future.delayed(const Duration(seconds: 2), () {
+        if (!mounted) return;
         final s = ref.read(authViewModelProvider);
         if (s.isLoggedIn) {
           FcmService().init(bloodType: s.user?.bloodType ?? '');
@@ -83,9 +88,33 @@ class _BloodConnectAppState extends ConsumerState<BloodConnectApp> {
   }
 
   @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Called whenever the app transitions to the foreground (resumed from
+  // background or lock screen). We re-run _checkAuth so a deleted/revoked
+  // account is caught immediately on next open — not just on cold start.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final authVm = ref.read(authViewModelProvider.notifier);
+      authVm.validateSessionOnResume();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final router = ref.watch(routerProvider);
+    final router         = ref.watch(routerProvider);
+    final isCheckingAuth = ref.watch(authViewModelProvider).isCheckingAuth;
     return SplashScreen(
+      // Keep the splash overlay visible until _checkAuth completes.
+      // Without this, the overlay fades after the animation (≈2.6 s) but
+      // _checkAuth may still be running — the router sits on /login during
+      // that window, so a logged-in user sees a login screen flash before
+      // being redirected to /feed.
+      isCheckingAuth: isCheckingAuth,
       child: MaterialApp.router(
         title: 'BloodConnect',
         debugShowCheckedModeBanner: false,

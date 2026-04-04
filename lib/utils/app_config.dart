@@ -281,6 +281,11 @@ class AppConfig {
   static const String profileSignOutBody     = 'Are you sure you want to sign out?';
   static const String profileSignOutCancel   = 'Cancel';
   static const String profileSignOutConfirm  = 'Sign out';
+  static const String profileDeleteAccount   = 'Delete Account?';
+  static const String profileDeleteAccountTitle    = 'Delete Account';
+  static const String profileDeleteAccountBody     = 'Are you sure you want to Delete?';
+  static const String profileDeleteAccountCancel   = 'Cancel';
+  static const String profileDeleteAccountConfirm  = 'Delete';
   static const String profileChangePwdTitle  = 'Change Password';
   static const String profileNewPwdLabel     = 'New password';
   static const String profileConfirmPwdLabel = 'Confirm new password';

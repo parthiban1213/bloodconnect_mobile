@@ -7,6 +7,7 @@ import '../../utils/app_theme.dart';
 import '../../utils/app_config.dart';
 import '../../widgets/app_widgets.dart';
 import 'requirement_card.dart';
+import '../../widgets/password_prompt_dialog.dart';
 
 class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
@@ -22,10 +23,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final bloodType = ref.read(authViewModelProvider).user?.bloodType ?? '';
       ref.read(requirementsViewModelProvider.notifier).setUserBloodType(bloodType);
       ref.read(requirementsViewModelProvider.notifier).load();
+      // Show the one-time post-registration password prompt if flagged.
+      if (mounted) await PasswordPromptDialog.showIfNeeded(context);
     });
   }
 
@@ -206,7 +209,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
     final bloodType = user?.bloodType ?? '';
     if (reqState.userBloodType != bloodType && bloodType.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         reqVm.setUserBloodType(bloodType);
       });
     }

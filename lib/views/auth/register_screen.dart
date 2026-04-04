@@ -9,6 +9,7 @@ import '../../services/auth_service.dart';
 import '../../utils/api_exception.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_config.dart';
+import '../../utils/prefs_service.dart';
 import '../../widgets/blood_drop_widget.dart';
 
 // ─── Registration steps ───────────────────────────────────────────────────────
@@ -211,6 +212,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       await ref
           .read(authViewModelProvider.notifier)
           .loginFromRegistration(result.token, result.user);
+
+      // Flag that the post-registration password prompt should be shown once
+      // on the feed screen (cleared when user taps Update Password or Skip).
+      await PrefsService.setShowPasswordPrompt();
 
       if (mounted) context.go('/feed');
     } catch (e) {

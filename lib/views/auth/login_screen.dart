@@ -158,7 +158,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _fpLoading = true);
     try {
       await ref.read(authViewModelProvider.notifier)
-          .forgotPassword(username: u, email: e, newPassword: n);
+          .forgotPassword(username: u, email: e, newPassword: n, confirmPassword: c);
       if (mounted) {
         setState(() { _fpLoading = false; _fpSuccess = AppConfig.fpSuccessMsg; });
         _fpUserCtrl.clear(); _fpEmailCtrl.clear();
@@ -177,9 +177,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final auth = ref.watch(authViewModelProvider);
     final fwd  = _forward;
 
-    if (auth.isCheckingAuth) {
-      return const Scaffold(backgroundColor: Colors.white, body: SizedBox.shrink());
-    }
+    // NOTE: Do NOT guard on auth.isCheckingAuth here.
+    // The SplashScreen overlay (in main.dart) already covers the UI while
+    // _checkAuth runs. Returning a blank Scaffold here meant the login form
+    // was never built — so when isCheckingAuth finished and the splash faded
+    // away, the screen stayed white and unresponsive until a lifecycle event
+    // (e.g. minimize/maximize) forced a rebuild. The fix: always build the
+    // login form; the splash hides it during startup automatically.
 
     Widget view = switch (_view) {
       _LoginView.otp => _OtpMobileView(

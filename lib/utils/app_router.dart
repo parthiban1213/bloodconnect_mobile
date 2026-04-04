@@ -16,20 +16,28 @@ import '../views/my_requests/my_requests_screen.dart';
 import '../views/my_requests/add_requirement_screen.dart';
 import '../views/history/history_screen.dart';
 import '../views/shell/main_shell.dart';
-import '../views/support/support_screen.dart'; // ← NEW
+import '../views/support/support_screen.dart';
 
 class _AuthRouterNotifier extends ChangeNotifier {
   _AuthRouterNotifier(this._ref) {
     _ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      if (previous?.isLoggedIn    != next.isLoggedIn ||
+      // Always notify when isCheckingAuth finishes (true → false),
+      // regardless of whether isLoggedIn changed. Without this, if the
+      // token was wiped (e.g. Android reinstall), isLoggedIn stays false
+      // before and after _checkAuth — neither condition below triggers —
+      // and the router never re-evaluates its redirect.
+      final checkingAuthFinished =
+          (previous?.isCheckingAuth == true) && !next.isCheckingAuth;
+      if (checkingAuthFinished ||
+          previous?.isLoggedIn != next.isLoggedIn ||
           previous?.isCheckingAuth != next.isCheckingAuth) {
         notifyListeners();
       }
     });
   }
   final Ref _ref;
-  bool get isLoggedIn      => _ref.read(authViewModelProvider).isLoggedIn;
-  bool get isCheckingAuth  => _ref.read(authViewModelProvider).isCheckingAuth;
+  bool get isLoggedIn     => _ref.read(authViewModelProvider).isLoggedIn;
+  bool get isCheckingAuth => _ref.read(authViewModelProvider).isCheckingAuth;
 }
 
 final _authRouterNotifierProvider =
@@ -41,48 +49,82 @@ final routerProvider = Provider<GoRouter>((ref) {
   final notifier = ref.watch(_authRouterNotifierProvider);
 
   return GoRouter(
-    initialLocation: '/login',
+    // KEY FIX: start on a blank /splash holding route — NOT /login.
+    //
+    // Previously the router used initialLocation: '/login' and held
+    // everyone there during _checkAuth. This meant LoginScreen was
+    // always built and sitting underneath the splash overlay. When
+    // _checkAuth finished and the overlay was removed, the user saw
+    // LoginScreen for a brief moment before the router redirected to
+    // /feed — the "login screen flash" bug.
+    //
+    // With /splash as the holding route, LoginScreen is never built
+    // during _checkAuth. When auth check completes the router goes
+    // directly to /feed (if logged in) or /login (if not) — no flash.
+    initialLocation: '/splash',
     refreshListenable: notifier,
     redirect: (context, state) {
-      // During startup _checkAuth, stay on /login (white guard in LoginScreen)
+      final loc = state.matchedLocation;
+
+      // Always accessible without login.
+      if (loc == '/support' || loc == '/register') return null;
+
+      // During _checkAuth: stay on the blank /splash holding route.
+      // The animated splash overlay (SplashScreen in main.dart) covers
+      // this blank screen, so the user sees the splash animation — not
+      // a white screen.
       if (notifier.isCheckingAuth) {
-        return state.matchedLocation == '/login' ? null : '/login';
+        return loc == '/splash' ? null : '/splash';
       }
+
       final isLoggedIn = notifier.isLoggedIn;
-      final onAuthPage = state.matchedLocation == '/login';
 
-      // /support is accessible without login (pre-auth support)
-      final onSupport   = state.matchedLocation == '/support';
-      final onRegister  = state.matchedLocation == '/register';
-      if (onSupport || onRegister) return null;
+      // Auth check done — /splash has served its purpose. Navigate
+      // directly to the correct destination with no intermediate stop.
+      if (loc == '/splash') return isLoggedIn ? '/feed' : '/login';
 
-      if (!isLoggedIn && !onAuthPage) return '/login';
-      if (isLoggedIn && onAuthPage) return '/feed';
+      // Not logged in and not on an auth page → send to login.
+      if (!isLoggedIn && loc != '/login') return '/login';
+
+      // Logged in but on login page → send to feed.
+      if (isLoggedIn && loc == '/login') return '/feed';
+
       return null;
     },
     routes: [
-      // ── Auth (no shell / no bottom bar) ──────────────────
+      // ── Blank holding route — only active during startup _checkAuth ──
+      // Renders nothing; the animated splash overlay covers it entirely.
+      GoRoute(
+        path: '/splash',
+        name: 'splash',
+        builder: (_, __) => const Scaffold(
+          backgroundColor: Colors.white,
+          body: SizedBox.shrink(),
+        ),
+      ),
+
+      // ── Auth (no shell / no bottom bar) ──────────────────────────
       GoRoute(
         path: '/login',
         name: 'login',
         builder: (_, __) => const LoginScreen(),
       ),
 
-      // ── Register — accessible pre-login ──────────────────
+      // ── Register — accessible pre-login ──────────────────────────
       GoRoute(
         path: '/register',
         name: 'register',
         builder: (_, __) => const RegisterScreen(),
       ),
 
-      // ── Support — accessible pre-login and post-login ─────
+      // ── Support — accessible pre-login and post-login ─────────────
       GoRoute(
         path: '/support',
         name: 'support',
         builder: (_, __) => const SupportScreen(),
       ),
 
-      // ── Shell (bottom bar shown on ALL routes inside) ─────
+      // ── Shell (bottom bar shown on ALL routes inside) ─────────────
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
@@ -116,13 +158,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'profile',
             builder: (_, __) => const ProfileScreen(),
           ),
-          // Notifications moved INSIDE the shell so bottom bar shows
           GoRoute(
             path: '/notifications',
             name: 'notifications',
             builder: (_, __) => const NotificationsScreen(),
           ),
-          // Add Requirement moved INSIDE the shell so bottom bar shows
           GoRoute(
             path: '/add-requirement',
             name: 'add_requirement',
@@ -133,7 +173,6 @@ final routerProvider = Provider<GoRouter>((ref) {
               );
             },
           ),
-          // Edit Profile inside shell
           GoRoute(
             path: '/edit-profile',
             name: 'edit_profile',
@@ -142,7 +181,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
 
-      // ── Full-screen routes (no shell / no bottom bar) ─────
+      // ── Full-screen routes (no shell / no bottom bar) ─────────────
       GoRoute(
         path: '/requirement/:id',
         name: 'requirement_detail',
