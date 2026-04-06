@@ -14,6 +14,7 @@ import '../../utils/app_config.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/blood_type_badge.dart';
 import '../../widgets/urgency_bar.dart';
+import '../../widgets/schedule_pledge_modal.dart';
 
 class RequirementDetailScreen extends ConsumerStatefulWidget {
   final String requirementId;
@@ -63,17 +64,28 @@ class _RequirementDetailScreenState
 
   Future<void> _confirmDonation() async {
     if (_requirement == null) return;
+
+    // Show schedule modal first — require date + time before pledging
+    final schedule = await showSchedulePledgeModal(
+      context,
+      patientName: _requirement!.patientName,
+      bloodType:   _requirement!.bloodType,
+    );
+    if (schedule == null) return; // user cancelled
+    if (!mounted) return;
+
     setState(() => _isConfirming = true);
-    // Call donate() — same as the "I'll Donate" button on the feed card.
-    // This records the donation on the backend, decrements remainingUnits,
-    // sends SMS to the requirement creator via Twilio, and triggers FCM push.
     final updated = await ref
         .read(requirementsViewModelProvider.notifier)
-        .donate(_requirement!.id);
+        .donate(
+          _requirement!.id,
+          scheduledDate: schedule.scheduledDate,
+          scheduledTime: schedule.scheduledTime,
+        );
     setState(() => _isConfirming = false);
     if (updated != null && mounted) {
-      // Auto-schedule eligibility reminder for 56 days from now
-      await ReminderService().scheduleEligibilityReminder(DateTime.now());
+      // NOTE: ReminderService is NOT called here — the 90-day cooldown
+      // only begins when the requester marks the donation Completed.
       context.pushReplacement('/accepted', extra: {
         'hospital':      _requirement!.hospital,
         'contactPerson': _requirement!.contactPerson,
@@ -485,8 +497,55 @@ class _RequirementDetailScreenState
     final lastDonation = authState.user?.lastDonationDate;
     final isInCooldown = !ReminderService.isEligible(lastDonation);
 
-    // Show "Already Donated" badge if user already donated to this request
-    if (hasDonated) {
+    // Check whether the user's pledge is Pending (awaiting approval) or Completed
+    final myPledge = _requirement?.donorPledges
+        .where((p) => p.donorUsername == username)
+        .firstOrNull;
+    final isScheduledPending = myPledge != null && myPledge.isPending;
+    // Only show green "Already Donated" badge when pledge is actually Completed
+    final isDonationCompleted = myPledge != null && myPledge.isCompleted;
+
+    // Show "⏳ Scheduled — awaiting approval" when pledged but not yet approved
+    if (hasDonated && isScheduledPending) {
+      return Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: AppColors.border)),
+        ),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+        child: SafeArea(
+          top: false,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFFCD34D)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.hourglass_top_rounded,
+                    size: 16, color: Color(0xFF92400E)),
+                const SizedBox(width: 8),
+                Text(
+                  AppConfig.detailScheduledPending,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF92400E),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Show green "✅ Already Donated" only when pledge is Completed (requester approved)
+    if (isDonationCompleted || (hasDonated && !isScheduledPending)) {
       return Container(
         decoration: const BoxDecoration(
           color: Colors.white,

@@ -191,13 +191,21 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
     try { return await _service.getRequirement(id); } catch (_) { return null; }
   }
 
-  Future<BloodRequirement?> donate(String id) async {
+  Future<BloodRequirement?> donate(
+    String id, {
+    required String scheduledDate,
+    required String scheduledTime,
+  }) async {
     final donating = Set<String>.from(state.donatingIds)..add(id);
     state = state.copyWith(donatingIds: donating, clearError: true);
     try {
-      final updated = await _service.donateToRequirement(id);
+      final updated = await _service.donateToRequirement(
+        id,
+        scheduledDate: scheduledDate,
+        scheduledTime: scheduledTime,
+      );
       final updatedList = state.requirements.map((r) => r.id == id ? updated : r).toList();
-      // Mark as donated immediately (optimistic) — will also be confirmed on next load
+      // Mark as donated immediately (optimistic) — confirmed on next load
       // since the username is now in the donations array on the server.
       final donated = Set<String>.from(state.donatedIds)..add(id);
       state = state.copyWith(
@@ -205,12 +213,10 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
         donatingIds:  Set<String>.from(state.donatingIds)..remove(id),
         donatedIds:   donated,
       );
-      // Persist lastDonationDate to server and update local state.
-      // Awaited so the server has the value before refreshProfile() re-fetches.
-      final donationDate = DateTime.now();
-      await _ref.read(authViewModelProvider.notifier).persistLastDonationDate(donationDate);
-      // Now refresh from server — it should now return the saved lastDonationDate.
-      _ref.read(authViewModelProvider.notifier).refreshProfile();
+      // NOTE: lastDonationDate is NOT updated here.
+      // It is only updated when the requester marks the donation as Completed
+      // (via updateDonationStatus). The server sets it at that point, and
+      // refreshProfile() is called from the status modal after approval.
       load();
       return updated;
     } on ApiException catch (e) {
@@ -246,6 +252,41 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
     // Inform backend in background
     _service.declineRequirement(id).catchError((_) {});
     return true;
+  }
+
+  /// Called by the status modal when the requester approves or reverts a pledge.
+  /// On Completed: backend sets lastDonationDate on the donor, decrements
+  /// remainingUnits, marks Fulfilled if needed, and clears other pledges.
+  /// After success, we refresh all stale views and the auth profile.
+  Future<bool> updateDonationStatus({
+    required String requirementId,
+    required String donorUsername,
+    required String newStatus,
+  }) async {
+    try {
+      await _service.updateDonationStatus(
+        requirementId: requirementId,
+        donorUsername: donorUsername,
+        newStatus:     newStatus,
+      );
+      // Refresh the feed so remainingUnits / status badges are current
+      await load();
+      if (newStatus == 'Completed') {
+        // The server has now set lastDonationDate on the approved donor.
+        // Always refresh the local profile — if the current user IS the donor
+        // their eligibility state updates immediately; if they are the requester
+        // the refresh is a no-op (their lastDonationDate is unchanged) but is
+        // needed for the edge case where requester == donor on other requests.
+        _ref.read(authViewModelProvider.notifier).refreshProfile();
+      }
+      return true;
+    } on ApiException catch (e) {
+      state = state.copyWith(error: e.message);
+      return false;
+    } catch (_) {
+      state = state.copyWith(error: 'Failed to update donation status.');
+      return false;
+    }
   }
 
   @override

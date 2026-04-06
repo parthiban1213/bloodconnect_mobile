@@ -61,22 +61,55 @@ class RequirementsService {
   }
 
   // ── Donate endpoint ─────────────────────────────────────────
-  // Backend POST /requirements/:id/donate returns:
-  //   { success, message, data: { remainingUnits, status } }
-  // NOT a full BloodRequirement object.
-  // We call donate, then fetch the fresh requirement separately.
-  Future<BloodRequirement> donateToRequirement(String id) async {
-    // Step 1: record donation on server
-    // Backend handles: decrement remainingUnits, auto-fulfill, SMS via Twilio
-    await _client.post('/requirements/$id/donate');
-
-    // Step 2: fetch the updated full requirement
+  // Donor pledges with a scheduled date + time.
+  // donationStatus is always 'Pending' — the requester must mark
+  // it 'Completed' later to trigger the 90-day cooldown.
+  // Backend POST returns: { success, message, data: { remainingUnits, status } }
+  // NOT a full BloodRequirement — we re-fetch after pledging.
+  Future<BloodRequirement> donateToRequirement(
+    String id, {
+    required String scheduledDate,
+    required String scheduledTime,
+  }) async {
+    await _client.post('/requirements/$id/donate', data: {
+      'scheduledDate':  scheduledDate,
+      'scheduledTime':  scheduledTime,
+      'donationStatus': 'Pending',
+    });
     return getRequirement(id);
   }
 
   // ── Decline endpoint ────────────────────────────────────────
   Future<void> declineRequirement(String id) async {
     await _client.post('/requirements/$id/decline');
+  }
+
+  // ── Donor list (requester / admin only) ─────────────────────
+  // GET /requirements/:id/donors
+  // Returns the full donations[] array for a requirement.
+  Future<List<DonorPledge>> getDonorPledges(String requirementId) async {
+    final res = await _client.get('/requirements/$requirementId/donors');
+    final data = res['data'] as List<dynamic>? ?? [];
+    return data
+        .map((e) => DonorPledge.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ── Update donation status (requester / admin only) ─────────
+  // POST /requirements/:id/donations/:donorUsername/status
+  // newStatus: 'Completed' | 'Pending'
+  // On Completed: backend sets lastDonationDate on donor, decrements
+  // remainingUnits, marks Fulfilled if done, removes other pledges.
+  Future<Map<String, dynamic>> updateDonationStatus({
+    required String requirementId,
+    required String donorUsername,
+    required String newStatus,
+  }) async {
+    final res = await _client.post(
+      '/requirements/$requirementId/donations/${Uri.encodeComponent(donorUsername)}/status',
+      data: {'donationStatus': newStatus},
+    );
+    return res as Map<String, dynamic>;
   }
 
   // ── Correct endpoint: /my-donations (not /donations/my) ────

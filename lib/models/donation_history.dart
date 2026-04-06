@@ -2,7 +2,8 @@
 // {
 //   requirementId, patientName, hospital, location,
 //   bloodType, unitsRequired, remainingUnits, status,
-//   urgency, donatedAt, note
+//   urgency, donatedAt, note, scheduledDate, scheduledTime,
+//   donationStatus, donorUsername
 // }
 class DonationHistory {
   final String id;
@@ -12,11 +13,18 @@ class DonationHistory {
   final String patientName;
   final String location;
   final String urgency;
+  // status of the requirement (Open / Fulfilled / Cancelled)
   final String status;
   final int unitsRequired;
   final int remainingUnits;
   final DateTime donatedAt;
   final String note;
+  // Date/time the donor scheduled their donation visit
+  final String scheduledDate;
+  final String scheduledTime;
+  // donationStatus: 'Pending' until requester marks Completed
+  final String donationStatus;
+  final String donorUsername;
 
   DonationHistory({
     this.id = '',
@@ -31,7 +39,14 @@ class DonationHistory {
     this.remainingUnits = 0,
     required this.donatedAt,
     this.note = '',
+    this.scheduledDate = '',
+    this.scheduledTime = '',
+    this.donationStatus = 'Pending',
+    this.donorUsername = '',
   });
+
+  bool get isCompleted => donationStatus == 'Completed';
+  bool get isPending   => donationStatus != 'Completed';
 
   factory DonationHistory.fromJson(Map<String, dynamic> json) {
     return DonationHistory(
@@ -48,7 +63,11 @@ class DonationHistory {
       donatedAt: json['donatedAt'] != null
           ? DateTime.tryParse(json['donatedAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
-      note: json['note']?.toString() ?? '',
+      note:           json['note']?.toString() ?? '',
+      scheduledDate:  json['scheduledDate']?.toString() ?? '',
+      scheduledTime:  json['scheduledTime']?.toString() ?? '',
+      donationStatus: json['donationStatus']?.toString() ?? 'Pending',
+      donorUsername:  json['donorUsername']?.toString() ?? '',
     );
   }
 }

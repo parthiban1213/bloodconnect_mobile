@@ -45,17 +45,18 @@ class HistoryViewModel extends StateNotifier<HistoryState> {
   Future<void> load() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      // Run all requests in parallel
+      // Run both requests in parallel
       final results = await Future.wait([
-        _service.getMyDonations(),    // GET /api/my-donations
-        _service.getRequirements(),   // GET /api/requirements (all, for completed tab)
+        _service.getMyDonations(),    // GET /api/my-donations  (donor tab)
+        _service.getMyRequirements(), // GET /api/my-requirements (completed tab)
       ]);
 
       final donations = results[0] as List<DonationHistory>;
-      final allReqs   = results[1] as List<BloodRequirement>;
+      final myReqs    = results[1] as List<BloodRequirement>;
 
-      // Completed tab = all Fulfilled OR Cancelled requests from the feed
-      final completed = allReqs
+      // Completed tab = only the current user's OWN requests that are
+      // Fulfilled or Cancelled. Sorted newest-updated first.
+      final completed = myReqs
           .where((r) => r.isFulfilled || r.isCancelled)
           .toList()
         ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));

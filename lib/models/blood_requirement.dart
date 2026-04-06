@@ -1,3 +1,40 @@
+/// Represents a single donor pledge stored inside a requirement's donations[].
+class DonorPledge {
+  final String donorUsername;
+  final String donorName;
+  final String bloodType;
+  final String scheduledDate;
+  final String scheduledTime;
+  /// 'Pending' until the requester marks it 'Completed'
+  final String donationStatus;
+  final DateTime donatedAt;
+
+  const DonorPledge({
+    required this.donorUsername,
+    this.donorName = '',
+    this.bloodType = '',
+    this.scheduledDate = '',
+    this.scheduledTime = '',
+    this.donationStatus = 'Pending',
+    required this.donatedAt,
+  });
+
+  bool get isCompleted => donationStatus == 'Completed';
+  bool get isPending   => donationStatus != 'Completed';
+
+  factory DonorPledge.fromJson(Map<String, dynamic> json) => DonorPledge(
+        donorUsername:  json['donorUsername']?.toString() ?? '',
+        donorName:      json['donorName']?.toString() ?? '',
+        bloodType:      json['bloodType']?.toString() ?? '',
+        scheduledDate:  json['scheduledDate']?.toString() ?? '',
+        scheduledTime:  json['scheduledTime']?.toString() ?? '',
+        donationStatus: json['donationStatus']?.toString() ?? 'Pending',
+        donatedAt: json['donatedAt'] != null
+            ? DateTime.tryParse(json['donatedAt'].toString()) ?? DateTime.now()
+            : DateTime.now(),
+      );
+}
+
 class BloodRequirement {
   final String id;
   final String patientName;
@@ -10,6 +47,9 @@ class BloodRequirement {
   // Backend stores progress as remainingUnits + donations array
   final int remainingUnits;
   final int donationsCount;
+  /// Number of Pending pledges (not yet approved by requester).
+  /// Populated from the enriched /my-requirements response.
+  final int pendingCount;
   final String urgency;
   final DateTime? requiredBy;
   final String notes;
@@ -21,6 +61,9 @@ class BloodRequirement {
   /// Populated from the `donations[].donorUsername` array returned by the server.
   /// Used to show "Already Donated" without any client-side storage.
   final List<String> donorUsernames;
+  /// Full pledge objects — populated when the donor list is fetched
+  /// (GET /requirements/:id/donors). Used in the status modal.
+  final List<DonorPledge> donorPledges;
 
   BloodRequirement({
     required this.id,
@@ -33,6 +76,7 @@ class BloodRequirement {
     required this.unitsRequired,
     int? remainingUnits,
     this.donationsCount = 0,
+    this.pendingCount = 0,
     this.urgency = 'Medium',
     this.requiredBy,
     this.notes = '',
@@ -41,6 +85,7 @@ class BloodRequirement {
     required this.createdAt,
     required this.updatedAt,
     this.donorUsernames = const [],
+    this.donorPledges = const [],
   }) : remainingUnits = remainingUnits ?? unitsRequired;
 
   factory BloodRequirement.fromJson(Map<String, dynamic> json) {
@@ -57,9 +102,13 @@ class BloodRequirement {
             ? (json['donations'] as List).length
             : 0);
 
+    // pendingCount — number of Pending pledges (from /my-requirements)
+    final pendingCount = (json['pendingCount'] as num?)?.toInt() ?? 0;
+
     // Parse donor usernames from the donations array so the app can
     // determine server-side whether the current user already donated.
     final donorUsernames = <String>[];
+    final donorPledges   = <DonorPledge>[];
     if (json['donations'] is List) {
       for (final d in (json['donations'] as List)) {
         if (d is Map<String, dynamic>) {
@@ -67,6 +116,7 @@ class BloodRequirement {
           if (uname != null && uname.isNotEmpty) {
             donorUsernames.add(uname);
           }
+          donorPledges.add(DonorPledge.fromJson(d));
         }
       }
     }
@@ -82,6 +132,7 @@ class BloodRequirement {
       unitsRequired:  unitsRequired,
       remainingUnits: remainingUnits,
       donationsCount: donationsCount,
+      pendingCount:   pendingCount,
       urgency:        json['urgency'] ?? 'Medium',
       requiredBy: json['requiredBy'] != null
           ? DateTime.tryParse(json['requiredBy'].toString())
@@ -96,6 +147,7 @@ class BloodRequirement {
           ? DateTime.tryParse(json['updatedAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
       donorUsernames: donorUsernames,
+      donorPledges:   donorPledges,
     );
   }
 
@@ -117,9 +169,11 @@ class BloodRequirement {
     String? id, String? patientName, String? hospital, String? location,
     String? contactPerson, String? contactPhone, String? bloodType,
     int? unitsRequired, int? remainingUnits, int? donationsCount,
+    int? pendingCount,
     String? urgency, DateTime? requiredBy, String? notes, String? status,
     String? createdBy, DateTime? createdAt, DateTime? updatedAt,
     List<String>? donorUsernames,
+    List<DonorPledge>? donorPledges,
   }) {
     return BloodRequirement(
       id:             id ?? this.id,
@@ -132,6 +186,7 @@ class BloodRequirement {
       unitsRequired:  unitsRequired ?? this.unitsRequired,
       remainingUnits: remainingUnits ?? this.remainingUnits,
       donationsCount: donationsCount ?? this.donationsCount,
+      pendingCount:   pendingCount ?? this.pendingCount,
       urgency:        urgency ?? this.urgency,
       requiredBy:     requiredBy ?? this.requiredBy,
       notes:          notes ?? this.notes,
@@ -140,6 +195,7 @@ class BloodRequirement {
       createdAt:      createdAt ?? this.createdAt,
       updatedAt:      updatedAt ?? this.updatedAt,
       donorUsernames: donorUsernames ?? this.donorUsernames,
+      donorPledges:   donorPledges ?? this.donorPledges,
     );
   }
 

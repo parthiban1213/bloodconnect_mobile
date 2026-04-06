@@ -102,6 +102,17 @@ class MyRequestsViewModel extends StateNotifier<MyRequestsState> {
     }
   }
 
+  /// Fetches the full donor pledge list for a given requirement.
+  /// Used by the status modal to show who has pledged and their status.
+  /// Only works if the current user is the requirement creator or admin.
+  Future<List<DonorPledge>> fetchDonorPledges(String requirementId) async {
+    try {
+      return await _service.getDonorPledges(requirementId);
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<bool> closeRequest(String id) async {
     try {
       final updated = await _service.cancelRequirement(id);

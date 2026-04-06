@@ -254,19 +254,6 @@ class AuthViewModel extends StateNotifier<AuthState> {
 
   void clearError() => state = state.copyWith(clearError: true);
 
-  Future<void> persistLastDonationDate(DateTime donationDate) async {
-    if (state.user != null) {
-      state = state.copyWith(
-        user: state.user!.copyWith(lastDonationDate: donationDate),
-      );
-    }
-    try {
-      await _authService.updateProfile({
-        'lastDonationDate': donationDate.toIso8601String(),
-      });
-    } catch (_) {}
-  }
-
   Future<void> refreshProfile() async {
     if (state.user == null) {
       state = state.copyWith(isLoading: true);
@@ -274,14 +261,13 @@ class AuthViewModel extends StateNotifier<AuthState> {
     try {
       final user  = await _authService.getProfile();
       final count = await _fetchDonationCount();
-      final resolvedLastDonation =
-          user.lastDonationDate ?? state.user?.lastDonationDate;
+      // Always use the server's lastDonationDate — never fall back to the
+      // previously cached value. The server is the single source of truth.
+      // Falling back to state.user?.lastDonationDate caused cross-user
+      // contamination when logging out and back in as a different user.
       state = state.copyWith(
         isLoading: false,
-        user: user.copyWith(
-          donationCount: count,
-          lastDonationDate: resolvedLastDonation,
-        ),
+        user: user.copyWith(donationCount: count),
       );
     } on ApiException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
@@ -312,12 +298,9 @@ class AuthViewModel extends StateNotifier<AuthState> {
     try {
       final user  = await _authService.getProfile();
       final count = await _fetchDonationCount();
+      // Always trust the server's lastDonationDate — no local fallback.
       state = state.copyWith(
-        user: user.copyWith(
-          donationCount: count,
-          lastDonationDate:
-              user.lastDonationDate ?? state.user?.lastDonationDate,
-        ),
+        user: user.copyWith(donationCount: count),
       );
     } on UnauthorizedException {
       // Token rejected — account deleted or revoked on the backend

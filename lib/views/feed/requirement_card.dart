@@ -12,6 +12,7 @@ import '../../services/reminder_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/blood_type_badge.dart';
+import '../../widgets/schedule_pledge_modal.dart';
 
 class RequirementCard extends ConsumerWidget {
   final BloodRequirement requirement;
@@ -22,8 +23,21 @@ class RequirementCard extends ConsumerWidget {
       requirement.status == 'Fulfilled' || requirement.status == 'Cancelled';
 
   Future<void> _handleDonate(BuildContext context, WidgetRef ref) async {
+    // Step 1: ask for scheduled date + time
+    final schedule = await showSchedulePledgeModal(
+      context,
+      patientName: requirement.patientName,
+      bloodType:   requirement.bloodType,
+    );
+    if (schedule == null) return; // user cancelled
+    if (!context.mounted) return;
+
     final vm      = ref.read(requirementsViewModelProvider.notifier);
-    final updated = await vm.donate(requirement.id);
+    final updated = await vm.donate(
+      requirement.id,
+      scheduledDate: schedule.scheduledDate,
+      scheduledTime: schedule.scheduledTime,
+    );
 
     if (!context.mounted) return;
 
@@ -41,8 +55,9 @@ class RequirementCard extends ConsumerWidget {
       return;
     }
 
-    // Auto-schedule eligibility reminder
-    await ReminderService().scheduleEligibilityReminder(DateTime.now());
+    // NOTE: ReminderService.scheduleEligibilityReminder is NOT called here.
+    // The 90-day cooldown only starts when the requester marks the donation
+    // as Completed. The reminder is triggered from the status modal at that point.
 
     if (context.mounted) {
       context.push('/accepted', extra: {
@@ -79,8 +94,15 @@ class RequirementCard extends ConsumerWidget {
     // Eligibility: user is ineligible if within 90-day cooldown after donation
     final lastDonation    = authState.user?.lastDonationDate;
     final isInCooldown    = !ReminderService.isEligible(lastDonation);
+    // Unavailable donors cannot pledge
+    final isUnavailable   = authState.user?.isAvailable == false;
     // Fix #1: show "Already Donated" when user already donated to this multi-unit request
     final showAlreadyDonated = hasDonated && !_isClosed;
+    // Check if this specific pledge is pending (scheduled but not yet approved)
+    final myPledge = requirement.donorPledges
+        .where((p) => p.donorUsername == (authState.user?.username ?? ''))
+        .firstOrNull;
+    final isScheduledPending = myPledge != null && myPledge.isPending;
 
     return Opacity(
       opacity: _isClosed ? 0.5 : 1.0,
@@ -187,8 +209,8 @@ class RequirementCard extends ConsumerWidget {
 
                 const SizedBox(height: 12),
 
-                // Fix #1: Already Donated button replaces I'll Donate / Can't help
-                if (showAlreadyDonated)
+                // Fix #1: Already Donated (Completed) badge
+                if (showAlreadyDonated && !isScheduledPending)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 11),
@@ -209,6 +231,33 @@ class RequirementCard extends ConsumerWidget {
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF085041),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                // Scheduled / awaiting approval badge
+                else if (isScheduledPending)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFCD34D)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.hourglass_top_rounded,
+                            size: 14, color: Color(0xFF92400E)),
+                        const SizedBox(width: 6),
+                        Text(
+                          '⏳ Scheduled — awaiting approval',
+                          style: GoogleFonts.syne(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF92400E),
                           ),
                         ),
                       ],
@@ -236,6 +285,33 @@ class RequirementCard extends ConsumerWidget {
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: AppColors.moderateAccent,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                // Unavailable donor — matching type only
+                else if (canDonate && isUnavailable)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    decoration: BoxDecoration(
+                      color: AppColors.closedBg,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.closedBorder),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.do_not_disturb_rounded,
+                            size: 14, color: AppColors.closedAccent),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Update availability in Profile',
+                          style: GoogleFonts.syne(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.closedText,
                           ),
                         ),
                       ],

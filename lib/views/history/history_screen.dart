@@ -117,7 +117,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                           donations: state.myDonations,
                           onRefresh: () => vm.load(),
                         ),
-                        // Tab 2: Completed — all Fulfilled/Cancelled requests from the feed
+                        // Tab 2: Completed — the current user's own Fulfilled/Cancelled requests
                         _CompletedTab(
                           requests: state.completedRequests,
                           onRefresh: () => vm.load(),
@@ -174,125 +174,222 @@ class _DonationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCompleted = donation.isCompleted;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: const Border.fromBorderSide(BorderSide(color: AppColors.border)),
+        border: Border.all(
+          color: isCompleted
+              ? const Color(0xFF86EFAC)
+              : const Color(0xFFFCD34D),
+          width: 1.5,
+        ),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Blood type indicator
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Center(
-              child: Text(
-                donation.bloodType,
-                style: GoogleFonts.dmSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(14),
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  donation.hospital.isNotEmpty
-                      ? donation.hospital
-                      : 'Blood Donation',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                if (donation.patientName.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    donation.patientName,
+                child: Center(
+                  child: Text(
+                    donation.bloodType,
                     style: GoogleFonts.dmSans(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
+                      fontSize: 13, fontWeight: FontWeight.w700,
+                      color: Colors.white,
                     ),
                   ),
-                ],
-                if (donation.location.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 11, color: AppColors.textMuted),
-                      const SizedBox(width: 3),
-                      Text(
-                        donation.location,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 10,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 4),
-                Text(
-                  _formatDateTime(donation.donatedAt),
-                  style: GoogleFonts.dmSans(
-                    fontSize: 10,
-                    color: AppColors.textVeryMuted,
-                  ),
                 ),
-              ],
-            ),
-          ),
-          // "Pledged" badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: AppColors.secondaryLight,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              AppConfig.historyDonatedBadge,
-              style: GoogleFonts.dmSans(
-                fontSize: 9,
-                fontWeight: FontWeight.w600,
-                color: AppColors.secondary,
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      donation.hospital.isNotEmpty
+                          ? donation.hospital
+                          : 'Blood Donation',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 14, fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    if (donation.patientName.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(donation.patientName,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 11, color: AppColors.textSecondary,
+                          )),
+                    ],
+                    if (donation.location.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Row(children: [
+                        const Icon(Icons.location_on_outlined,
+                            size: 11, color: AppColors.textMuted),
+                        const SizedBox(width: 3),
+                        Text(donation.location,
+                            style: GoogleFonts.dmSans(
+                              fontSize: 10, color: AppColors.textMuted,
+                            )),
+                      ]),
+                    ],
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatDateTime(donation.donatedAt),
+                      style: GoogleFonts.dmSans(
+                        fontSize: 10, color: AppColors.textVeryMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Donation status badge
+              _DonationStatusBadge(isCompleted: isCompleted),
+            ],
           ),
+
+          // Scheduled date + time
+          if (donation.scheduledDate.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Divider(height: 1, color: AppColors.borderSoft),
+            const SizedBox(height: 8),
+            Row(children: [
+              const Icon(Icons.calendar_today_rounded,
+                  size: 12, color: AppColors.plannedAccent),
+              const SizedBox(width: 6),
+              Text(
+                '${AppConfig.donorScheduledPrefix}${_formatSchedule(donation.scheduledDate, donation.scheduledTime)}',
+                style: GoogleFonts.dmSans(
+                  fontSize: 11, fontWeight: FontWeight.w500,
+                  color: AppColors.plannedText,
+                ),
+              ),
+            ]),
+          ],
+
+          // Request status
+          const SizedBox(height: 8),
+          Row(children: [
+            const Icon(Icons.local_hospital_outlined,
+                size: 12, color: AppColors.textMuted),
+            const SizedBox(width: 6),
+            Text('Request: ',
+                style: GoogleFonts.dmSans(fontSize: 11, color: AppColors.textMuted)),
+            _ReqStatusChip(status: donation.status),
+          ]),
         ],
       ),
     );
   }
 
   String _formatDateTime(DateTime dt) {
-    final now = DateTime.now();
+    final now  = DateTime.now();
     final diff = now.difference(dt);
     if (diff.inDays == 0) return 'Today · ${DateFormat('h:mm a').format(dt)}';
     if (diff.inDays == 1) return 'Yesterday · ${DateFormat('h:mm a').format(dt)}';
-    if (diff.inDays < 7) return '${diff.inDays} days ago · ${DateFormat('h:mm a').format(dt)}';
+    if (diff.inDays < 7)  return '${diff.inDays} days ago · ${DateFormat('h:mm a').format(dt)}';
     return DateFormat('d MMM yyyy · h:mm a').format(dt);
+  }
+
+  String _formatSchedule(String date, String time) {
+    try {
+      final d    = DateTime.parse(date);
+      final fmtd = DateFormat('d MMM yyyy').format(d);
+      return time.isNotEmpty ? '$fmtd  🕐 $time' : fmtd;
+    } catch (_) {
+      return time.isNotEmpty ? '$date  $time' : date;
+    }
+  }
+}
+
+class _DonationStatusBadge extends StatelessWidget {
+  final bool isCompleted;
+  const _DonationStatusBadge({required this.isCompleted});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isCompleted
+            ? const Color(0xFFDCFCE7)
+            : const Color(0xFFFEF3C7),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isCompleted
+              ? const Color(0xFF86EFAC)
+              : const Color(0xFFFCD34D),
+        ),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(
+          isCompleted
+              ? Icons.check_circle_outline_rounded
+              : Icons.hourglass_top_rounded,
+          size: 10,
+          color: isCompleted
+              ? const Color(0xFF15803D)
+              : const Color(0xFF92400E),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          isCompleted
+              ? AppConfig.donationStatusCompleted
+              : AppConfig.donationStatusPending,
+          style: GoogleFonts.dmSans(
+            fontSize: 9, fontWeight: FontWeight.w600,
+            color: isCompleted
+                ? const Color(0xFF15803D)
+                : const Color(0xFF92400E),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+class _ReqStatusChip extends StatelessWidget {
+  final String status;
+  const _ReqStatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color;
+    if (status == 'Fulfilled')      color = AppColors.secondary;
+    else if (status == 'Cancelled') color = AppColors.closedAccent;
+    else                            color = AppColors.primary;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text(status,
+          style: GoogleFonts.dmSans(
+            fontSize: 9, fontWeight: FontWeight.w600, color: color,
+          )),
+    );
   }
 }
 
 // ── Completed Tab ─────────────────────────────────────────────
-// Shows all Fulfilled and Cancelled blood requests from the feed.
-// Any user can see these — not limited to their own requests.
+// Shows the current user's OWN blood requests that are Fulfilled or Cancelled.
+// Uses /my-requirements, so only requests they created are shown.
 class _CompletedTab extends StatelessWidget {
-  final List<BloodRequirement>  requests;
+  final List<BloodRequirement> requests;
   final Future<void> Function() onRefresh;
 
   const _CompletedTab({required this.requests, required this.onRefresh});

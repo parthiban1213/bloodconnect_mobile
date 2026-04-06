@@ -22,12 +22,13 @@ class AuthService {
   Future<bool> sendOtp(String mobile) async {
     final res = await _client.post('/auth/otp/send', data: {'mobile': mobile});
     print('[AuthService] sendOtp response: $res');
-    final isExistingUser  = res['isExistingUser']  == true;
-    final isExistingDonor = res['isExistingDonor'] == true;
-    final success         = res['success']          == true;
-    final sent            = res['sent']             == true;
-    final otpSent         = res['otpSent']          == true;
-    if (!isExistingUser && !isExistingDonor && !success && !sent && !otpSent) {
+    // Backend returns success:true when OTP was sent to an existing account.
+    // If the account doesn't exist it returns 404 and ApiClient throws ApiException,
+    // which the caller catches as OtpNoAccountException.
+    final success = res['success'] == true;
+    final sent    = res['sent']    == true;
+    final otpSent = res['otpSent'] == true;
+    if (!success && !sent && !otpSent) {
       throw OtpNoAccountException();
     }
     return true;

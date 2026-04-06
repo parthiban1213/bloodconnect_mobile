@@ -406,13 +406,27 @@ class _RequestCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '${requirement.unitsFulfilled}/${requirement.unitsRequired} units',
-                style: GoogleFonts.dmSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${requirement.unitsFulfilled}/${requirement.unitsRequired} units',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  if (requirement.pendingCount > 0 && requirement.isOpen)
+                    Text(
+                      '+${requirement.pendingCount}${AppConfig.pendingCountSuffix}',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF92400E),
+                      ),
+                    ),
+                ],
               ),
               Text(
                 '${requirement.donorCount} donor${requirement.donorCount != 1 ? 's' : ''}',
@@ -444,7 +458,11 @@ class _RequestCard extends ConsumerWidget {
               // View Status
               Expanded(
                 child: GestureDetector(
-                  onTap: () => showRequestStatusModal(context, requirement),
+                  onTap: () => showRequestStatusModal(
+                    context,
+                    requirement,
+                    isRequester: true,
+                  ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
@@ -517,7 +535,11 @@ class _RequestCard extends ConsumerWidget {
             // Fulfilled or Cancelled — show View Status so user can see donor details
             const SizedBox(height: 12),
             GestureDetector(
-              onTap: () => showRequestStatusModal(context, requirement),
+              onTap: () => showRequestStatusModal(
+                context,
+                requirement,
+                isRequester: true,
+              ),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 10),

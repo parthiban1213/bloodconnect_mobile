@@ -6,6 +6,7 @@ import '../../viewmodels/requirements_viewmodel.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_config.dart';
 import '../../widgets/app_widgets.dart';
+import '../../services/reminder_service.dart';
 import 'requirement_card.dart';
 import '../../widgets/password_prompt_dialog.dart';
 
@@ -428,6 +429,40 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
               ),
             ),
 
+            // ── Cooldown / unavailable banners ────────────────────────────
+            Builder(builder: (context) {
+              final lastDonation  = authState.user?.lastDonationDate;
+              final isInCooldown  = !ReminderService.isEligible(lastDonation);
+              final isUnavailable = authState.user?.isAvailable == false;
+              final nextDate      = ReminderService.nextEligibleDate(lastDonation);
+              final daysLeft      = ReminderService.daysUntilEligible(lastDonation);
+
+              if (!isInCooldown && !isUnavailable) return const SizedBox.shrink();
+              return Column(children: [
+                if (isUnavailable)
+                  _FeedBanner(
+                    icon: Icons.do_not_disturb_rounded,
+                    color: AppColors.closedAccent,
+                    bgColor: AppColors.closedBg,
+                    borderColor: AppColors.closedBorder,
+                    message: AppConfig.unavailableBanner,
+                  ),
+                if (isInCooldown && nextDate != null)
+                  _FeedBanner(
+                    icon: Icons.hourglass_top_rounded,
+                    color: const Color(0xFF92400E),
+                    bgColor: const Color(0xFFFEF3C7),
+                    borderColor: const Color(0xFFFCD34D),
+                    message:
+                        '${AppConfig.cooldownBannerTitle} — '
+                        '${AppConfig.cooldownBannerPrefix}'
+                        '${nextDate.day} ${_monthAbbr(nextDate.month)} ${nextDate.year}'
+                        ' ($daysLeft day${daysLeft != 1 ? 's' : ''}'
+                        '${AppConfig.cooldownBannerSuffix})',
+                  ),
+              ]);
+            }),
+
             // ── Feed list ─────────────────────────────────────────────────
             Expanded(
               child: reqState.isLoading
@@ -475,6 +510,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       ),
       ),
     );
+  }
+
+  static String _monthAbbr(int month) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun',
+                    'Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[(month - 1).clamp(0, 11)];
   }
 
   Widget _buildList(RequirementsState state) {
@@ -573,4 +614,48 @@ class _OpenRequestCount extends StatelessWidget {
           ],
         ),
       );
+}
+
+// ── Banner widget shown above the feed for cooldown / unavailable ─────────────
+class _FeedBanner extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final Color bgColor;
+  final Color borderColor;
+  final String message;
+
+  const _FeedBanner({
+    required this.icon,
+    required this.color,
+    required this.bgColor,
+    required this.borderColor,
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderColor, width: 1.5),
+      ),
+      child: Row(children: [
+        Icon(icon, size: 15, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            message,
+            style: GoogleFonts.dmSans(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
 }

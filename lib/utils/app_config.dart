@@ -174,6 +174,7 @@ class AppConfig {
   static const String detailHospitalContact = 'HOSPITAL CONTACT';
   static const String detailRequiredBy      = 'Required by: ';
   static const String detailAlreadyDonated  = 'Already Donated';
+  static const String detailScheduledPending = 'Scheduled — awaiting approval';
 
   // ── Directory screen ─────────────────────────────────────────
   static const String directoryTitle       = 'Directory';
@@ -209,7 +210,7 @@ class AppConfig {
       'When you pledge to donate blood, your donations will appear here.';
   static const String historyNoCompleted          = 'No completed requests';
   static const String historyNoCompletedSubtitle  =
-      'Fulfilled and cancelled blood requests will appear here.';
+      'Your fulfilled and cancelled blood requests will appear here.';
   static const String historyDonatedBadge         = 'Donated';
 
   // ── My Requests screen ───────────────────────────────────────
@@ -406,6 +407,46 @@ class AppConfig {
   static const String myReqStatusOpen      = 'Open';
   static const String myReqCloseAction     = 'Close';
   static const String myReqCancelAction    = 'Cancel';
+
+  // ── Pledge schedule modal ────────────────────────────────────
+  static const String pledgeModalTitle       = 'Schedule Donation';
+  static const String pledgeModalSubtitle    = 'Choose when you plan to donate';
+  static const String pledgeModalDateLabel   = 'Donation Date';
+  static const String pledgeModalTimeLabel   = 'Preferred Time';
+  static const String pledgeModalDateHint    = 'Select date';
+  static const String pledgeModalTimeHint    = 'Select time';
+  static const String pledgeModalConfirmBtn  = 'Confirm Pledge';
+  static const String pledgeModalCancelBtn   = 'Cancel';
+  static const String pledgeModalDateError   = 'Please select a donation date.';
+  static const String pledgeModalTimeError   = 'Please select a preferred time.';
+
+  // ── Cooldown / eligibility banner on feed ────────────────────
+  static const String cooldownBannerTitle    = 'Not eligible to donate yet';
+  static const String cooldownBannerPrefix   = 'Next eligible date: ';
+  static const String cooldownBannerSuffix   = ' remaining';
+
+  // ── Unavailable donor banner ─────────────────────────────────
+  static const String unavailableBanner      = 'You are marked as Unavailable. Update in Profile to donate.';
+
+  // ── Donor list in status modal ───────────────────────────────
+  static const String donorListSectionTitle  = 'DONORS WHO RESPONDED';
+  static const String donorListEmpty         = 'No donors have pledged yet.';
+  static const String donorListLoading       = 'Loading donors…';
+  static const String donorListError         = 'Could not load donor list.';
+  static const String donorScheduledPrefix   = 'Scheduled: ';
+  static const String donorNoSchedule        = 'No date scheduled';
+  static const String donorMarkCompleted     = 'Mark Completed';
+  static const String donorRevertPending     = 'Revert to Pending';
+  static const String donorCompletedSuccess  = 'Marked as Completed!';
+  static const String donorPendingSuccess    = 'Reverted to Pending.';
+  static const String donorStatusError       = 'Failed to update status.';
+
+  // ── Donation status badges ───────────────────────────────────
+  static const String donationStatusPending   = 'Pending';
+  static const String donationStatusCompleted = 'Completed';
+
+  // ── Pending count label on My Requests card ──────────────────
+  static const String pendingCountSuffix = ' pending approval';
 
   // ── Request status modal — stat card labels ──────────────────
   static const String modalDonorsLabel        = 'Donors';
