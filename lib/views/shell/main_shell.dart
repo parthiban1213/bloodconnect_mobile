@@ -23,8 +23,8 @@ class MainShell extends ConsumerStatefulWidget {
 class _MainShellState extends ConsumerState<MainShell> {
 
   static const _allTabs = [
-    _Tab('/feed',        Icons.grid_view_rounded,              Icons.grid_view_rounded,          'Feed'),
     _Tab('/my-requests', Icons.bloodtype_outlined,             Icons.bloodtype_rounded,          'Requests'),
+    _Tab('/feed',        Icons.grid_view_rounded,              Icons.grid_view_rounded,          'Feed'),
     _Tab('/donors',      Icons.volunteer_activism_outlined,    Icons.volunteer_activism_rounded, 'Donors'),
   ];
 
