@@ -11,7 +11,7 @@ class DonorsService {
   }) async {
     final params = <String, dynamic>{};
     if (bloodType != null) params['bloodType'] = bloodType;
-    if (isAvailable != null) params['isAvailable'] = isAvailable;
+    if (isAvailable != null) params['available'] = isAvailable;
     if (search != null && search.isNotEmpty) params['search'] = search;
 
     final res = await _client.get('/donors', queryParams: params.isEmpty ? null : params);

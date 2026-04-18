@@ -40,6 +40,9 @@ class BloodRequirement {
   final String patientName;
   final String hospital;
   final String location;
+  final String city;
+  final double? latitude;
+  final double? longitude;
   final String contactPerson;
   final String contactPhone;
   final String bloodType;
@@ -57,12 +60,12 @@ class BloodRequirement {
   final String createdBy;
   final DateTime createdAt;
   final DateTime updatedAt;
+  /// Distance in km from the user's current location (server-calculated).
+  /// Null when user location is unavailable or the request has no coordinates.
+  final double? distanceKm;
   /// Usernames of every donor who has pledged to this requirement.
-  /// Populated from the `donations[].donorUsername` array returned by the server.
-  /// Used to show "Already Donated" without any client-side storage.
   final List<String> donorUsernames;
   /// Full pledge objects — populated when the donor list is fetched
-  /// (GET /requirements/:id/donors). Used in the status modal.
   final List<DonorPledge> donorPledges;
 
   BloodRequirement({
@@ -70,6 +73,9 @@ class BloodRequirement {
     required this.patientName,
     required this.hospital,
     this.location = '',
+    this.city = '',
+    this.latitude,
+    this.longitude,
     required this.contactPerson,
     required this.contactPhone,
     required this.bloodType,
@@ -84,6 +90,7 @@ class BloodRequirement {
     this.createdBy = '',
     required this.createdAt,
     required this.updatedAt,
+    this.distanceKm,
     this.donorUsernames = const [],
     this.donorPledges = const [],
   }) : remainingUnits = remainingUnits ?? unitsRequired;
@@ -105,8 +112,7 @@ class BloodRequirement {
     // pendingCount — number of Pending pledges (from /my-requirements)
     final pendingCount = (json['pendingCount'] as num?)?.toInt() ?? 0;
 
-    // Parse donor usernames from the donations array so the app can
-    // determine server-side whether the current user already donated.
+    // Parse donor usernames from the donations array
     final donorUsernames = <String>[];
     final donorPledges   = <DonorPledge>[];
     if (json['donations'] is List) {
@@ -126,6 +132,9 @@ class BloodRequirement {
       patientName:    json['patientName'] ?? '',
       hospital:       json['hospital'] ?? '',
       location:       json['location'] ?? '',
+      city:           json['city'] ?? '',
+      latitude:       (json['latitude'] as num?)?.toDouble(),
+      longitude:      (json['longitude'] as num?)?.toDouble(),
       contactPerson:  json['contactPerson'] ?? '',
       contactPhone:   json['contactPhone'] ?? '',
       bloodType:      json['bloodType'] ?? '',
@@ -146,6 +155,7 @@ class BloodRequirement {
       updatedAt: json['updatedAt'] != null
           ? DateTime.tryParse(json['updatedAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
+      distanceKm:     (json['distanceKm'] as num?)?.toDouble(),
       donorUsernames: donorUsernames,
       donorPledges:   donorPledges,
     );
@@ -155,6 +165,7 @@ class BloodRequirement {
         'patientName':   patientName,
         'hospital':      hospital,
         'location':      location,
+        'city':          city,
         'contactPerson': contactPerson,
         'contactPhone':  contactPhone,
         'bloodType':     bloodType,
@@ -167,11 +178,13 @@ class BloodRequirement {
 
   BloodRequirement copyWith({
     String? id, String? patientName, String? hospital, String? location,
+    String? city, double? latitude, double? longitude,
     String? contactPerson, String? contactPhone, String? bloodType,
     int? unitsRequired, int? remainingUnits, int? donationsCount,
     int? pendingCount,
     String? urgency, DateTime? requiredBy, String? notes, String? status,
     String? createdBy, DateTime? createdAt, DateTime? updatedAt,
+    double? distanceKm,
     List<String>? donorUsernames,
     List<DonorPledge>? donorPledges,
   }) {
@@ -180,6 +193,9 @@ class BloodRequirement {
       patientName:    patientName ?? this.patientName,
       hospital:       hospital ?? this.hospital,
       location:       location ?? this.location,
+      city:           city ?? this.city,
+      latitude:       latitude ?? this.latitude,
+      longitude:      longitude ?? this.longitude,
       contactPerson:  contactPerson ?? this.contactPerson,
       contactPhone:   contactPhone ?? this.contactPhone,
       bloodType:      bloodType ?? this.bloodType,
@@ -194,6 +210,7 @@ class BloodRequirement {
       createdBy:      createdBy ?? this.createdBy,
       createdAt:      createdAt ?? this.createdAt,
       updatedAt:      updatedAt ?? this.updatedAt,
+      distanceKm:     distanceKm ?? this.distanceKm,
       donorUsernames: donorUsernames ?? this.donorUsernames,
       donorPledges:   donorPledges ?? this.donorPledges,
     );
@@ -219,4 +236,8 @@ class BloodRequirement {
   /// Returns true if [username] has already donated to this requirement.
   bool hasDonatedBy(String username) =>
       username.isNotEmpty && donorUsernames.contains(username);
+
+  /// Formatted distance string for display (e.g. "2.5 km away")
+  String? get distanceDisplay =>
+      distanceKm != null ? '${distanceKm!.toStringAsFixed(1)} km away' : null;
 }

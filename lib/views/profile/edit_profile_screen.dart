@@ -38,6 +38,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _emailCtrl;
   late final TextEditingController _mobileCtrl;
   late final TextEditingController _addressCtrl;
+  late final TextEditingController _cityCtrl;
 
   String? _selectedBloodType;
   bool    _controllersFilled = false; // guard: only fill once
@@ -53,6 +54,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _emailCtrl     = TextEditingController(text: user?.email     ?? '');
     _mobileCtrl    = TextEditingController(text: user?.mobile    ?? '');
     _addressCtrl   = TextEditingController(text: user?.address   ?? '');
+    _cityCtrl      = TextEditingController(text: user?.city      ?? '');
     _selectedBloodType =
         (user?.bloodType.isNotEmpty == true) ? user!.bloodType : null;
 
@@ -91,6 +93,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (user.address.isNotEmpty && _addressCtrl.text.isEmpty) {
       _addressCtrl.text = user.address;
     }
+    if (user.city.isNotEmpty && _cityCtrl.text.isEmpty) {
+      _cityCtrl.text = user.city;
+    }
     if (_selectedBloodType == null && user.bloodType.isNotEmpty) {
       setState(() => _selectedBloodType = user.bloodType);
     }
@@ -103,6 +108,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _emailCtrl.dispose();
     _mobileCtrl.dispose();
     _addressCtrl.dispose();
+    _cityCtrl.dispose();
     super.dispose();
   }
 
@@ -116,6 +122,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       'lastName':  _lastNameCtrl.text.trim(),
       'email':     _emailCtrl.text.trim(),
       'address':   _addressCtrl.text.trim(),
+      'city':      _cityCtrl.text.trim(),
     };
     if (_selectedBloodType != null) data['bloodType'] = _selectedBloodType;
     if (_mobileCtrl.text.trim().isNotEmpty) data['mobile'] = _mobileCtrl.text.trim();
@@ -209,11 +216,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         formatters: [FilteringTextInputFormatter.digitsOnly])),
                     _Row(
                       label: AppConfig.editProfileAddress,
-                      isLast: true,
+                      isLast: false,
                       child: _EditTextField(
                         ctrl: _addressCtrl,
                         hint: AppConfig.editProfileAddressHint,
                         maxLines: 2)),
+                    _Row(
+                      label: 'City',
+                      isLast: true,
+                      child: _EditTextField(
+                        ctrl: _cityCtrl,
+                        hint: 'e.g. Coimbatore')),
                   ]),
                   const SizedBox(height: 12),
 

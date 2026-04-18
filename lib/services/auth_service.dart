@@ -64,6 +64,7 @@ class AuthService {
     required String bloodType,
     required String email,
     String? address,
+    String? city,
     DateTime? lastDonationDate,
   }) async {
     final res = await _client.post('/auth/register-direct', data: {
@@ -75,6 +76,7 @@ class AuthService {
       'bloodType': bloodType,
       'email':     email,
       if (address != null && address.isNotEmpty) 'address': address,
+      if (city != null && city.isNotEmpty) 'city': city,
       if (lastDonationDate != null)
         'lastDonationDate': lastDonationDate.toIso8601String(),
     });

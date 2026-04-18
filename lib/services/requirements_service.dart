@@ -2,21 +2,78 @@ import '../models/blood_requirement.dart';
 import '../models/donation_history.dart';
 import 'api_client.dart';
 
+class PaginatedRequirements {
+  final List<BloodRequirement> items;
+  final int page;
+  final int totalPages;
+  final int total;
+
+  const PaginatedRequirements({
+    required this.items,
+    required this.page,
+    required this.totalPages,
+    required this.total,
+  });
+}
+
 class RequirementsService {
   final ApiClient _client = ApiClient.instance;
 
-  Future<List<BloodRequirement>> getRequirements({
+  Future<PaginatedRequirements> getRequirements({
     String? status,
     String? urgency,
     String? bloodType,
+    String? city,
+    double? latitude,
+    double? longitude,
+    double? maxDistance,
+    int page = 1,
+    int limit = 20,
   }) async {
-    final params = <String, dynamic>{};
-    if (status != null) params['status'] = status;
-    if (urgency != null) params['urgency'] = urgency;
+    final params = <String, dynamic>{
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
+    if (status != null)    params['status'] = status;
+    if (urgency != null)   params['urgency'] = urgency;
     if (bloodType != null) params['bloodType'] = bloodType;
+    if (city != null && city.isNotEmpty) params['city'] = city;
+    if (latitude != null)  params['latitude'] = latitude.toString();
+    if (longitude != null) params['longitude'] = longitude.toString();
+    if (maxDistance != null) params['maxDistance'] = maxDistance.toString();
 
-    final res = await _client.get('/requirements',
-        queryParams: params.isEmpty ? null : params);
+    final res = await _client.get('/requirements', queryParams: params);
+    final data = res['data'] as List<dynamic>? ?? [];
+    final pagination = res['pagination'] as Map<String, dynamic>?;
+
+    final items = data
+        .map((e) => BloodRequirement.fromJson(e as Map<String, dynamic>))
+        .toList();
+
+    return PaginatedRequirements(
+      items: items,
+      page: pagination?['page'] as int? ?? page,
+      totalPages: pagination?['totalPages'] as int? ?? 1,
+      total: pagination?['total'] as int? ?? items.length,
+    );
+  }
+
+  /// Legacy non-paginated fetch (used by silent refresh to get all).
+  Future<List<BloodRequirement>> getAllRequirements({
+    double? latitude,
+    double? longitude,
+    String? city,
+    double? maxDistance,
+  }) async {
+    final params = <String, dynamic>{
+      'limit': '500', // large limit to get all
+    };
+    if (city != null && city.isNotEmpty) params['city'] = city;
+    if (latitude != null)    params['latitude'] = latitude.toString();
+    if (longitude != null)   params['longitude'] = longitude.toString();
+    if (maxDistance != null) params['maxDistance'] = maxDistance.toString();
+
+    final res = await _client.get('/requirements', queryParams: params);
     final data = res['data'] as List<dynamic>? ?? [];
     return data
         .map((e) => BloodRequirement.fromJson(e as Map<String, dynamic>))
@@ -61,11 +118,6 @@ class RequirementsService {
   }
 
   // ── Donate endpoint ─────────────────────────────────────────
-  // Donor pledges with a scheduled date + time.
-  // donationStatus is always 'Pending' — the requester must mark
-  // it 'Completed' later to trigger the 90-day cooldown.
-  // Backend POST returns: { success, message, data: { remainingUnits, status } }
-  // NOT a full BloodRequirement — we re-fetch after pledging.
   Future<BloodRequirement> donateToRequirement(
     String id, {
     required String scheduledDate,
@@ -85,8 +137,6 @@ class RequirementsService {
   }
 
   // ── Donor list (requester / admin only) ─────────────────────
-  // GET /requirements/:id/donors
-  // Returns the full donations[] array for a requirement.
   Future<List<DonorPledge>> getDonorPledges(String requirementId) async {
     final res = await _client.get('/requirements/$requirementId/donors');
     final data = res['data'] as List<dynamic>? ?? [];
@@ -96,10 +146,6 @@ class RequirementsService {
   }
 
   // ── Update donation status (requester / admin only) ─────────
-  // POST /requirements/:id/donations/:donorUsername/status
-  // newStatus: 'Completed' | 'Pending'
-  // On Completed: backend sets lastDonationDate on donor, decrements
-  // remainingUnits, marks Fulfilled if done, removes other pledges.
   Future<Map<String, dynamic>> updateDonationStatus({
     required String requirementId,
     required String donorUsername,

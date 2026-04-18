@@ -2,8 +2,43 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/blood_requirement.dart';
 import '../services/requirements_service.dart';
+import '../services/location_service.dart';
 import '../utils/api_exception.dart';
 import 'auth_viewmodel.dart';
+
+/// Distance filter options for the feed
+enum LocationFilterRadius {
+  nearby5km,
+  nearby10km,
+  nearby25km,
+  nearby50km,
+  sameCity,
+  allLocations,
+}
+
+extension LocationFilterRadiusExt on LocationFilterRadius {
+  String get label {
+    switch (this) {
+      case LocationFilterRadius.nearby5km:    return '5 km';
+      case LocationFilterRadius.nearby10km:   return '10 km';
+      case LocationFilterRadius.nearby25km:   return '25 km';
+      case LocationFilterRadius.nearby50km:   return '50 km';
+      case LocationFilterRadius.sameCity:     return 'My City';
+      case LocationFilterRadius.allLocations: return 'All Locations';
+    }
+  }
+
+  double? get distanceKm {
+    switch (this) {
+      case LocationFilterRadius.nearby5km:    return 5;
+      case LocationFilterRadius.nearby10km:   return 10;
+      case LocationFilterRadius.nearby25km:   return 25;
+      case LocationFilterRadius.nearby50km:   return 50;
+      case LocationFilterRadius.sameCity:     return null;
+      case LocationFilterRadius.allLocations: return null;
+    }
+  }
+}
 
 class RequirementsState {
   final bool isLoading;
@@ -14,21 +49,36 @@ class RequirementsState {
   final String searchQuery;
   final Set<String> donatingIds;
   final Set<String> declinedIds;
-  /// IDs of requirements the current user has already donated to.
-  /// Derived from server data (donations[].donorUsername) on every load —
-  /// no local storage needed, survives logout/login automatically.
   final Set<String> donatedIds;
 
+  // ── Pagination ────────────────────────────────────────────────
+  final int currentPage;
+  final int totalPages;
+  final int totalItems;
+  final bool isLoadingMore;
+
+  // ── Location ──────────────────────────────────────────────────
+  final UserLocation? userLocation;
+  final bool locationLoading;
+  final LocationFilterRadius locationFilter;
+
   const RequirementsState({
-    this.isLoading      = false,
-    this.requirements   = const [],
+    this.isLoading       = false,
+    this.requirements    = const [],
     this.error,
-    this.selectedFilter = 'All',
-    this.userBloodType  = '',
-    this.searchQuery    = '',
-    this.donatingIds    = const {},
-    this.declinedIds    = const {},
-    this.donatedIds     = const {},
+    this.selectedFilter  = 'All',
+    this.userBloodType   = '',
+    this.searchQuery     = '',
+    this.donatingIds     = const {},
+    this.declinedIds     = const {},
+    this.donatedIds      = const {},
+    this.currentPage     = 1,
+    this.totalPages      = 1,
+    this.totalItems      = 0,
+    this.isLoadingMore   = false,
+    this.userLocation,
+    this.locationLoading = false,
+    this.locationFilter  = LocationFilterRadius.allLocations,
   });
 
   RequirementsState copyWith({
@@ -41,7 +91,15 @@ class RequirementsState {
     Set<String>? donatingIds,
     Set<String>? declinedIds,
     Set<String>? donatedIds,
+    int? currentPage,
+    int? totalPages,
+    int? totalItems,
+    bool? isLoadingMore,
+    UserLocation? userLocation,
+    bool? locationLoading,
+    LocationFilterRadius? locationFilter,
     bool clearError = false,
+    bool clearLocation = false,
   }) {
     return RequirementsState(
       isLoading:      isLoading ?? this.isLoading,
@@ -53,6 +111,13 @@ class RequirementsState {
       donatingIds:    donatingIds ?? this.donatingIds,
       declinedIds:    declinedIds ?? this.declinedIds,
       donatedIds:     donatedIds ?? this.donatedIds,
+      currentPage:    currentPage ?? this.currentPage,
+      totalPages:     totalPages ?? this.totalPages,
+      totalItems:     totalItems ?? this.totalItems,
+      isLoadingMore:  isLoadingMore ?? this.isLoadingMore,
+      userLocation:   clearLocation ? null : (userLocation ?? this.userLocation),
+      locationLoading: locationLoading ?? this.locationLoading,
+      locationFilter: locationFilter ?? this.locationFilter,
     );
   }
 
@@ -90,12 +155,16 @@ class RequirementsState {
         return r.hospital.toLowerCase().contains(q) ||
                r.bloodType.toLowerCase().contains(q) ||
                r.patientName.toLowerCase().contains(q) ||
-               r.location.toLowerCase().contains(q);
+               r.location.toLowerCase().contains(q) ||
+               r.city.toLowerCase().contains(q);
       }).toList();
     }
 
     return base;
   }
+
+  bool get hasGpsLocation => userLocation?.isGps == true;
+  bool get hasMorePages   => currentPage < totalPages;
 
   bool isDonating(String id) => donatingIds.contains(id);
   bool isDeclined(String id) => declinedIds.contains(id);
@@ -109,8 +178,47 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
 
   RequirementsViewModel(this._ref, {String userBloodType = ''})
       : super(RequirementsState(userBloodType: userBloodType)) {
-    load();
+    _initLocation();
     _startAutoRefresh();
+  }
+
+  // ── Location initialization ─────────────────────────────────────
+  Future<void> _initLocation() async {
+    state = state.copyWith(locationLoading: true);
+
+    // Try GPS first
+    final gpsLocation = await LocationService.instance.requestGpsLocation();
+    if (gpsLocation != null) {
+      state = state.copyWith(
+        userLocation: gpsLocation,
+        locationLoading: false,
+        locationFilter: LocationFilterRadius.nearby25km,
+      );
+      load();
+      return;
+    }
+
+    // Fallback to profile city
+    final userCity = _ref.read(authViewModelProvider).user?.city ?? '';
+    if (userCity.isNotEmpty) {
+      final coords = CityCoordinates.lookup(userCity);
+      if (coords != null) {
+        LocationService.instance.setFallbackLocation(coords['lat']!, coords['lng']!);
+        state = state.copyWith(
+          userLocation: LocationService.instance.currentLocation,
+          locationLoading: false,
+          locationFilter: LocationFilterRadius.sameCity,
+        );
+      } else {
+        // City not in lookup table — use city name filter on the server
+        state = state.copyWith(locationLoading: false,
+            locationFilter: LocationFilterRadius.sameCity);
+      }
+    } else {
+      state = state.copyWith(locationLoading: false);
+    }
+
+    load();
   }
 
   // ── Auto-refresh ──────────────────────────────────────────────────────────
@@ -125,7 +233,12 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
 
   Future<void> _silentRefresh() async {
     try {
-      final reqs = await _service.getRequirements();
+      final reqs = await _service.getAllRequirements(
+        latitude:    state.userLocation?.latitude,
+        longitude:   state.userLocation?.longitude,
+        city:        _getCityFilter(),
+        maxDistance: _getMaxDistance(),
+      );
       _sortRequirements(reqs);
       final donated = _deriveDonatedIds(reqs);
       state = state.copyWith(requirements: reqs, donatedIds: donated);
@@ -136,17 +249,29 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
 
   // ── Derive donated IDs from server data ───────────────────────────────────
 
-  /// Scans the freshly-loaded requirements list and returns IDs of all
-  /// requirements where the currently logged-in user appears in the
-  /// donations array.  Because this data comes from MongoDB, it persists
-  /// across app restarts, logouts, and device changes automatically.
   Set<String> _deriveDonatedIds(List<BloodRequirement> reqs) {
     final username = _ref.read(authViewModelProvider).user?.username ?? '';
-    if (username.isEmpty) return state.donatedIds; // keep existing if not logged in yet
+    if (username.isEmpty) return state.donatedIds;
     return reqs
         .where((r) => r.hasDonatedBy(username))
         .map((r) => r.id)
         .toSet();
+  }
+
+  // ── Location filter helpers ───────────────────────────────────────────────
+
+  String? _getCityFilter() {
+    if (state.locationFilter == LocationFilterRadius.sameCity) {
+      return _ref.read(authViewModelProvider).user?.city;
+    }
+    return null;
+  }
+
+  double? _getMaxDistance() {
+    if (state.userLocation != null) {
+      return state.locationFilter.distanceKm;
+    }
+    return null;
   }
 
   // ── Public API ────────────────────────────────────────────────────────────
@@ -164,13 +289,32 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
   void setFilter(String filter) =>
       state = state.copyWith(selectedFilter: filter);
 
+  void setLocationFilter(LocationFilterRadius filter) {
+    state = state.copyWith(locationFilter: filter, currentPage: 1);
+    load();
+  }
+
   Future<void> load() async {
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, clearError: true, currentPage: 1);
     try {
-      final reqs = await _service.getRequirements();
-      _sortRequirements(reqs);
-      final donated = _deriveDonatedIds(reqs);
-      state = state.copyWith(isLoading: false, requirements: reqs, donatedIds: donated);
+      final result = await _service.getRequirements(
+        latitude:    state.userLocation?.latitude,
+        longitude:   state.userLocation?.longitude,
+        city:        _getCityFilter(),
+        maxDistance:  _getMaxDistance(),
+        page:        1,
+        limit:       20,
+      );
+      _sortRequirements(result.items);
+      final donated = _deriveDonatedIds(result.items);
+      state = state.copyWith(
+        isLoading: false,
+        requirements: result.items,
+        donatedIds: donated,
+        currentPage: result.page,
+        totalPages: result.totalPages,
+        totalItems: result.total,
+      );
     } on ApiException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
     } catch (_) {
@@ -178,13 +322,48 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
     }
   }
 
+  /// Load next page (pagination)
+  Future<void> loadMore() async {
+    if (state.isLoadingMore || !state.hasMorePages) return;
+    state = state.copyWith(isLoadingMore: true);
+    try {
+      final nextPage = state.currentPage + 1;
+      final result = await _service.getRequirements(
+        latitude:    state.userLocation?.latitude,
+        longitude:   state.userLocation?.longitude,
+        city:        _getCityFilter(),
+        maxDistance:  _getMaxDistance(),
+        page:        nextPage,
+        limit:       20,
+      );
+      final combined = [...state.requirements, ...result.items];
+      _sortRequirements(combined);
+      final donated = _deriveDonatedIds(combined);
+      state = state.copyWith(
+        isLoadingMore: false,
+        requirements: combined,
+        donatedIds: donated,
+        currentPage: result.page,
+        totalPages: result.totalPages,
+        totalItems: result.total,
+      );
+    } catch (_) {
+      state = state.copyWith(isLoadingMore: false);
+    }
+  }
+
   void _sortRequirements(List<BloodRequirement> reqs) {
-    const order = {'Critical': 0, 'High': 1, 'Medium': 2, 'Low': 3};
-    reqs.sort((a, b) {
-      if (a.status == 'Open' && b.status != 'Open') return -1;
-      if (a.status != 'Open' && b.status == 'Open') return 1;
-      return (order[a.urgency] ?? 4).compareTo(order[b.urgency] ?? 4);
-    });
+    // When user has location, sort primarily by distance (already done by server),
+    // otherwise fall back to urgency-based sorting.
+    if (state.userLocation == null) {
+      const order = {'Critical': 0, 'High': 1, 'Medium': 2, 'Low': 3};
+      reqs.sort((a, b) {
+        if (a.status == 'Open' && b.status != 'Open') return -1;
+        if (a.status != 'Open' && b.status == 'Open') return 1;
+        return (order[a.urgency] ?? 4).compareTo(order[b.urgency] ?? 4);
+      });
+    }
+    // When location is available, server already sorted by distance
   }
 
   Future<BloodRequirement?> getDetail(String id) async {
@@ -205,18 +384,12 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
         scheduledTime: scheduledTime,
       );
       final updatedList = state.requirements.map((r) => r.id == id ? updated : r).toList();
-      // Mark as donated immediately (optimistic) — confirmed on next load
-      // since the username is now in the donations array on the server.
       final donated = Set<String>.from(state.donatedIds)..add(id);
       state = state.copyWith(
         requirements: updatedList,
         donatingIds:  Set<String>.from(state.donatingIds)..remove(id),
         donatedIds:   donated,
       );
-      // NOTE: lastDonationDate is NOT updated here.
-      // It is only updated when the requester marks the donation as Completed
-      // (via updateDonationStatus). The server sets it at that point, and
-      // refreshProfile() is called from the status modal after approval.
       load();
       return updated;
     } on ApiException catch (e) {
@@ -246,18 +419,12 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
   }
 
   Future<bool> declineDonation(String id) async {
-    // Immediately hide card from feed (optimistic update)
     final hidden = Set<String>.from(state.declinedIds)..add(id);
     state = state.copyWith(declinedIds: hidden);
-    // Inform backend in background
     _service.declineRequirement(id).catchError((_) {});
     return true;
   }
 
-  /// Called by the status modal when the requester approves or reverts a pledge.
-  /// On Completed: backend sets lastDonationDate on the donor, decrements
-  /// remainingUnits, marks Fulfilled if needed, and clears other pledges.
-  /// After success, we refresh all stale views and the auth profile.
   Future<bool> updateDonationStatus({
     required String requirementId,
     required String donorUsername,
@@ -269,14 +436,8 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
         donorUsername: donorUsername,
         newStatus:     newStatus,
       );
-      // Refresh the feed so remainingUnits / status badges are current
       await load();
       if (newStatus == 'Completed') {
-        // The server has now set lastDonationDate on the approved donor.
-        // Always refresh the local profile — if the current user IS the donor
-        // their eligibility state updates immediately; if they are the requester
-        // the refresh is a no-op (their lastDonationDate is unchanged) but is
-        // needed for the edge case where requester == donor on other requests.
         _ref.read(authViewModelProvider.notifier).refreshProfile();
       }
       return true;

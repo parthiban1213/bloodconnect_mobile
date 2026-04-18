@@ -6,6 +6,7 @@ class UserModel {
   final String bloodType;
   final bool isAvailable;
   final String address;
+  final String city;
   final DateTime? lastDonationDate;
   final String? mobile;
   final String? firstName;
@@ -20,6 +21,7 @@ class UserModel {
     this.bloodType = '',
     this.isAvailable = true,
     this.address = '',
+    this.city = '',
     this.lastDonationDate,
     this.mobile,
     this.firstName,
@@ -53,6 +55,7 @@ class UserModel {
       bloodType: json['bloodType'] ?? '',
       isAvailable: json['isAvailable'] ?? true,
       address: json['address'] ?? '',
+      city: json['city'] ?? '',
       lastDonationDate: json['lastDonationDate'] != null
           ? DateTime.tryParse(json['lastDonationDate'].toString())
           : null,
@@ -70,6 +73,7 @@ class UserModel {
     'bloodType': bloodType,
     'isAvailable': isAvailable,
     'address': address,
+    'city': city,
     'lastDonationDate': lastDonationDate?.toIso8601String(),
     'mobile': mobile,
     'firstName': firstName,
@@ -84,6 +88,7 @@ class UserModel {
     String? bloodType,
     bool? isAvailable,
     String? address,
+    String? city,
     DateTime? lastDonationDate,
     String? mobile,
     String? firstName,
@@ -98,6 +103,7 @@ class UserModel {
       bloodType: bloodType ?? this.bloodType,
       isAvailable: isAvailable ?? this.isAvailable,
       address: address ?? this.address,
+      city: city ?? this.city,
       lastDonationDate: lastDonationDate ?? this.lastDonationDate,
       mobile: mobile ?? this.mobile,
       firstName: firstName ?? this.firstName,

@@ -433,6 +433,11 @@ class AppConfig {
   static const String donorListEmpty         = 'No donors have pledged yet.';
   static const String donorListLoading       = 'Loading donors…';
   static const String donorListError         = 'Could not load donor list.';
+  static const String donorTabPledged        = 'Pledged';
+  static const String donorTabAvailable      = 'Available Donors';
+  static const String availableDonorEmpty    = 'No available donors found for this blood type.';
+  static const String availableDonorLoading  = 'Loading available donors…';
+  static const String availableDonorError    = 'Failed to load donors.';
   static const String donorScheduledPrefix   = 'Scheduled: ';
   static const String donorNoSchedule        = 'No date scheduled';
   static const String donorMarkCompleted     = 'Mark Completed';

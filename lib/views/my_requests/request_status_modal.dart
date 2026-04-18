@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/blood_requirement.dart';
+import '../../models/donor_model.dart';
+import '../../services/donors_service.dart';
 import '../../viewmodels/my_requests_viewmodel.dart';
 import '../../viewmodels/requirements_viewmodel.dart';
 import '../../viewmodels/history_viewmodel.dart';
@@ -52,10 +55,19 @@ class RequestStatusModal extends ConsumerStatefulWidget {
 }
 
 class _RequestStatusModalState extends ConsumerState<RequestStatusModal> {
+  // ── Pledged donors ────────────────────────────────────────────
   List<DonorPledge> _pledges = [];
   bool _loadingPledges = false;
   String? _pledgesError;
   final Map<String, bool> _updating = {};
+
+  // ── Available donors ──────────────────────────────────────────
+  List<DonorModel> _availableDonors = [];
+  bool _loadingAvailable = false;
+  String? _availableError;
+
+  // ── Tab state ─────────────────────────────────────────────────
+  int _selectedTab = 0; // 0 = Pledged, 1 = Available Donors
 
   @override
   void initState() {
@@ -70,6 +82,26 @@ class _RequestStatusModalState extends ConsumerState<RequestStatusModal> {
         .fetchDonorPledges(widget.requirement.id);
     if (!mounted) return;
     setState(() { _pledges = pledges; _loadingPledges = false; });
+  }
+
+  Future<void> _loadAvailableDonors() async {
+    setState(() { _loadingAvailable = true; _availableError = null; });
+    try {
+      final donors = await DonorsService().getDonors(
+        bloodType: widget.requirement.bloodType,
+        isAvailable: true,
+      );
+      if (!mounted) return;
+      setState(() { _availableDonors = donors; _loadingAvailable = false; });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() { _loadingAvailable = false; _availableError = AppConfig.availableDonorError; });
+    }
+  }
+
+  Future<void> _call(String phone) async {
+    final uri = Uri.parse('tel:$phone');
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   Future<void> _toggleStatus(DonorPledge pledge) async {
@@ -102,7 +134,6 @@ class _RequestStatusModalState extends ConsumerState<RequestStatusModal> {
       ));
 
       if (newStatus == 'Completed') {
-        // If the logged-in user IS the donor being approved, schedule reminder
         final currentUser = ref.read(authViewModelProvider).user;
         if (currentUser?.username == pledge.donorUsername) {
           await ReminderService().scheduleEligibilityReminder(DateTime.now());
@@ -318,18 +349,14 @@ class _RequestStatusModalState extends ConsumerState<RequestStatusModal> {
             if (req.notes.isNotEmpty)
               _DetailRow(label: AppConfig.modalNotesLabel, value: req.notes),
 
-            // Donor pledge list (requester / admin only)
+            // Tabbed donor section (requester / admin only)
             if (widget.isRequester) ...[
               const SizedBox(height: 20),
               const Divider(height: 1, color: AppColors.borderSoft),
               const SizedBox(height: 16),
-              Text(AppConfig.donorListSectionTitle,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 10, fontWeight: FontWeight.w700,
-                    color: AppColors.textMuted, letterSpacing: 0.8,
-                  )),
-              const SizedBox(height: 10),
-              _buildDonorList(),
+              _buildTabBar(),
+              const SizedBox(height: 12),
+              _selectedTab == 0 ? _buildDonorList() : _buildAvailableDonorList(),
             ],
 
             const SizedBox(height: 4),
@@ -337,6 +364,27 @@ class _RequestStatusModalState extends ConsumerState<RequestStatusModal> {
         ),
       ),
     );
+  }
+
+  Widget _buildTabBar() {
+    return Row(children: [
+      _TabChip(
+        label: AppConfig.donorTabPledged,
+        active: _selectedTab == 0,
+        onTap: () => setState(() => _selectedTab = 0),
+      ),
+      const SizedBox(width: 8),
+      _TabChip(
+        label: AppConfig.donorTabAvailable,
+        active: _selectedTab == 1,
+        onTap: () {
+          setState(() => _selectedTab = 1);
+          if (_availableDonors.isEmpty && !_loadingAvailable && _availableError == null) {
+            _loadAvailableDonors();
+          }
+        },
+      ),
+    ]);
   }
 
   Widget _buildDonorList() {
@@ -374,6 +422,78 @@ class _RequestStatusModalState extends ConsumerState<RequestStatusModal> {
                 onToggle:   () => _toggleStatus(p),
               ))
           .toList(),
+    );
+  }
+
+  Widget _buildAvailableDonorList() {
+    if (_loadingAvailable) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(children: [
+          const SizedBox(
+            width: 16, height: 16,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppColors.primary),
+          ),
+          const SizedBox(width: 10),
+          Text(AppConfig.availableDonorLoading,
+              style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.textMuted)),
+        ]),
+      );
+    }
+    if (_availableError != null) {
+      return Text(_availableError!,
+          style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.primary));
+    }
+    if (_availableDonors.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text(AppConfig.availableDonorEmpty,
+            style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.textMuted)),
+      );
+    }
+    return Column(
+      children: _availableDonors
+          .map((d) => _AvailableDonorCard(donor: d, onCall: () => _call(d.phone)))
+          .toList(),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  _TabChip
+// ─────────────────────────────────────────────────────────────
+
+class _TabChip extends StatelessWidget {
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+  const _TabChip({required this.label, required this.active, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: active ? AppColors.navBg : AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: active ? AppColors.navBg : AppColors.border,
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.syne(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: active ? Colors.white : AppColors.textSecondary,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -526,6 +646,104 @@ class _DonorPledgeCard extends StatelessWidget {
                   ]),
                 ),
               ),
+      ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  _AvailableDonorCard
+// ─────────────────────────────────────────────────────────────
+
+class _AvailableDonorCard extends StatelessWidget {
+  final DonorModel donor;
+  final VoidCallback onCall;
+  const _AvailableDonorCard({required this.donor, required this.onCall});
+
+  @override
+  Widget build(BuildContext context) {
+    final name    = donor.fullName.isNotEmpty ? donor.fullName : donor.phone;
+    final avatar  = donor.initials;
+    final cityStr = donor.city.isNotEmpty ? donor.city : null;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border, width: 1.5),
+      ),
+      child: Row(children: [
+        // Avatar
+        Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+            color: AppColors.urgentBg,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(child: Text(avatar,
+              style: GoogleFonts.syne(
+                fontSize: 13, fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ))),
+        ),
+        const SizedBox(width: 10),
+
+        // Name + city + phone
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name,
+                  style: GoogleFonts.syne(
+                    fontSize: 12, fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  )),
+              if (cityStr != null)
+                Text(cityStr,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 11, color: AppColors.textMuted,
+                    )),
+              const SizedBox(height: 2),
+              Row(children: [
+                const Icon(Icons.phone_outlined,
+                    size: 11, color: AppColors.textMuted),
+                const SizedBox(width: 4),
+                Text(donor.phone,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 11, color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    )),
+              ]),
+            ],
+          ),
+        ),
+
+        const SizedBox(width: 8),
+
+        // Call button
+        GestureDetector(
+          onTap: onCall,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDCFCE7),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF86EFAC), width: 1.5),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.call_rounded,
+                  size: 12, color: Color(0xFF15803D)),
+              const SizedBox(width: 4),
+              Text('Call',
+                  style: GoogleFonts.syne(
+                    fontSize: 9, fontWeight: FontWeight.w700,
+                    color: const Color(0xFF15803D),
+                  )),
+            ]),
+          ),
+        ),
       ]),
     );
   }

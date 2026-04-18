@@ -45,6 +45,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   final _lastNameCtrl  = TextEditingController();
   final _emailCtrl     = TextEditingController();
   final _addressCtrl   = TextEditingController();
+  final _cityCtrl      = TextEditingController();
   String? _selectedBloodType;
   DateTime? _lastDonationDate;
   bool _isAvailable = true;
@@ -65,6 +66,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     _usernameCtrl.dispose();
     _emailCtrl.dispose();
     _addressCtrl.dispose();
+    _cityCtrl.dispose();
     _timer?.cancel();
     super.dispose();
   }
@@ -192,6 +194,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       setState(() => _error = AppConfig.regErrEmail);
       return;
     }
+    final city = _cityCtrl.text.trim();
+    if (city.isEmpty) {
+      setState(() => _error = 'Please enter your city for location-based matching.');
+      return;
+    }
 
     setState(() { _registering = true; _error = null; });
     context.dismissKeyboard();
@@ -209,6 +216,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
         email:            email,
         address:          _addressCtrl.text.trim().isNotEmpty
                               ? _addressCtrl.text.trim()
+                              : null,
+        city:             _cityCtrl.text.trim().isNotEmpty
+                              ? _cityCtrl.text.trim()
                               : null,
         lastDonationDate: _lastDonationDate,
       );
@@ -583,6 +593,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
               child: _PlainField(
                 ctrl: _addressCtrl, hint: AppConfig.regAddressHint,
                 icon: Icons.location_on_outlined),
+            ),
+            const SizedBox(height: 12),
+
+            _LabeledField(
+              label: 'CITY *',
+              child: _PlainField(
+                ctrl: _cityCtrl, hint: 'e.g. Coimbatore',
+                icon: Icons.location_city_rounded),
             ),
             const SizedBox(height: 12),
 

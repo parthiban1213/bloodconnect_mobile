@@ -16,8 +16,14 @@ import '../../widgets/schedule_pledge_modal.dart';
 
 class RequirementCard extends ConsumerWidget {
   final BloodRequirement requirement;
+  /// Whether to show distance (only when GPS location is available)
+  final bool showDistance;
 
-  const RequirementCard({super.key, required this.requirement});
+  const RequirementCard({
+    super.key,
+    required this.requirement,
+    this.showDistance = false,
+  });
 
   bool get _isClosed =>
       requirement.status == 'Fulfilled' || requirement.status == 'Cancelled';
@@ -55,10 +61,6 @@ class RequirementCard extends ConsumerWidget {
       return;
     }
 
-    // NOTE: ReminderService.scheduleEligibilityReminder is NOT called here.
-    // The 90-day cooldown only starts when the requester marks the donation
-    // as Completed. The reminder is triggered from the status modal at that point.
-
     if (context.mounted) {
       context.push('/accepted', extra: {
         'hospital':      requirement.hospital,
@@ -91,14 +93,10 @@ class RequirementCard extends ConsumerWidget {
     final hasDonated      = state.hasDonated(requirement.id);
     final canDonate       = state.userBloodType.isNotEmpty &&
                             state.userBloodType == requirement.bloodType;
-    // Eligibility: user is ineligible if within 90-day cooldown after donation
     final lastDonation    = authState.user?.lastDonationDate;
     final isInCooldown    = !ReminderService.isEligible(lastDonation);
-    // Unavailable donors cannot pledge
     final isUnavailable   = authState.user?.isAvailable == false;
-    // Fix #1: show "Already Donated" when user already donated to this multi-unit request
     final showAlreadyDonated = hasDonated && !_isClosed;
-    // Check if this specific pledge is pending (scheduled but not yet approved)
     final myPledge = requirement.donorPledges
         .where((p) => p.donorUsername == (authState.user?.username ?? ''))
         .firstOrNull;
@@ -145,22 +143,51 @@ class RequirementCard extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        // Fix #8: display location
-                        if (requirement.location.isNotEmpty) ...[
+                        // Location + distance row
+                        if (requirement.location.isNotEmpty || (showDistance && requirement.distanceKm != null)) ...[
                           Row(
                             children: [
                               const Icon(Icons.location_on_outlined,
                                   size: 11, color: AppColors.primary),
                               const SizedBox(width: 3),
-                              Flexible(
-                                child: Text(
-                                  requirement.location.toUpperCase(),
-                                  style: GoogleFonts.dmSans(
-                                      fontSize: 11, color: AppColors.primary,fontWeight: FontWeight.bold),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                              if (requirement.location.isNotEmpty)
+                                Flexible(
+                                  child: Text(
+                                    requirement.location.toUpperCase(),
+                                    style: GoogleFonts.dmSans(
+                                        fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.bold),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
+                              // Distance badge
+                              if (showDistance && requirement.distanceKm != null) ...[
+                                if (requirement.location.isNotEmpty)
+                                  const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryLight,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.near_me_rounded,
+                                          size: 9, color: AppColors.primary),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        requirement.distanceDisplay!,
+                                        style: GoogleFonts.dmSans(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                           const SizedBox(height: 2),
@@ -209,7 +236,7 @@ class RequirementCard extends ConsumerWidget {
 
                 const SizedBox(height: 12),
 
-                // Fix #1: Already Donated (Completed) badge
+                // Already Donated (Completed) badge
                 if (showAlreadyDonated && !isScheduledPending)
                   Container(
                     width: double.infinity,
