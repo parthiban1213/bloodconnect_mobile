@@ -34,27 +34,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   final List<FocusNode> _otpNodes = List.generate(6, (_) => FocusNode());
 
   Timer? _timer;
-  int _timerSec = AppConfig.otpTimerSeconds;
+  int  _timerSec    = AppConfig.otpTimerSeconds;
   bool _timerActive = false;
-  bool _otpSending = false;
+  bool _otpSending  = false;
   bool _otpVerifying = false;
 
   // ── Details form ─────────────────────────────────────────
-  final _usernameCtrl  = TextEditingController();
+  // Username removed — auto-generated from firstName + last 4 digits of mobile
   final _firstNameCtrl = TextEditingController();
-  final _lastNameCtrl  = TextEditingController();
-  final _emailCtrl     = TextEditingController();
+  final _lastNameCtrl  = TextEditingController(); // optional
+  final _emailCtrl     = TextEditingController(); // optional
   final _addressCtrl   = TextEditingController();
   final _cityCtrl      = TextEditingController();
-  String? _selectedBloodType;
+  String?  _selectedBloodType;
   DateTime? _lastDonationDate;
   bool _isAvailable = true;
   bool _registering = false;
 
-  // ── Errors / success ─────────────────────────────────────
+  // ── Errors ───────────────────────────────────────────────
   String? _error;
   String? _mobileError;
-  bool _mobileVerified = false;
+  bool    _mobileVerified = false;
 
   @override
   void dispose() {
@@ -63,7 +63,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     for (final f in _otpNodes) f.dispose();
     _firstNameCtrl.dispose();
     _lastNameCtrl.dispose();
-    _usernameCtrl.dispose();
     _emailCtrl.dispose();
     _addressCtrl.dispose();
     _cityCtrl.dispose();
@@ -71,8 +70,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     super.dispose();
   }
 
-  // ── Step navigation ───────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────
   void _goStep(_RegStep s) => setState(() { _step = s; _error = null; });
+
+  /// Auto-generate username: lowercase(firstName) + _ + last4digits(mobile)
+  /// e.g. firstName="Arjun", mobile="9876543210" → "arjun_3210"
+  String _generateUsername() {
+    final mobile    = _mobileCtrl.text.trim();
+    final firstName = _firstNameCtrl.text.trim();
+    final last4     = mobile.length >= 4
+        ? mobile.substring(mobile.length - 4)
+        : mobile;
+    final base = firstName
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]'), '');
+    return '${base.isNotEmpty ? base : 'user'}_$last4';
+  }
 
   // ── Timer ─────────────────────────────────────────────────
   void _startTimer() {
@@ -88,7 +101,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     });
   }
 
-  // ── Send OTP (register purpose) ───────────────────────────
+  // ── Send OTP ──────────────────────────────────────────────
   Future<void> _sendOtp() async {
     final m = _mobileCtrl.text.trim();
     if (m.isEmpty) {
@@ -96,12 +109,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       return;
     }
     if (!RegExp(r'^[6-9]\d{9}$').hasMatch(m)) {
-      setState(() =>
-          _mobileError = AppConfig.regErrMobileInvalid);
+      setState(() => _mobileError = AppConfig.regErrMobileInvalid);
       return;
     }
     setState(() { _mobileError = null; _otpSending = true; _error = null; });
-    context.dismissKeyboard();;
+    context.dismissKeyboard();
     try {
       await AuthService().sendOtpForRegister(m);
       if (!mounted) return;
@@ -111,13 +123,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       Future.delayed(const Duration(milliseconds: 80),
           () => _otpNodes[0].requestFocus());
     } on MobileAlreadyExistsException catch (e) {
-      if (mounted) {
-        setState(() => _mobileError = e.message);
-      }
+      if (mounted) setState(() => _mobileError = e.message);
     } catch (e) {
-      if (mounted) {
-        setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
-      }
+      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _otpSending = false);
     }
@@ -133,13 +141,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       await AuthService().verifyRegisterOtp(
           mobile: _mobileCtrl.text.trim(), otp: code);
       if (!mounted) return;
-      setState(() { _mobileVerified = true; });
+      setState(() => _mobileVerified = true);
       _goStep(_RegStep.details);
     } catch (e) {
-      if (mounted) {
-        setState(() =>
-            _error = e.toString().replaceFirst('Exception: ', ''));
-      }
+      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _otpVerifying = false);
     }
@@ -169,28 +174,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 
   // ── Submit registration ───────────────────────────────────
   Future<void> _submitRegistration() async {
-    final username  = _usernameCtrl.text.trim();
     final firstName = _firstNameCtrl.text.trim();
-    final lastName  = _lastNameCtrl.text.trim();
-    final email     = _emailCtrl.text.trim();
+    final lastName  = _lastNameCtrl.text.trim();   // optional
+    final email     = _emailCtrl.text.trim();       // optional
 
-    if (firstName.isEmpty || lastName.isEmpty) {
-      setState(() => _error = AppConfig.regErrFirstLast);
+    // Only first name is required now
+    if (firstName.isEmpty) {
+      setState(() => _error = AppConfig.regErrFirstName);
       return;
     }
     if (_selectedBloodType == null) {
       setState(() => _error = AppConfig.regErrBloodType);
       return;
     }
-    if (username.length < 3) {
-      setState(() => _error = AppConfig.regErrUsername);
-      return;
-    }
-    if (email.isEmpty) {
-      setState(() => _error = AppConfig.regErrEmailRequired);
-      return;
-    }
-    if (!RegExp(r'^[\w.-]+@[\w.-]+\.\w{2,}$').hasMatch(email)) {
+    // Validate email only if provided
+    if (email.isNotEmpty &&
+        !RegExp(r'^[\w.-]+@[\w.-]+\.\w{2,}$').hasMatch(email)) {
       setState(() => _error = AppConfig.regErrEmail);
       return;
     }
@@ -199,6 +198,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       setState(() => _error = 'Please enter your city for location-based matching.');
       return;
     }
+
+    // Auto-generate username
+    final username = _generateUsername();
 
     setState(() { _registering = true; _error = null; });
     context.dismissKeyboard();
@@ -211,32 +213,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
         otp:              otp,
         username:         username,
         firstName:        firstName,
-        lastName:         lastName,
+        lastName:         lastName.isNotEmpty ? lastName : firstName, // fallback
         bloodType:        _selectedBloodType!,
-        email:            email,
+        email:            email.isNotEmpty ? email : null,
         address:          _addressCtrl.text.trim().isNotEmpty
                               ? _addressCtrl.text.trim()
                               : null,
-        city:             _cityCtrl.text.trim().isNotEmpty
-                              ? _cityCtrl.text.trim()
-                              : null,
+        city:             city,
         lastDonationDate: _lastDonationDate,
       );
 
-      // Save token + update auth state
       await ref
           .read(authViewModelProvider.notifier)
           .loginFromRegistration(result.token, result.user);
 
-      // Flag that the post-registration password prompt should be shown once
-      // on the feed screen (cleared when user taps Update Password or Skip).
       await PrefsService.setShowPasswordPrompt();
 
       if (mounted) context.go('/feed');
     } catch (e) {
       if (mounted) {
-        setState(() =>
-            _error = e.toString().replaceFirst('Exception: ', ''));
+        setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
       }
     } finally {
       if (mounted) setState(() => _registering = false);
@@ -329,43 +325,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
               style: GoogleFonts.dmSans(
                 fontSize: 13, color: AppColors.textSecondary)),
             const SizedBox(height: 20),
-
-            // Info hint
-            _HintCard(
-              icon: Icons.phone_android_rounded,
-              body: AppConfig.regHintBody,
-            ),
+            _HintCard(icon: Icons.phone_android_rounded, body: AppConfig.regHintBody),
             const SizedBox(height: 16),
-
-            if (_error != null) ...[
-              _ErrorPill(_error!), const SizedBox(height: 10),
-            ],
-            if (_mobileError != null) ...[
-              _ErrorPill(_mobileError!), const SizedBox(height: 10),
-            ],
-
-            // Mobile field
+            if (_error != null) ...[ _ErrorPill(_error!), const SizedBox(height: 10) ],
+            if (_mobileError != null) ...[ _ErrorPill(_mobileError!), const SizedBox(height: 10) ],
             _MobileField(ctrl: _mobileCtrl, onSubmit: _sendOtp),
             const SizedBox(height: 16),
-
-            // Send OTP button
             _PrimaryButton(
               label: AppConfig.regSendOtpBtn,
               icon: Icons.sms_outlined,
               isLoading: _otpSending,
               onTap: _sendOtp,
             ),
-
             const SizedBox(height: 14),
             _Divider(label: AppConfig.regSignInDivider),
             const SizedBox(height: 14),
-
-            // Back to login
-            _OutlineButton(
-              label: AppConfig.regSignInBtn,
-              onTap: () => context.go('/login'),
-            ),
-
+            _OutlineButton(label: AppConfig.regSignInBtn, onTap: () => context.go('/login')),
             const SizedBox(height: 16),
             _SupportLink(),
           ],
@@ -379,7 +354,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   // ══════════════════════════════════════════════════════════
   Widget _buildOtpStep() {
     final mobile = _mobileCtrl.text.trim();
-
     return _RegLayout(
       key: const ValueKey('step-otp'),
       topContent: Column(
@@ -390,30 +364,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             decoration: BoxDecoration(
               color: AppColors.primaryLight,
               borderRadius: BorderRadius.circular(20)),
-            child: const Center(
-              child: Icon(Icons.mark_email_read_outlined,
-                size: 28, color: AppColors.primary)),
+            child: const Center(child: Icon(Icons.mark_email_read_outlined,
+              size: 28, color: AppColors.primary)),
           ),
           const SizedBox(height: 14),
           Text(AppConfig.regOtpIconTitle,
-            style: GoogleFonts.dmSans(
-              fontSize: 18, fontWeight: FontWeight.w600,
+            style: GoogleFonts.dmSans(fontSize: 18, fontWeight: FontWeight.w600,
               color: AppColors.textPrimary)),
           const SizedBox(height: 6),
           Text('${AppConfig.regOtpSentPrefix}$mobile',
-            style: GoogleFonts.dmSans(
-              fontSize: 13, color: AppColors.textSecondary)),
+            style: GoogleFonts.dmSans(fontSize: 13, color: AppColors.textSecondary)),
           const SizedBox(height: 4),
           GestureDetector(
-            onTap: () {
-              _timer?.cancel();
-              _goStep(_RegStep.mobile);
-            },
+            onTap: () { _timer?.cancel(); _goStep(_RegStep.mobile); },
             child: Text(AppConfig.regOtpChangeNumber,
-              style: GoogleFonts.dmSans(
-                fontSize: 12, color: AppColors.primary,
-                fontWeight: FontWeight.w500,
-                decoration: TextDecoration.underline,
+              style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.primary,
+                fontWeight: FontWeight.w500, decoration: TextDecoration.underline,
                 decorationColor: AppColors.primary)),
           ),
         ],
@@ -425,31 +391,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(AppConfig.regOtpHeading,
-              style: GoogleFonts.dmSans(
-                fontSize: 20, fontWeight: FontWeight.w500,
+              style: GoogleFonts.dmSans(fontSize: 20, fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary)),
             const SizedBox(height: 6),
             Text(AppConfig.regOtpSubtext,
-              style: GoogleFonts.dmSans(
-                fontSize: 13, color: AppColors.textSecondary)),
+              style: GoogleFonts.dmSans(fontSize: 13, color: AppColors.textSecondary)),
             const SizedBox(height: 20),
-
-            if (_error != null) ...[
-              _ErrorPill(_error!), const SizedBox(height: 12),
-            ],
-
-            // OTP cells
+            if (_error != null) ...[ _ErrorPill(_error!), const SizedBox(height: 12) ],
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(6, (i) => _OtpCell(
-                ctrl: _otpCtrls[i],
-                node: _otpNodes[i],
+                ctrl: _otpCtrls[i], node: _otpNodes[i],
                 onInput: (v) => _onOtpInput(i, v),
                 onBackspace: () => _onOtpBackspace(i),
               )),
             ),
             const SizedBox(height: 20),
-
             _PrimaryButton(
               label: AppConfig.regVerifyBtn,
               icon: Icons.verified_user_outlined,
@@ -457,21 +414,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
               onTap: _verifyOtp,
             ),
             const SizedBox(height: 16),
-
-            // Resend / timer
             Center(
               child: _timerActive
                 ? Text(
                     '${AppConfig.regResendTimerPrefix}${_timerSec}${AppConfig.regResendTimerSuffix}',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 13, color: AppColors.textMuted))
+                    style: GoogleFonts.dmSans(fontSize: 13, color: AppColors.textMuted))
                 : GestureDetector(
                     onTap: _resendOtp,
                     child: Text(AppConfig.regResendBtn,
-                      style: GoogleFonts.dmSans(
-                        fontSize: 13, color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                        decoration: TextDecoration.underline,
+                      style: GoogleFonts.dmSans(fontSize: 13, color: AppColors.primary,
+                        fontWeight: FontWeight.w600, decoration: TextDecoration.underline,
                         decorationColor: AppColors.primary)),
                   ),
             ),
@@ -482,7 +434,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   }
 
   // ══════════════════════════════════════════════════════════
-  //  STEP 3 — Registration details form
+  //  STEP 3 — Registration details (simplified)
   // ══════════════════════════════════════════════════════════
   Widget _buildDetailsStep() {
     return _RegLayout(
@@ -491,7 +443,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       topContent: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Verified mobile badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
@@ -499,25 +450,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFBBF7D0))),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.check_circle_rounded,
-                  size: 15, color: Color(0xFF15803D)),
+              const Icon(Icons.check_circle_rounded, size: 15, color: Color(0xFF15803D)),
               const SizedBox(width: 7),
               Text(
                 '${_mobileCtrl.text.trim()}${AppConfig.regVerifiedSuffix}',
-                style: GoogleFonts.dmSans(
-                  fontSize: 12, fontWeight: FontWeight.w600,
+                style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w600,
                   color: const Color(0xFF15803D))),
             ]),
           ),
           const SizedBox(height: 14),
           Text(AppConfig.regDetailsHeading,
-            style: GoogleFonts.cormorantGaramond(
-              fontSize: 22, fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary)),
+            style: GoogleFonts.cormorantGaramond(fontSize: 22,
+              fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           const SizedBox(height: 4),
           Text(AppConfig.regDetailsSubtitle,
-            style: GoogleFonts.syne(
-              fontSize: 11, fontWeight: FontWeight.w600,
+            style: GoogleFonts.syne(fontSize: 11, fontWeight: FontWeight.w600,
               color: AppColors.primary, letterSpacing: 1.2)),
         ],
       ),
@@ -527,14 +474,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (_error != null) ...[
-              _ErrorPill(_error!), const SizedBox(height: 14),
-            ],
+            if (_error != null) ...[ _ErrorPill(_error!), const SizedBox(height: 14) ],
 
             // ── Personal Info ─────────────────────────────
             _SectionLabel(label: AppConfig.regSectionPersonal),
             const SizedBox(height: 10),
 
+            // First name (required) + Last name (optional) side by side
             Row(children: [
               Expanded(child: _LabeledField(
                 label: AppConfig.regFirstNameLabel,
@@ -544,20 +490,34 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
               )),
               const SizedBox(width: 10),
               Expanded(child: _LabeledField(
-                label: AppConfig.regLastNameLabel,
+                label: AppConfig.regLastNameOptionalLabel,
                 child: _PlainField(
                   ctrl: _lastNameCtrl, hint: AppConfig.regLastNameHint,
                   icon: Icons.person_outline_rounded),
               )),
             ]),
-            const SizedBox(height: 12),
+            const SizedBox(height: 6),
 
-            _LabeledField(
-              label: AppConfig.regUsernameLabel,
-              child: _PlainField(
-                ctrl: _usernameCtrl, hint: AppConfig.regUsernameHint,
-                icon: Icons.alternate_email_rounded,
-                autocorrect: false),
+            // Username auto-generation hint
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.background3,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.borderSoft),
+              ),
+              child: Row(children: [
+                const Icon(Icons.auto_awesome_rounded,
+                    size: 13, color: AppColors.textMuted),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    AppConfig.regUsernameAutoNote,
+                    style: GoogleFonts.dmSans(
+                        fontSize: 11, color: AppColors.textMuted),
+                  ),
+                ),
+              ]),
             ),
             const SizedBox(height: 12),
 
@@ -574,12 +534,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             ),
             const SizedBox(height: 12),
 
-            // ── Contact ──────────────────────────────────
+            // ── Contact (optional) ───────────────────────
             _SectionLabel(label: AppConfig.regSectionContact),
             const SizedBox(height: 10),
 
             _LabeledField(
-              label: AppConfig.regEmailLabel,
+              label: AppConfig.regEmailOptionalLabel,
               child: _PlainField(
                 ctrl: _emailCtrl, hint: AppConfig.regEmailHint,
                 icon: Icons.mail_outline_rounded,
@@ -608,7 +568,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             _SectionLabel(label: AppConfig.regSectionOptional),
             const SizedBox(height: 10),
 
-            // Last donation date picker
             _LabeledField(
               label: AppConfig.regLastDonationLabel,
               child: GestureDetector(
@@ -647,21 +606,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             ),
             const SizedBox(height: 24),
 
-            // Submit button
             _PrimaryButton(
               label: AppConfig.regSubmitBtn,
               isLoading: _registering,
               onTap: _submitRegistration,
             ),
             const SizedBox(height: 12),
-
-            // Back
             _OutlineButton(
               label: AppConfig.regBackBtn,
-              onTap: () {
-                setState(() { _error = null; });
-                _goStep(_RegStep.otpCode);
-              },
+              onTap: () { setState(() => _error = null); _goStep(_RegStep.otpCode); },
             ),
             const SizedBox(height: 16),
             _SupportLink(),
@@ -673,549 +626,236 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
 }
 
 // ══════════════════════════════════════════════════════════════
-//  Shared layout wrapper
+//  Shared layout & widgets (unchanged from original)
 // ══════════════════════════════════════════════════════════════
+
 class _RegLayout extends StatelessWidget {
   final Widget topContent;
   final Widget bottomContent;
   final bool scrollable;
-
-  const _RegLayout({
-    super.key,
-    required this.topContent,
-    required this.bottomContent,
-    this.scrollable = false,
-  });
+  const _RegLayout({super.key, required this.topContent, required this.bottomContent, this.scrollable = false});
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  // Top gradient band with brand / step indicator
-                  Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0xFFFDF5F6),
-                          AppColors.background,
-                        ],
-                      ),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
-                    child: Center(child: topContent),
+    return LayoutBuilder(builder: (context, constraints) {
+      return SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: IntrinsicHeight(
+            child: Column(children: [
+              Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                    colors: [Color(0xFFFDF5F6), AppColors.background],
                   ),
-
-                  // White card bottom
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: AppColors.background,
-                      ),
-                      child: bottomContent,
-                    ),
-                  ),
-                ],
+                ),
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
+                child: Center(child: topContent),
               ),
-            ),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(color: AppColors.background),
+                  child: bottomContent,
+                ),
+              ),
+            ]),
           ),
-        );
-      },
-    );
+        ),
+      );
+    });
   }
 }
 
-// ══════════════════════════════════════════════════════════════
-//  Reusable widgets (matching login_screen.dart style exactly)
-// ══════════════════════════════════════════════════════════════
-
 class _PrimaryButton extends StatelessWidget {
-  final String label;
-  final IconData? icon;
-  final bool isLoading;
-  final VoidCallback onTap;
-
-  const _PrimaryButton({
-    required this.label,
-    this.icon,
-    required this.isLoading,
-    required this.onTap,
-  });
-
+  final String label; final IconData? icon; final bool isLoading; final VoidCallback onTap;
+  const _PrimaryButton({required this.label, this.icon, required this.isLoading, required this.onTap});
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14)),
-          elevation: 0,
-        ),
-        child: isLoading
-          ? const SizedBox(
-              width: 22, height: 22,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: Colors.white))
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, size: 18),
-                  const SizedBox(width: 8),
-                ],
-                Text(label,
-                  style: GoogleFonts.syne(
-                    fontSize: 15, fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3)),
-              ],
-            ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => SizedBox(width: double.infinity, height: 52,
+    child: ElevatedButton(
+      onPressed: isLoading ? null : onTap,
+      style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white, disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), elevation: 0),
+      child: isLoading
+        ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+        : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            if (icon != null) ...[ Icon(icon, size: 18), const SizedBox(width: 8) ],
+            Text(label, style: GoogleFonts.syne(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
+          ]),
+    ));
 }
 
 class _OutlineButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-
+  final String label; final VoidCallback onTap;
   const _OutlineButton({required this.label, required this.onTap});
-
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: OutlinedButton(
-        onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textSecondary,
-          side: const BorderSide(color: AppColors.border, width: 1.5),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14)),
-        ),
-        child: Text(label,
-          style: GoogleFonts.dmSans(
-            fontSize: 14, fontWeight: FontWeight.w500)),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => SizedBox(width: double.infinity, height: 48,
+    child: OutlinedButton(onPressed: onTap,
+      style: OutlinedButton.styleFrom(foregroundColor: AppColors.textSecondary,
+        side: const BorderSide(color: AppColors.border, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+      child: Text(label, style: GoogleFonts.dmSans(fontSize: 14, fontWeight: FontWeight.w500))));
 }
 
 class _MobileField extends StatelessWidget {
-  final TextEditingController ctrl;
-  final VoidCallback onSubmit;
-
+  final TextEditingController ctrl; final VoidCallback onSubmit;
   const _MobileField({required this.ctrl, required this.onSubmit});
-
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14)),
-      child: Row(children: [
-        const SizedBox(width: 14),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(8)),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Text(AppConfig.otpCountryFlag,
-                style: const TextStyle(fontSize: 14)),
-            const SizedBox(width: 5),
-            Text(AppConfig.otpCountryCode,
-              style: GoogleFonts.dmSans(
-                fontSize: 12, fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary)),
-          ]),
-        ),
-        const SizedBox(width: 8),
-        Container(width: 1, height: 20, color: AppColors.border),
-        const SizedBox(width: 12),
-        Expanded(
-          child: TextField(
-            controller: ctrl,
-            keyboardType: TextInputType.phone,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(10),
-            ],
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => onSubmit(),
-            style: GoogleFonts.dmSans(
-              fontSize: 15, color: AppColors.textPrimary,
-              fontWeight: FontWeight.w500, letterSpacing: 1.4),
-            decoration: InputDecoration(
-              hintText: AppConfig.otpPlaceholder,
-              hintStyle: GoogleFonts.dmSans(
-                  fontSize: 14, color: AppColors.textVeryMuted),
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              isDense: true, contentPadding: EdgeInsets.zero),
-          ),
-        ),
-        const SizedBox(width: 14),
-      ]),
-    );
-  }
+  Widget build(BuildContext context) => Container(
+    height: 52,
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+    child: Row(children: [
+      const SizedBox(width: 14),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(8)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Text(AppConfig.otpCountryFlag, style: const TextStyle(fontSize: 14)),
+          const SizedBox(width: 5),
+          Text(AppConfig.otpCountryCode, style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+        ])),
+      const SizedBox(width: 8),
+      Container(width: 1, height: 20, color: AppColors.border),
+      const SizedBox(width: 12),
+      Expanded(child: TextField(controller: ctrl, keyboardType: TextInputType.phone,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
+        textInputAction: TextInputAction.done, onSubmitted: (_) => onSubmit(),
+        style: GoogleFonts.dmSans(fontSize: 15, color: AppColors.textPrimary, fontWeight: FontWeight.w500, letterSpacing: 1.4),
+        decoration: InputDecoration(hintText: AppConfig.otpPlaceholder,
+          hintStyle: GoogleFonts.dmSans(fontSize: 14, color: AppColors.textVeryMuted),
+          border: InputBorder.none, enabledBorder: InputBorder.none, focusedBorder: InputBorder.none,
+          isDense: true, contentPadding: EdgeInsets.zero))),
+      const SizedBox(width: 14),
+    ]));
 }
 
 class _PlainField extends StatelessWidget {
-  final TextEditingController ctrl;
-  final String hint;
-  final IconData icon;
-  final TextInputType keyboard;
-  final TextInputAction action;
-  final bool autocorrect;
-
-  const _PlainField({
-    required this.ctrl,
-    required this.hint,
-    required this.icon,
-    this.keyboard = TextInputType.text,
-    this.action = TextInputAction.next,
-    this.autocorrect = true,
-  });
-
+  final TextEditingController ctrl; final String hint; final IconData icon;
+  final TextInputType keyboard; final TextInputAction action; final bool autocorrect;
+  const _PlainField({required this.ctrl, required this.hint, required this.icon,
+    this.keyboard = TextInputType.text, this.action = TextInputAction.next, this.autocorrect = true});
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14)),
-      child: Row(children: [
-        const SizedBox(width: 16),
-        Icon(icon, size: 18, color: AppColors.textMuted),
-        const SizedBox(width: 12),
-        Expanded(
-          child: TextField(
-            controller: ctrl,
-            keyboardType: keyboard,
-            textInputAction: action,
-            autocorrect: autocorrect,
-            style: GoogleFonts.dmSans(
-                fontSize: 14, color: AppColors.textPrimary),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: GoogleFonts.dmSans(
-                  fontSize: 14, color: AppColors.textVeryMuted),
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              isDense: true, contentPadding: EdgeInsets.zero),
-          ),
-        ),
-        const SizedBox(width: 16),
-      ]),
-    );
-  }
+  Widget build(BuildContext context) => Container(height: 52,
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+    child: Row(children: [
+      const SizedBox(width: 16), Icon(icon, size: 18, color: AppColors.textMuted), const SizedBox(width: 12),
+      Expanded(child: TextField(controller: ctrl, keyboardType: keyboard, textInputAction: action,
+        autocorrect: autocorrect, style: GoogleFonts.dmSans(fontSize: 14, color: AppColors.textPrimary),
+        decoration: InputDecoration(hintText: hint, hintStyle: GoogleFonts.dmSans(fontSize: 14, color: AppColors.textVeryMuted),
+          border: InputBorder.none, enabledBorder: InputBorder.none, focusedBorder: InputBorder.none,
+          isDense: true, contentPadding: EdgeInsets.zero))),
+      const SizedBox(width: 16),
+    ]));
 }
 
 class _BloodTypeDropdown extends StatelessWidget {
-  final String? value;
-  final ValueChanged<String?> onChanged;
-
+  final String? value; final ValueChanged<String?> onChanged;
   static const _types = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-
   const _BloodTypeDropdown({required this.value, required this.onChanged});
-
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14)),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          hint: Text(AppConfig.regBloodTypeHint,
-            style: GoogleFonts.dmSans(
-              fontSize: 14, color: AppColors.textVeryMuted)),
-          icon: const Icon(Icons.keyboard_arrow_down_rounded,
-              color: AppColors.textMuted),
-          isExpanded: true,
-          style: GoogleFonts.dmSans(
-              fontSize: 14, color: AppColors.textPrimary),
-          onChanged: onChanged,
-          items: _types.map((t) => DropdownMenuItem(
-            value: t,
-            child: Row(children: [
-              Container(
-                width: 32, height: 22,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(6)),
-                child: Center(
-                  child: Text(t,
-                    style: GoogleFonts.syne(
-                      fontSize: 11, fontWeight: FontWeight.w700,
-                      color: AppColors.primary)))),
-              const SizedBox(width: 10),
-              Text(t, style: GoogleFonts.dmSans(
-                  fontSize: 14, color: AppColors.textPrimary)),
-            ]),
-          )).toList(),
-        ),
-      ),
-    );
-  }
-}
-
-class _AvailabilityToggle extends StatelessWidget {
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _AvailabilityToggle(
-      {required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14)),
-      padding: const EdgeInsets.all(6),
-      child: Row(children: [
-        Expanded(child: _ToggleOption(
-          label: AppConfig.regAvailableOption,
-          selected: value,
-          onTap: () => onChanged(true),
-        )),
-        const SizedBox(width: 6),
-        Expanded(child: _ToggleOption(
-          label: AppConfig.regUnavailableOption,
-          selected: !value,
-          onTap: () => onChanged(false),
-        )),
-      ]),
-    );
-  }
-}
-
-class _ToggleOption extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _ToggleOption(
-      {required this.label, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        height: 40,
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(10)),
-        child: Center(
-          child: Text(label,
-            style: GoogleFonts.dmSans(
-              fontSize: 12, fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : AppColors.textSecondary))),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Container(height: 52,
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: DropdownButtonHideUnderline(child: DropdownButton<String>(
+      value: value, isExpanded: true, icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textMuted),
+      hint: Text(AppConfig.regBloodTypeHint, style: GoogleFonts.dmSans(fontSize: 14, color: AppColors.textVeryMuted)),
+      style: GoogleFonts.dmSans(fontSize: 14, color: AppColors.textPrimary), onChanged: onChanged,
+      items: _types.map((t) => DropdownMenuItem(value: t, child: Row(children: [
+        Container(width: 32, height: 22, decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(6)),
+          child: Center(child: Text(t, style: GoogleFonts.syne(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)))),
+        const SizedBox(width: 10),
+        Text(t, style: GoogleFonts.dmSans(fontSize: 14, color: AppColors.textPrimary)),
+      ]))).toList())));
 }
 
 class _OtpCell extends StatelessWidget {
-  final TextEditingController ctrl;
-  final FocusNode node;
-  final ValueChanged<String> onInput;
-  final VoidCallback onBackspace;
-
-  const _OtpCell({
-    required this.ctrl, required this.node,
-    required this.onInput, required this.onBackspace,
-  });
-
+  final TextEditingController ctrl; final FocusNode node;
+  final ValueChanged<String> onInput; final VoidCallback onBackspace;
+  const _OtpCell({required this.ctrl, required this.node, required this.onInput, required this.onBackspace});
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 46, height: 54,
-      child: KeyboardListener(
-        focusNode: FocusNode(),
-        onKeyEvent: (e) {
-          if (e is KeyDownEvent &&
-              e.logicalKey == LogicalKeyboardKey.backspace &&
-              ctrl.text.isEmpty) onBackspace();
-        },
-        child: TextField(
-          controller: ctrl, focusNode: node,
-          keyboardType: TextInputType.number,
-          textAlign: TextAlign.center, maxLength: 1,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: onInput,
-          style: GoogleFonts.dmSans(
-              fontSize: 22, fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary),
-          decoration: InputDecoration(
-            counterText: '',
-            filled: true, fillColor: Colors.white,
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                  color: AppColors.border, width: 1.5)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                  color: AppColors.primary, width: 2)),
-            contentPadding: EdgeInsets.zero),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => SizedBox(width: 46, height: 54,
+    child: KeyboardListener(focusNode: FocusNode(),
+      onKeyEvent: (e) { if (e is KeyDownEvent && e.logicalKey == LogicalKeyboardKey.backspace && ctrl.text.isEmpty) onBackspace(); },
+      child: TextField(controller: ctrl, focusNode: node, keyboardType: TextInputType.number,
+        textAlign: TextAlign.center, maxLength: 1,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly], onChanged: onInput,
+        style: GoogleFonts.dmSans(fontSize: 22, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+        decoration: InputDecoration(counterText: '', filled: true, fillColor: Colors.white,
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border, width: 1.5)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+          contentPadding: EdgeInsets.zero))));
 }
 
 class _LabeledField extends StatelessWidget {
-  final String label;
-  final Widget child;
-
+  final String label; final Widget child;
   const _LabeledField({required this.label, required this.child});
-
   @override
-  Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label,
-        style: GoogleFonts.syne(
-          fontSize: 11, fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary, letterSpacing: 0.3)),
-      const SizedBox(height: 6),
-      child,
-    ]);
-  }
+  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Text(label, style: GoogleFonts.syne(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.3)),
+    const SizedBox(height: 6), child,
+  ]);
 }
 
 class _SectionLabel extends StatelessWidget {
   final String label;
-
   const _SectionLabel({required this.label});
-
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
-      child: Text(label,
-        style: GoogleFonts.syne(
-          fontSize: 10, fontWeight: FontWeight.w700,
-          color: AppColors.textMuted,
-          letterSpacing: 0.8)),
-    );
-  }
+  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(bottom: 2),
+    child: Text(label, style: GoogleFonts.syne(fontSize: 10, fontWeight: FontWeight.w700,
+      color: AppColors.textMuted, letterSpacing: 0.8)));
 }
 
 class _HintCard extends StatelessWidget {
-  final IconData icon;
-  final String body;
-
+  final IconData icon; final String body;
   const _HintCard({required this.icon, required this.body});
-
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14)),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, size: 18, color: AppColors.primary),
-        const SizedBox(width: 10),
-        Expanded(child: Text(body,
-          style: GoogleFonts.dmSans(
-            fontSize: 12, color: AppColors.textSecondary, height: 1.5))),
-      ]),
-    );
-  }
+  Widget build(BuildContext context) => Container(padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Icon(icon, size: 18, color: AppColors.primary), const SizedBox(width: 10),
+      Expanded(child: Text(body, style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.textSecondary, height: 1.5))),
+    ]));
 }
 
 class _ErrorPill extends StatelessWidget {
   final String msg;
   const _ErrorPill(this.msg);
-
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.urgentBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.urgentBorder)),
-      child: Row(children: [
-        const Icon(Icons.error_outline_rounded,
-            size: 15, color: AppColors.urgentText),
-        const SizedBox(width: 8),
-        Expanded(child: Text(msg,
-          style: GoogleFonts.dmSans(
-              fontSize: 12, color: AppColors.urgentText, height: 1.4))),
-      ]),
-    );
-  }
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(color: AppColors.urgentBg, borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: AppColors.urgentBorder)),
+    child: Row(children: [
+      const Icon(Icons.error_outline_rounded, size: 15, color: AppColors.urgentText), const SizedBox(width: 8),
+      Expanded(child: Text(msg, style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.urgentText, height: 1.4))),
+    ]));
 }
 
 class _Divider extends StatelessWidget {
   final String label;
   const _Divider({required this.label});
-
   @override
-  Widget build(BuildContext context) {
-    return Row(children: [
-      const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Text(label,
-          style: GoogleFonts.dmSans(
-            fontSize: 12, color: AppColors.textMuted))),
-      const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
-    ]);
-  }
+  Widget build(BuildContext context) => Row(children: [
+    const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
+    Padding(padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Text(label, style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.textMuted))),
+    const Expanded(child: Divider(color: AppColors.border, thickness: 1)),
+  ]);
 }
 
 class _SupportLink extends StatelessWidget {
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: GestureDetector(
-        onTap: () => context.push('/support'),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.help_outline_rounded,
-                size: 13, color: AppColors.primary),
-            const SizedBox(width: 5),
-            Text(AppConfig.supportLabel,
-              style: GoogleFonts.dmSans(
-                fontSize: 12, color: AppColors.primary,
-                fontWeight: FontWeight.w500,
-                decoration: TextDecoration.underline,
-                decorationColor: AppColors.primary)),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Center(
+    child: GestureDetector(onTap: () => context.push('/support'),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.help_outline_rounded, size: 13, color: AppColors.primary),
+        const SizedBox(width: 5),
+        Text(AppConfig.supportLabel, style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.primary,
+          fontWeight: FontWeight.w500, decoration: TextDecoration.underline,
+          decorationColor: AppColors.primary)),
+      ])));
 }

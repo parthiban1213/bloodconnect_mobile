@@ -62,7 +62,7 @@ class AuthService {
     required String firstName,
     required String lastName,
     required String bloodType,
-    required String email,
+    String? email,                // optional — omitted from payload when null/empty
     String? address,
     String? city,
     DateTime? lastDonationDate,
@@ -74,7 +74,7 @@ class AuthService {
       'firstName': firstName,
       'lastName':  lastName,
       'bloodType': bloodType,
-      'email':     email,
+      if (email != null && email.isNotEmpty) 'email': email,
       if (address != null && address.isNotEmpty) 'address': address,
       if (city != null && city.isNotEmpty) 'city': city,
       if (lastDonationDate != null)

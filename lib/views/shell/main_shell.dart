@@ -49,7 +49,6 @@ class _MainShellState extends ConsumerState<MainShell> {
   void _onTabTap(int index) {
     final path = _allTabs[index].path;
     context.go(path);
-    // Directly trigger data load — avoids any frame-callback race condition
     if (path.startsWith('/feed')) {
       ref.read(requirementsViewModelProvider.notifier).load();
     } else if (path.startsWith('/my-requests')) {
@@ -82,6 +81,12 @@ class _MainShellState extends ConsumerState<MainShell> {
     final currentIdx  = _locationToIndex(location);
     final unreadCount = ref.watch(notificationsViewModelProvider).unreadCount;
 
+    // Watch pending pledge count across all active requests
+    final myReqState  = ref.watch(myRequestsViewModelProvider);
+    final pendingCount = myReqState.activeRequests.fold<int>(
+      0, (sum, r) => sum + r.pendingCount,
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _onLocationChanged(location);
     });
@@ -104,6 +109,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           tabs:         _allTabs,
           currentIndex: currentIdx,
           onTabTap:     _onTabTap,
+          pendingCount: pendingCount,
         ),
       ),
     );
@@ -111,17 +117,19 @@ class _MainShellState extends ConsumerState<MainShell> {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Floating Nav — flat 5-tab pill
+//  Floating Nav
 // ─────────────────────────────────────────────────────────────
 class _FloatingNav extends StatelessWidget {
   final List<_Tab> tabs;
   final int currentIndex;
   final ValueChanged<int> onTabTap;
+  final int pendingCount;
 
   const _FloatingNav({
     required this.tabs,
     required this.currentIndex,
     required this.onTabTap,
+    required this.pendingCount,
   });
 
   static const _pillH = 62.0;
@@ -147,13 +155,16 @@ class _FloatingNav extends StatelessWidget {
           ),
           child: Row(
             children: List.generate(tabs.length, (i) {
+              // Show pending badge only on the Requests tab (index 0)
+              final badge = (i == 0 && pendingCount > 0) ? pendingCount : 0;
               return Expanded(
                 child: _PillTab(
-                  icon:       tabs[i].icon,
-                  activeIcon: tabs[i].activeIcon,
-                  label:      tabs[i].label,
-                  active:     currentIndex == i,
-                  onTap:      () => onTabTap(i),
+                  icon:        tabs[i].icon,
+                  activeIcon:  tabs[i].activeIcon,
+                  label:       tabs[i].label,
+                  active:      currentIndex == i,
+                  onTap:       () => onTabTap(i),
+                  badgeCount:  badge,
                 ),
               );
             }),
@@ -165,7 +176,7 @@ class _FloatingNav extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Pill tab item
+//  Pill tab item — with optional badge
 // ─────────────────────────────────────────────────────────────
 class _PillTab extends StatelessWidget {
   final IconData icon;
@@ -173,6 +184,7 @@ class _PillTab extends StatelessWidget {
   final String label;
   final bool active;
   final VoidCallback onTap;
+  final int badgeCount;
 
   const _PillTab({
     required this.icon,
@@ -180,6 +192,7 @@ class _PillTab extends StatelessWidget {
     required this.label,
     required this.active,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
@@ -194,23 +207,51 @@ class _PillTab extends StatelessWidget {
           color: active ? Colors.white.withOpacity(0.16) : Colors.transparent,
           borderRadius: BorderRadius.circular(24),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
           children: [
-            Icon(
-              active ? activeIcon : icon,
-              size: 19,
-              color: active ? Colors.white : Colors.white.withOpacity(0.45),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  active ? activeIcon : icon,
+                  size: 19,
+                  color: active ? Colors.white : Colors.white.withOpacity(0.45),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: GoogleFonts.syne(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: active ? Colors.white : Colors.white.withOpacity(0.45),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: GoogleFonts.syne(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: active ? Colors.white : Colors.white.withOpacity(0.45),
+            // Badge count
+            if (badgeCount > 0)
+              Positioned(
+                top: 2,
+                right: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.navBg, width: 1.5),
+                  ),
+                  child: Text(
+                    badgeCount > 99 ? '99+' : '$badgeCount',
+                    style: GoogleFonts.syne(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               ),
-            ),
           ],
         ),
       ),

@@ -53,6 +53,10 @@ class FcmService {
       if (_currentBloodType != bloodType) {
         await _resubscribe(bloodType);
       }
+      // Always re-save the token on every init call so the backend stays
+      // up-to-date even if the endpoint was unavailable on a previous call.
+      final existingToken = await FirebaseMessaging.instance.getToken();
+      if (existingToken != null) _saveTokenToBackend(existingToken);
       return;
     }
     _initialized      = true;

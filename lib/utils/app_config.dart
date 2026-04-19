@@ -101,14 +101,17 @@ class AppConfig {
   static const String regSectionContact    = 'Contact Details';
   static const String regSectionOptional   = 'Additional Details (optional)';
   static const String regFirstNameLabel    = 'First Name *';
-  static const String regLastNameLabel     = 'Last Name *';
+  static const String regLastNameLabel             = 'Last Name *';
+  static const String regLastNameOptionalLabel     = 'Last Name (optional)';
   static const String regFirstNameHint     = 'e.g. Arjun';
   static const String regLastNameHint      = 'e.g. Kumar';
   static const String regBloodTypeLabel    = 'Blood Type *';
   static const String regBloodTypeHint     = 'Select blood type';
   static const String regUsernameLabel     = 'Username *';
   static const String regUsernameHint      = 'e.g. arjun_kumar';
-  static const String regEmailLabel        = 'Email Address *';
+  static const String regEmailLabel            = 'Email Address *';
+  static const String regEmailOptionalLabel    = 'Email Address (optional)';
+  static const String regUsernameAutoNote      = 'Your login username will be generated automatically from your name.';
   static const String regEmailHint         = 'you@example.com';
   static const String regAddressLabel      = 'Address (optional)';
   static const String regAddressHint       = 'Street, City, State';
@@ -122,6 +125,7 @@ class AppConfig {
 
   // Validation messages
   static const String regErrFirstLast      = 'First name and last name are required.';
+  static const String regErrFirstName     = 'Please enter your first name.';
   static const String regErrBloodType      = 'Please select your blood type.';
   static const String regErrUsername       = 'Username must be at least 3 characters.';
   static const String regErrEmail          = 'Please enter a valid email address.';
@@ -409,13 +413,15 @@ class AppConfig {
   static const String myReqCancelAction    = 'Cancel';
 
   // ── Pledge schedule modal ────────────────────────────────────
-  static const String pledgeModalTitle       = 'Schedule Donation';
-  static const String pledgeModalSubtitle    = 'Choose when you plan to donate';
+  static const String pledgeModalTitle         = 'Confirm Pledge';
+  static const String pledgeModalSubtitle      = 'Choose when you plan to donate';
+  static const String pledgeModalOptionalNote  = 'Scheduling is optional — you can pledge now and coordinate with the hospital directly.';
+  static const String pledgeModalScheduleLabel = 'SCHEDULE (OPTIONAL)';
   static const String pledgeModalDateLabel   = 'Donation Date';
   static const String pledgeModalTimeLabel   = 'Preferred Time';
-  static const String pledgeModalDateHint    = 'Select date';
-  static const String pledgeModalTimeHint    = 'Select time';
-  static const String pledgeModalConfirmBtn  = 'Confirm Pledge';
+  static const String pledgeModalDateHint    = 'Pick date';
+  static const String pledgeModalTimeHint    = 'Pick time';
+  static const String pledgeModalConfirmBtn  = 'Pledge to Donate';
   static const String pledgeModalCancelBtn   = 'Cancel';
   static const String pledgeModalDateError   = 'Please select a donation date.';
   static const String pledgeModalTimeError   = 'Please select a preferred time.';
@@ -433,11 +439,7 @@ class AppConfig {
   static const String donorListEmpty         = 'No donors have pledged yet.';
   static const String donorListLoading       = 'Loading donors…';
   static const String donorListError         = 'Could not load donor list.';
-  static const String donorTabPledged        = 'Pledged';
-  static const String donorTabAvailable      = 'Available Donors';
-  static const String availableDonorEmpty    = 'No available donors found for this blood type.';
-  static const String availableDonorLoading  = 'Loading available donors…';
-  static const String availableDonorError    = 'Failed to load donors.';
+  static const String donorTabPledged        = 'Pledged Donors';
   static const String donorScheduledPrefix   = 'Scheduled: ';
   static const String donorNoSchedule        = 'No date scheduled';
   static const String donorMarkCompleted     = 'Mark Completed';

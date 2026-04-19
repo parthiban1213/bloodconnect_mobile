@@ -4,8 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/blood_requirement.dart';
-import '../../models/donor_model.dart';
-import '../../services/donors_service.dart';
 import '../../viewmodels/my_requests_viewmodel.dart';
 import '../../viewmodels/requirements_viewmodel.dart';
 import '../../viewmodels/history_viewmodel.dart';
@@ -55,19 +53,12 @@ class RequestStatusModal extends ConsumerStatefulWidget {
 }
 
 class _RequestStatusModalState extends ConsumerState<RequestStatusModal> {
-  // ── Pledged donors ────────────────────────────────────────────
-  List<DonorPledge> _pledges = [];
-  bool _loadingPledges = false;
-  String? _pledgesError;
+  List<DonorPledge> _pledges     = [];
+  bool              _loadingPledges = false;
+  String?           _pledgesError;
   final Map<String, bool> _updating = {};
-
-  // ── Available donors ──────────────────────────────────────────
-  List<DonorModel> _availableDonors = [];
-  bool _loadingAvailable = false;
-  String? _availableError;
-
-  // ── Tab state ─────────────────────────────────────────────────
-  int _selectedTab = 0; // 0 = Pledged, 1 = Available Donors
+  // Tracks which pledge was just marked Completed for the Undo snackbar
+  String? _lastCompletedUsername;
 
   @override
   void initState() {
@@ -84,28 +75,12 @@ class _RequestStatusModalState extends ConsumerState<RequestStatusModal> {
     setState(() { _pledges = pledges; _loadingPledges = false; });
   }
 
-  Future<void> _loadAvailableDonors() async {
-    setState(() { _loadingAvailable = true; _availableError = null; });
-    try {
-      final donors = await DonorsService().getDonors(
-        bloodType: widget.requirement.bloodType,
-        isAvailable: true,
-      );
-      if (!mounted) return;
-      setState(() { _availableDonors = donors; _loadingAvailable = false; });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() { _loadingAvailable = false; _availableError = AppConfig.availableDonorError; });
-    }
-  }
-
   Future<void> _call(String phone) async {
     final uri = Uri.parse('tel:$phone');
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  Future<void> _toggleStatus(DonorPledge pledge) async {
-    final newStatus = pledge.isCompleted ? 'Pending' : 'Completed';
+  Future<void> _markCompleted(DonorPledge pledge) async {
     setState(() => _updating[pledge.donorUsername] = true);
 
     final ok = await ref
@@ -113,46 +88,76 @@ class _RequestStatusModalState extends ConsumerState<RequestStatusModal> {
         .updateDonationStatus(
           requirementId: widget.requirement.id,
           donorUsername: pledge.donorUsername,
-          newStatus: newStatus,
+          newStatus: 'Completed',
         );
 
     if (!mounted) return;
+    setState(() => _updating.remove(pledge.donorUsername));
 
     if (ok) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-          newStatus == 'Completed'
-              ? AppConfig.donorCompletedSuccess
-              : AppConfig.donorPendingSuccess,
-          style: GoogleFonts.dmSans(fontSize: 13),
-        ),
-        backgroundColor: newStatus == 'Completed'
-            ? AppColors.secondary
-            : AppColors.navBg,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ));
-
-      if (newStatus == 'Completed') {
-        final currentUser = ref.read(authViewModelProvider).user;
-        if (currentUser?.username == pledge.donorUsername) {
-          await ReminderService().scheduleEligibilityReminder(DateTime.now());
-        }
-        ref.read(historyViewModelProvider.notifier).load();
+      // Schedule eligibility reminder if current user was the donor
+      final currentUser = ref.read(authViewModelProvider).user;
+      if (currentUser?.username == pledge.donorUsername) {
+        await ReminderService().scheduleEligibilityReminder(DateTime.now());
       }
+      ref.read(historyViewModelProvider.notifier).load();
       ref.read(myRequestsViewModelProvider.notifier).load();
       await _loadPledges();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(AppConfig.donorStatusError,
-            style: GoogleFonts.dmSans(fontSize: 13)),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ));
-    }
 
-    if (mounted) setState(() => _updating.remove(pledge.donorUsername));
+      // Show Undo snackbar — single-action recovery, no permanent revert UI
+      if (mounted) {
+        _lastCompletedUsername = pledge.donorUsername;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppConfig.donorCompletedSuccess,
+              style: GoogleFonts.dmSans(fontSize: 13),
+            ),
+            backgroundColor: AppColors.secondary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Undo',
+              textColor: Colors.white,
+              onPressed: () => _undoCompleted(pledge),
+            ),
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppConfig.donorStatusError,
+              style: GoogleFonts.dmSans(fontSize: 13)),
+          backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ));
+      }
+    }
+  }
+
+  Future<void> _undoCompleted(DonorPledge pledge) async {
+    setState(() => _updating[pledge.donorUsername] = true);
+
+    final ok = await ref
+        .read(requirementsViewModelProvider.notifier)
+        .updateDonationStatus(
+          requirementId: widget.requirement.id,
+          donorUsername: pledge.donorUsername,
+          newStatus: 'Pending',
+        );
+
+    if (!mounted) return;
+    setState(() => _updating.remove(pledge.donorUsername));
+
+    if (ok) {
+      ref.read(historyViewModelProvider.notifier).load();
+      ref.read(myRequestsViewModelProvider.notifier).load();
+      await _loadPledges();
+    }
   }
 
   Color get _statusColor {
@@ -169,7 +174,13 @@ class _RequestStatusModalState extends ConsumerState<RequestStatusModal> {
 
   @override
   Widget build(BuildContext context) {
-    final req      = widget.requirement;
+    // Watch live state so modal rebuilds immediately after mark completed
+    // without needing to close and reopen.
+    final myReqState = ref.watch(myRequestsViewModelProvider);
+    final liveReq = myReqState.requests
+        .where((r) => r.id == widget.requirement.id)
+        .firstOrNull;
+    final req      = liveReq ?? widget.requirement;
     final progress = req.fulfillmentProgress;
 
     return Container(
@@ -349,14 +360,22 @@ class _RequestStatusModalState extends ConsumerState<RequestStatusModal> {
             if (req.notes.isNotEmpty)
               _DetailRow(label: AppConfig.modalNotesLabel, value: req.notes),
 
-            // Tabbed donor section (requester / admin only)
+            // Pledged donors section (requester only — no Available Donors tab)
             if (widget.isRequester) ...[
               const SizedBox(height: 20),
               const Divider(height: 1, color: AppColors.borderSoft),
               const SizedBox(height: 16),
-              _buildTabBar(),
-              const SizedBox(height: 12),
-              _selectedTab == 0 ? _buildDonorList() : _buildAvailableDonorList(),
+              Text(
+                AppConfig.donorListSectionTitle,
+                style: GoogleFonts.syne(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textMuted,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _buildDonorList(),
             ],
 
             const SizedBox(height: 4),
@@ -364,27 +383,6 @@ class _RequestStatusModalState extends ConsumerState<RequestStatusModal> {
         ),
       ),
     );
-  }
-
-  Widget _buildTabBar() {
-    return Row(children: [
-      _TabChip(
-        label: AppConfig.donorTabPledged,
-        active: _selectedTab == 0,
-        onTap: () => setState(() => _selectedTab = 0),
-      ),
-      const SizedBox(width: 8),
-      _TabChip(
-        label: AppConfig.donorTabAvailable,
-        active: _selectedTab == 1,
-        onTap: () {
-          setState(() => _selectedTab = 1);
-          if (_availableDonors.isEmpty && !_loadingAvailable && _availableError == null) {
-            _loadAvailableDonors();
-          }
-        },
-      ),
-    ]);
   }
 
   Widget _buildDonorList() {
@@ -419,97 +417,27 @@ class _RequestStatusModalState extends ConsumerState<RequestStatusModal> {
           .map((p) => _DonorPledgeCard(
                 pledge:     p,
                 isUpdating: _updating[p.donorUsername] == true,
-                onToggle:   () => _toggleStatus(p),
+                onMarkCompleted: p.isPending ? () => _markCompleted(p) : null,
               ))
           .toList(),
     );
   }
-
-  Widget _buildAvailableDonorList() {
-    if (_loadingAvailable) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(children: [
-          const SizedBox(
-            width: 16, height: 16,
-            child: CircularProgressIndicator(
-                strokeWidth: 2, color: AppColors.primary),
-          ),
-          const SizedBox(width: 10),
-          Text(AppConfig.availableDonorLoading,
-              style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.textMuted)),
-        ]),
-      );
-    }
-    if (_availableError != null) {
-      return Text(_availableError!,
-          style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.primary));
-    }
-    if (_availableDonors.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Text(AppConfig.availableDonorEmpty,
-            style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.textMuted)),
-      );
-    }
-    return Column(
-      children: _availableDonors
-          .map((d) => _AvailableDonorCard(donor: d, onCall: () => _call(d.phone)))
-          .toList(),
-    );
-  }
 }
 
 // ─────────────────────────────────────────────────────────────
-//  _TabChip
-// ─────────────────────────────────────────────────────────────
-
-class _TabChip extends StatelessWidget {
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-  const _TabChip({required this.label, required this.active, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? AppColors.navBg : AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: active ? AppColors.navBg : AppColors.border,
-            width: 1.5,
-          ),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.syne(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: active ? Colors.white : AppColors.textSecondary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  _DonorPledgeCard
+//  _DonorPledgeCard — Pending shows Mark Completed button,
+//  Completed shows a green badge only (no revert toggle)
 // ─────────────────────────────────────────────────────────────
 
 class _DonorPledgeCard extends StatelessWidget {
   final DonorPledge pledge;
   final bool isUpdating;
-  final VoidCallback onToggle;
+  final VoidCallback? onMarkCompleted;
+
   const _DonorPledgeCard({
     required this.pledge,
     required this.isUpdating,
-    required this.onToggle,
+    required this.onMarkCompleted,
   });
 
   @override
@@ -530,7 +458,7 @@ class _DonorPledgeCard extends StatelessWidget {
         : pledge.donorUsername;
     final avatar = displayName[0].toUpperCase();
 
-    String scheduleText = AppConfig.donorNoSchedule;
+    String scheduleText = 'No schedule set';
     if (pledge.scheduledDate.isNotEmpty) {
       try {
         final d = DateTime.parse(pledge.scheduledDate);
@@ -584,11 +512,15 @@ class _DonorPledgeCard extends StatelessWidget {
                   )),
               const SizedBox(height: 3),
               Row(children: [
-                Icon(Icons.calendar_today_rounded,
-                    size: 11,
-                    color: pledge.scheduledDate.isNotEmpty
-                        ? AppColors.plannedAccent
-                        : AppColors.textMuted),
+                Icon(
+                  pledge.scheduledDate.isNotEmpty
+                      ? Icons.calendar_today_rounded
+                      : Icons.calendar_today_outlined,
+                  size: 11,
+                  color: pledge.scheduledDate.isNotEmpty
+                      ? AppColors.plannedAccent
+                      : AppColors.textMuted,
+                ),
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text(scheduleText,
@@ -609,141 +541,59 @@ class _DonorPledgeCard extends StatelessWidget {
 
         const SizedBox(width: 8),
 
-        // Toggle button
+        // Action: loading / Mark Completed button / Completed badge
         isUpdating
             ? const SizedBox(
                 width: 22, height: 22,
                 child: CircularProgressIndicator(
                     strokeWidth: 2.5, color: AppColors.primary),
               )
-            : GestureDetector(
-                onTap: onToggle,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: statusBg,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: cardBorder, width: 1.5),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(
-                      isPending
-                          ? Icons.check_circle_outline_rounded
-                          : Icons.undo_rounded,
-                      size: 12, color: statusColor,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      isPending
-                          ? AppConfig.donorMarkCompleted
-                          : AppConfig.donorRevertPending,
-                      style: GoogleFonts.syne(
-                        fontSize: 9, fontWeight: FontWeight.w700,
-                        color: statusColor,
+            : isPending
+                ? GestureDetector(
+                    onTap: onMarkCompleted,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: statusBg,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: cardBorder, width: 1.5),
                       ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.check_circle_outline_rounded,
+                            size: 12, color: statusColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          AppConfig.donorMarkCompleted,
+                          style: GoogleFonts.syne(
+                            fontSize: 9, fontWeight: FontWeight.w700,
+                            color: statusColor,
+                          ),
+                        ),
+                      ]),
                     ),
-                  ]),
-                ),
-              ),
-      ]),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  _AvailableDonorCard
-// ─────────────────────────────────────────────────────────────
-
-class _AvailableDonorCard extends StatelessWidget {
-  final DonorModel donor;
-  final VoidCallback onCall;
-  const _AvailableDonorCard({required this.donor, required this.onCall});
-
-  @override
-  Widget build(BuildContext context) {
-    final name    = donor.fullName.isNotEmpty ? donor.fullName : donor.phone;
-    final avatar  = donor.initials;
-    final cityStr = donor.city.isNotEmpty ? donor.city : null;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border, width: 1.5),
-      ),
-      child: Row(children: [
-        // Avatar
-        Container(
-          width: 36, height: 36,
-          decoration: BoxDecoration(
-            color: AppColors.urgentBg,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Center(child: Text(avatar,
-              style: GoogleFonts.syne(
-                fontSize: 13, fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ))),
-        ),
-        const SizedBox(width: 10),
-
-        // Name + city + phone
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(name,
-                  style: GoogleFonts.syne(
-                    fontSize: 12, fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  )),
-              if (cityStr != null)
-                Text(cityStr,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 11, color: AppColors.textMuted,
-                    )),
-              const SizedBox(height: 2),
-              Row(children: [
-                const Icon(Icons.phone_outlined,
-                    size: 11, color: AppColors.textMuted),
-                const SizedBox(width: 4),
-                Text(donor.phone,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 11, color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    )),
-              ]),
-            ],
-          ),
-        ),
-
-        const SizedBox(width: 8),
-
-        // Call button
-        GestureDetector(
-          onTap: onCall,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(
-              color: const Color(0xFFDCFCE7),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF86EFAC), width: 1.5),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.call_rounded,
-                  size: 12, color: Color(0xFF15803D)),
-              const SizedBox(width: 4),
-              Text('Call',
-                  style: GoogleFonts.syne(
-                    fontSize: 9, fontWeight: FontWeight.w700,
-                    color: const Color(0xFF15803D),
-                  )),
-            ]),
-          ),
-        ),
+                  )
+                : Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: statusBg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: cardBorder, width: 1.5),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.check_circle_rounded,
+                          size: 12, color: statusColor),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Completed',
+                        style: GoogleFonts.syne(
+                          fontSize: 9, fontWeight: FontWeight.w700,
+                          color: statusColor,
+                        ),
+                      ),
+                    ]),
+                  ),
       ]),
     );
   }

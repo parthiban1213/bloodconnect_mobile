@@ -34,15 +34,15 @@ class RequirementsService {
       'page': page.toString(),
       'limit': limit.toString(),
     };
-    if (status != null)    params['status'] = status;
-    if (urgency != null)   params['urgency'] = urgency;
-    if (bloodType != null) params['bloodType'] = bloodType;
+    if (status != null)      params['status']      = status;
+    if (urgency != null)     params['urgency']      = urgency;
+    if (bloodType != null)   params['bloodType']    = bloodType;
     if (city != null && city.isNotEmpty) params['city'] = city;
-    if (latitude != null)  params['latitude'] = latitude.toString();
-    if (longitude != null) params['longitude'] = longitude.toString();
-    if (maxDistance != null) params['maxDistance'] = maxDistance.toString();
+    if (latitude != null)    params['latitude']     = latitude.toString();
+    if (longitude != null)   params['longitude']    = longitude.toString();
+    if (maxDistance != null) params['maxDistance']  = maxDistance.toString();
 
-    final res = await _client.get('/requirements', queryParams: params);
+    final res  = await _client.get('/requirements', queryParams: params);
     final data = res['data'] as List<dynamic>? ?? [];
     final pagination = res['pagination'] as Map<String, dynamic>?;
 
@@ -51,10 +51,10 @@ class RequirementsService {
         .toList();
 
     return PaginatedRequirements(
-      items: items,
-      page: pagination?['page'] as int? ?? page,
+      items:      items,
+      page:       pagination?['page']       as int? ?? page,
       totalPages: pagination?['totalPages'] as int? ?? 1,
-      total: pagination?['total'] as int? ?? items.length,
+      total:      pagination?['total']      as int? ?? items.length,
     );
   }
 
@@ -65,24 +65,21 @@ class RequirementsService {
     String? city,
     double? maxDistance,
   }) async {
-    final params = <String, dynamic>{
-      'limit': '500', // large limit to get all
-    };
-    if (city != null && city.isNotEmpty) params['city'] = city;
-    if (latitude != null)    params['latitude'] = latitude.toString();
-    if (longitude != null)   params['longitude'] = longitude.toString();
-    if (maxDistance != null) params['maxDistance'] = maxDistance.toString();
+    final params = <String, dynamic>{ 'limit': '500' };
+    if (city != null && city.isNotEmpty) params['city']        = city;
+    if (latitude != null)                params['latitude']    = latitude.toString();
+    if (longitude != null)               params['longitude']   = longitude.toString();
+    if (maxDistance != null)             params['maxDistance'] = maxDistance.toString();
 
-    final res = await _client.get('/requirements', queryParams: params);
+    final res  = await _client.get('/requirements', queryParams: params);
     final data = res['data'] as List<dynamic>? ?? [];
     return data
         .map((e) => BloodRequirement.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
-  // ── Correct endpoint: /my-requirements (not /requirements/my) ──
   Future<List<BloodRequirement>> getMyRequirements() async {
-    final res = await _client.get('/my-requirements');
+    final res  = await _client.get('/my-requirements');
     final data = res['data'] as List<dynamic>? ?? [];
     return data
         .map((e) => BloodRequirement.fromJson(e as Map<String, dynamic>))
@@ -117,35 +114,51 @@ class RequirementsService {
     return updateRequirement(id, {'status': 'Cancelled'});
   }
 
-  // ── Donate endpoint ─────────────────────────────────────────
+  // ── Donate endpoint ──────────────────────────────────────
+  /// Pledges to donate for [id]. After the pledge is created on the backend,
+  /// a notification is sent to the requester via POST /requirements/:id/notify-pledge
+  /// so they are immediately alerted that someone has responded.
   Future<BloodRequirement> donateToRequirement(
     String id, {
     required String scheduledDate,
     required String scheduledTime,
   }) async {
+    // Step 1: create the pledge
     await _client.post('/requirements/$id/donate', data: {
       'scheduledDate':  scheduledDate,
       'scheduledTime':  scheduledTime,
       'donationStatus': 'Pending',
     });
+
+    // Step 2: notify the requester (fire-and-forget — errors are non-fatal)
+    _notifyRequesterOfPledge(id).catchError((_) {});
+
+    // Step 3: return the refreshed requirement
     return getRequirement(id);
   }
 
-  // ── Decline endpoint ────────────────────────────────────────
+  /// Sends a push notification to the requirement creator informing them
+  /// that a donor has pledged. Uses a dedicated lightweight endpoint so the
+  /// backend can look up the requester's FCM token and send the alert.
+  Future<void> _notifyRequesterOfPledge(String requirementId) async {
+    await _client.post('/requirements/$requirementId/notify-pledge');
+  }
+
+  // ── Decline endpoint ─────────────────────────────────────
   Future<void> declineRequirement(String id) async {
     await _client.post('/requirements/$id/decline');
   }
 
-  // ── Donor list (requester / admin only) ─────────────────────
+  // ── Donor list (requester / admin only) ──────────────────
   Future<List<DonorPledge>> getDonorPledges(String requirementId) async {
-    final res = await _client.get('/requirements/$requirementId/donors');
+    final res  = await _client.get('/requirements/$requirementId/donors');
     final data = res['data'] as List<dynamic>? ?? [];
     return data
         .map((e) => DonorPledge.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
-  // ── Update donation status (requester / admin only) ─────────
+  // ── Update donation status (requester / admin only) ──────
   Future<Map<String, dynamic>> updateDonationStatus({
     required String requirementId,
     required String donorUsername,
@@ -158,9 +171,8 @@ class RequirementsService {
     return res as Map<String, dynamic>;
   }
 
-  // ── Correct endpoint: /my-donations (not /donations/my) ────
   Future<List<DonationHistory>> getMyDonations() async {
-    final res = await _client.get('/my-donations');
+    final res  = await _client.get('/my-donations');
     final data = res['data'] as List<dynamic>? ?? [];
     return data
         .map((e) => DonationHistory.fromJson(e as Map<String, dynamic>))

@@ -6,8 +6,8 @@ import '../utils/app_config.dart';
 
 // ─────────────────────────────────────────────────────────────
 //  SchedulePledgeModal
-//  Shows before a donor taps "I'll Donate". Requires them to
-//  pick a donation date (≥ today) and a preferred time.
+//  Shows before a donor taps "I'll Donate". Date and time are
+//  now OPTIONAL — donor can pledge immediately without scheduling.
 //  Returns a ({scheduledDate, scheduledTime}) record on confirm,
 //  or null if cancelled.
 // ─────────────────────────────────────────────────────────────
@@ -17,7 +17,7 @@ Future<({String scheduledDate, String scheduledTime})?> showSchedulePledgeModal(
   required String patientName,
   required String bloodType,
 }) {
-  return showDialog<({String scheduledDate, String scheduledTime})?>(
+  return showDialog<({String scheduledDate, String scheduledTime})>(
     context: context,
     barrierDismissible: true,
     barrierColor: Colors.black.withOpacity(0.45),
@@ -48,8 +48,6 @@ class _SchedulePledgeModal extends StatefulWidget {
 class _SchedulePledgeModalState extends State<_SchedulePledgeModal> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
-  String? _dateError;
-  String? _timeError;
 
   Future<void> _pickDate() async {
     final now    = DateTime.now();
@@ -70,12 +68,7 @@ class _SchedulePledgeModalState extends State<_SchedulePledgeModal> {
         child: child!,
       ),
     );
-    if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-        _dateError    = null;
-      });
-    }
+    if (picked != null) setState(() { _selectedDate = picked; });
   }
 
   Future<void> _pickTime() async {
@@ -94,33 +87,24 @@ class _SchedulePledgeModalState extends State<_SchedulePledgeModal> {
         child: child!,
       ),
     );
-    if (picked != null) {
-      setState(() {
-        _selectedTime = picked;
-        _timeError    = null;
-      });
-    }
+    if (picked != null) setState(() { _selectedTime = picked; });
   }
 
   void _confirm() {
-    bool valid = true;
-    if (_selectedDate == null) {
-      setState(() => _dateError = AppConfig.pledgeModalDateError);
-      valid = false;
+    // Date and time are optional — send empty strings if not selected
+    final dateStr = _selectedDate != null
+        ? DateFormat('yyyy-MM-dd').format(_selectedDate!)
+        : '';
+    String timeStr = '';
+    if (_selectedTime != null) {
+      final hour   = _selectedTime!.hour.toString().padLeft(2, '0');
+      final minute = _selectedTime!.minute.toString().padLeft(2, '0');
+      timeStr = '$hour:$minute';
     }
-    if (_selectedTime == null) {
-      setState(() => _timeError = AppConfig.pledgeModalTimeError);
-      valid = false;
-    }
-    if (!valid) return;
-
-    final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate!);
-    final hour    = _selectedTime!.hour.toString().padLeft(2, '0');
-    final minute  = _selectedTime!.minute.toString().padLeft(2, '0');
-    final timeStr = '$hour:$minute';
-
     Navigator.of(context).pop((scheduledDate: dateStr, scheduledTime: timeStr));
   }
+
+  void _clearDate() => setState(() { _selectedDate = null; _selectedTime = null; });
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +114,7 @@ class _SchedulePledgeModalState extends State<_SchedulePledgeModal> {
     final timeLabel = _selectedTime != null
         ? _selectedTime!.format(context)
         : AppConfig.pledgeModalTimeHint;
+    final hasSchedule = _selectedDate != null;
 
     return Container(
       decoration: BoxDecoration(
@@ -200,130 +185,138 @@ class _SchedulePledgeModalState extends State<_SchedulePledgeModal> {
             ),
           ]),
 
-          const SizedBox(height: 6),
-          Text(
-            AppConfig.pledgeModalSubtitle,
-            style: GoogleFonts.dmSans(
-              fontSize: 12,
-              color: AppColors.textMuted,
-            ),
-          ),
+          const SizedBox(height: 10),
 
-          const SizedBox(height: 22),
-
-          // ── Date picker ──────────────────────────────────────
-          Text(
-            AppConfig.pledgeModalDateLabel,
-            style: GoogleFonts.dmSans(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-              letterSpacing: 0.4,
+          // ── Optional schedule info banner ────────────────────
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.plannedBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.plannedBorder),
             ),
-          ),
-          const SizedBox(height: 6),
-          GestureDetector(
-            onTap: _pickDate,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _dateError != null
-                      ? AppColors.primary
-                      : AppColors.border,
-                  width: 1.5,
-                ),
-              ),
-              child: Row(children: [
-                Icon(
-                  Icons.calendar_today_rounded,
-                  size: 16,
-                  color: _selectedDate != null
-                      ? AppColors.primary
-                      : AppColors.textMuted,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  dateLabel,
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Icon(Icons.info_outline_rounded,
+                  size: 15, color: AppColors.plannedText),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  AppConfig.pledgeModalOptionalNote,
                   style: GoogleFonts.dmSans(
-                    fontSize: 13,
-                    color: _selectedDate != null
-                        ? AppColors.textPrimary
-                        : AppColors.textMuted,
+                    fontSize: 12,
+                    color: AppColors.plannedText,
+                    height: 1.45,
                   ),
                 ),
-              ]),
-            ),
+              ),
+            ]),
           ),
-          if (_dateError != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              _dateError!,
-              style: GoogleFonts.dmSans(
-                  fontSize: 11, color: AppColors.primary),
-            ),
-          ],
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
 
-          // ── Time picker ──────────────────────────────────────
-          Text(
-            AppConfig.pledgeModalTimeLabel,
-            style: GoogleFonts.dmSans(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: 6),
-          GestureDetector(
-            onTap: _pickTime,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _timeError != null
-                      ? AppColors.primary
-                      : AppColors.border,
-                  width: 1.5,
+          // ── Optional schedule section ────────────────────────
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                AppConfig.pledgeModalScheduleLabel,
+                style: GoogleFonts.dmSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.4,
                 ),
               ),
-              child: Row(children: [
-                Icon(
-                  Icons.access_time_rounded,
-                  size: 16,
-                  color: _selectedTime != null
-                      ? AppColors.primary
-                      : AppColors.textMuted,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  timeLabel,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 13,
-                    color: _selectedTime != null
-                        ? AppColors.textPrimary
-                        : AppColors.textMuted,
+              if (hasSchedule)
+                GestureDetector(
+                  onTap: _clearDate,
+                  child: Text(
+                    'Clear',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 11,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ]),
-            ),
+            ],
           ),
-          if (_timeError != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              _timeError!,
-              style: GoogleFonts.dmSans(
-                  fontSize: 11, color: AppColors.primary),
+          const SizedBox(height: 8),
+
+          // Date picker row
+          Row(children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: _pickDate,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border, width: 1.5),
+                  ),
+                  child: Row(children: [
+                    Icon(
+                      Icons.calendar_today_rounded,
+                      size: 15,
+                      color: _selectedDate != null
+                          ? AppColors.primary
+                          : AppColors.textMuted,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        dateLabel,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          color: _selectedDate != null
+                              ? AppColors.textPrimary
+                              : AppColors.textMuted,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
             ),
-          ],
+            const SizedBox(width: 8),
+            Expanded(
+              child: GestureDetector(
+                onTap: _pickTime,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border, width: 1.5),
+                  ),
+                  child: Row(children: [
+                    Icon(
+                      Icons.access_time_rounded,
+                      size: 15,
+                      color: _selectedTime != null
+                          ? AppColors.primary
+                          : AppColors.textMuted,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        timeLabel,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          color: _selectedTime != null
+                              ? AppColors.textPrimary
+                              : AppColors.textMuted,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
+            ),
+          ]),
 
           const SizedBox(height: 24),
 
