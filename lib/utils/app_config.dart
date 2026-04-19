@@ -431,9 +431,6 @@ class AppConfig {
   static const String cooldownBannerPrefix   = 'Next eligible date: ';
   static const String cooldownBannerSuffix   = ' remaining';
 
-  // ── Unavailable donor banner ─────────────────────────────────
-  static const String unavailableBanner      = 'You are marked as Unavailable. Update in Profile to donate.';
-
   // ── Donor list in status modal ───────────────────────────────
   static const String donorListSectionTitle  = 'DONORS WHO RESPONDED';
   static const String donorListEmpty         = 'No donors have pledged yet.';

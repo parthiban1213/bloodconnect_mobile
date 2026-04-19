@@ -637,14 +637,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
               if (!isInCooldown && !isUnavailable) return const SizedBox.shrink();
               return Column(children: [
-                if (isUnavailable)
-                  _FeedBanner(
-                    icon: Icons.do_not_disturb_rounded,
-                    color: AppColors.closedAccent,
-                    bgColor: AppColors.closedBg,
-                    borderColor: AppColors.closedBorder,
-                    message: AppConfig.unavailableBanner,
-                  ),
                 if (isInCooldown && nextDate != null)
                   _FeedBanner(
                     icon: Icons.hourglass_top_rounded,
