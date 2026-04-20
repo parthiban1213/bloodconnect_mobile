@@ -115,33 +115,25 @@ class RequirementsService {
   }
 
   // ── Donate endpoint ──────────────────────────────────────
-  /// Pledges to donate for [id]. After the pledge is created on the backend,
-  /// a notification is sent to the requester via POST /requirements/:id/notify-pledge
-  /// so they are immediately alerted that someone has responded.
+  /// Pledges to donate for [id]. The backend's /donate endpoint already
+  /// triggers an in-app notification + FCM push to the requester internally
+  /// via notifyRequesterOfPledge(). No separate notify call is needed.
   Future<BloodRequirement> donateToRequirement(
     String id, {
     required String scheduledDate,
     required String scheduledTime,
   }) async {
-    // Step 1: create the pledge
+    // Step 1: create the pledge — the server sends the requester notification
+    // automatically as part of this call (notifyRequesterOfPledge is called
+    // inside the donate endpoint before responding).
     await _client.post('/requirements/$id/donate', data: {
       'scheduledDate':  scheduledDate,
       'scheduledTime':  scheduledTime,
       'donationStatus': 'Pending',
     });
 
-    // Step 2: notify the requester (fire-and-forget — errors are non-fatal)
-    _notifyRequesterOfPledge(id).catchError((_) {});
-
-    // Step 3: return the refreshed requirement
+    // Step 2: return the refreshed requirement
     return getRequirement(id);
-  }
-
-  /// Sends a push notification to the requirement creator informing them
-  /// that a donor has pledged. Uses a dedicated lightweight endpoint so the
-  /// backend can look up the requester's FCM token and send the alert.
-  Future<void> _notifyRequesterOfPledge(String requirementId) async {
-    await _client.post('/requirements/$requirementId/notify-pledge');
   }
 
   // ── Decline endpoint ─────────────────────────────────────

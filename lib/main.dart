@@ -12,7 +12,6 @@ import 'viewmodels/auth_viewmodel.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ── Firebase init with explicit options ───────────────────
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -20,13 +19,11 @@ void main() async {
   // Register background FCM handler before runApp
   await FcmService.setupBackground();
 
-  // ── Device orientation ────────────────────────────────────
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // ── Status bar style ──────────────────────────────────────
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor:                    Colors.transparent,
     statusBarIconBrightness:           Brightness.dark,
@@ -44,11 +41,6 @@ class BloodConnectApp extends ConsumerStatefulWidget {
   ConsumerState<BloodConnectApp> createState() => _BloodConnectAppState();
 }
 
-// WidgetsBindingObserver lets us detect app resume (foreground) events.
-// On resume we re-validate the stored token against the server — this covers
-// the case where the account was deleted from the backend while the app was
-// running or backgrounded. If the server returns 401, _checkAuth clears the
-// token and the router redirects to /login automatically.
 class _BloodConnectAppState extends ConsumerState<BloodConnectApp>
     with WidgetsBindingObserver {
 
@@ -58,32 +50,38 @@ class _BloodConnectAppState extends ConsumerState<BloodConnectApp>
     WidgetsBinding.instance.addObserver(this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Listen for login/logout to init/teardown FCM
+      // ── Auth state listener ───────────────────────────────
+      // Fires on every auth state change after this widget is built.
+      // Handles: login, logout, blood type profile change.
       ref.listenManual<AuthState>(authViewModelProvider, (previous, next) {
-        if (next.isLoggedIn && !(previous?.isLoggedIn ?? false)) {
-          FcmService().init(bloodType: next.user?.bloodType ?? '');
-        } else if (next.isLoggedIn && previous?.isLoggedIn == true) {
-          final bt = next.user?.bloodType ?? '';
-          if (bt.isNotEmpty) FcmService().init(bloodType: bt);
-        } else if (!next.isLoggedIn && (previous?.isLoggedIn ?? false)) {
-          FcmService().unsubscribeAll();
+        if (!next.isLoggedIn) {
+          // Logged out — clean up FCM subscriptions
+          if (previous?.isLoggedIn == true) {
+            FcmService().unsubscribeAll();
+          }
+          return;
         }
+
+        // Logged in (either just now, or blood type / profile changed)
+        // Always call ensureInitialized so:
+        //  - topic subscription is verified / re-established
+        //  - FCM token is saved to backend (retried if it failed before)
+        final bloodType = next.user?.bloodType ?? '';
+        FcmService().ensureInitialized(bloodType: bloodType);
       });
 
-      // Already logged in on cold start — init FCM immediately.
+      // ── Cold-start: already logged in ────────────────────
+      // The listenManual above only fires on CHANGES. If the user was
+      // already logged in when the app started, _checkAuth sets
+      // isLoggedIn=true but the listener may have missed it (depends on
+      // whether _checkAuth completed before addPostFrameCallback ran).
+      // Read current state and init FCM directly as a safety net.
       final authState = ref.read(authViewModelProvider);
       if (authState.isLoggedIn) {
-        FcmService().init(bloodType: authState.user?.bloodType ?? '');
+        FcmService().ensureInitialized(
+          bloodType: authState.user?.bloodType ?? '',
+        );
       }
-
-      // Retry init after a short delay to catch delayed auth restoration.
-      Future.delayed(const Duration(seconds: 2), () {
-        if (!mounted) return;
-        final s = ref.read(authViewModelProvider);
-        if (s.isLoggedIn) {
-          FcmService().init(bloodType: s.user?.bloodType ?? '');
-        }
-      });
     });
   }
 
@@ -93,14 +91,29 @@ class _BloodConnectAppState extends ConsumerState<BloodConnectApp>
     super.dispose();
   }
 
-  // Called whenever the app transitions to the foreground (resumed from
-  // background or lock screen). We re-run _checkAuth so a deleted/revoked
-  // account is caught immediately on next open — not just on cold start.
+  // ── App resume ───────────────────────────────────────────
+  // Called every time the app comes back to the foreground.
+  // Two things happen:
+  //   1. Session is re-validated (catches deleted accounts).
+  //   2. FCM is re-initialized — this retries a failed token save
+  //      and re-confirms the topic subscription. This is the key fix
+  //      for both notification failures: even if the token save failed
+  //      at login time (Render cold start, network blip), it succeeds
+  //      here the next time the user opens the app.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       final authVm = ref.read(authViewModelProvider.notifier);
       authVm.validateSessionOnResume();
+
+      // Re-run FCM init on every resume to retry failed token saves
+      // and re-confirm topic subscriptions.
+      final authState = ref.read(authViewModelProvider);
+      if (authState.isLoggedIn) {
+        FcmService().ensureInitialized(
+          bloodType: authState.user?.bloodType ?? '',
+        );
+      }
     }
   }
 
@@ -109,11 +122,6 @@ class _BloodConnectAppState extends ConsumerState<BloodConnectApp>
     final router         = ref.watch(routerProvider);
     final isCheckingAuth = ref.watch(authViewModelProvider).isCheckingAuth;
     return SplashScreen(
-      // Keep the splash overlay visible until _checkAuth completes.
-      // Without this, the overlay fades after the animation (≈2.6 s) but
-      // _checkAuth may still be running — the router sits on /login during
-      // that window, so a logged-in user sees a login screen flash before
-      // being redirected to /feed.
       isCheckingAuth: isCheckingAuth,
       child: MaterialApp.router(
         title: 'BloodConnect',
