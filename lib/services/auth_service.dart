@@ -21,7 +21,6 @@ class AuthService {
   // ── OTP: send (login — requires existing account) ───────────
   Future<bool> sendOtp(String mobile) async {
     final res = await _client.post('/auth/otp/send', data: {'mobile': mobile});
-    print('[AuthService] sendOtp response: $res');
     // Backend returns success:true when OTP was sent to an existing account.
     // If the account doesn't exist it returns 404 and ApiClient throws ApiException,
     // which the caller catches as OtpNoAccountException.
@@ -41,7 +40,6 @@ class AuthService {
         'mobile':  mobile,
         'purpose': 'register',
       });
-      print('[AuthService] sendOtpForRegister response: $res');
     } on ApiException catch (e) {
       if (e.statusCode == 409) throw MobileAlreadyExistsException();
       rethrow;
@@ -49,10 +47,19 @@ class AuthService {
   }
 
   // ── OTP: pre-verify for register ────────────────────────────
+  // Checks the OTP against the server WITHOUT consuming it or creating
+  // an account. The OTP stays valid so /auth/register-direct can consume
+  // it once the user finishes filling in their details.
+  // Throws ApiException on wrong/expired OTP.
   Future<void> verifyRegisterOtp({
     required String mobile,
     required String otp,
-  }) async {}
+  }) async {
+    await _client.post('/auth/otp/verify', data: {
+      'mobile': mobile.trim(),
+      'otp':    otp.trim(),
+    });
+  }
 
   // ── OTP: register new HS Employee (with custom username) ────
   Future<({String token, UserModel user})> registerDirect({

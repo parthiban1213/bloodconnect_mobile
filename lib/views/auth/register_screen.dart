@@ -55,6 +55,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   String? _error;
   String? _mobileError;
   bool    _mobileVerified = false;
+  String  _verifiedOtp    = ''; // set on successful server OTP check
 
   @override
   void dispose() {
@@ -138,10 +139,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     if (code.length < 6) return;
     setState(() { _otpVerifying = true; _error = null; });
     try {
+      // Calls POST /auth/otp/verify — server checks the code without consuming
+      // it, so /auth/register-direct can still use it during final submission.
       await AuthService().verifyRegisterOtp(
           mobile: _mobileCtrl.text.trim(), otp: code);
       if (!mounted) return;
-      setState(() => _mobileVerified = true);
+      setState(() {
+        _mobileVerified = true;
+        _verifiedOtp    = code; // save for use in _submitRegistration
+      });
       _goStep(_RegStep.details);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
@@ -206,7 +212,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     context.dismissKeyboard();
     try {
       final mobile = _mobileCtrl.text.trim();
-      final otp    = _otpCtrls.map((c) => c.text).join();
+      final otp    = _verifiedOtp; // verified by server in step 2
 
       final result = await AuthService().registerDirect(
         mobile:           mobile,
