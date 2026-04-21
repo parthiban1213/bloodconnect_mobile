@@ -7,7 +7,7 @@ class DonorsState {
   final List<DonorModel> donors;
   final String? error;
   final String search;
-  final String bloodTypeFilter; // '' = All
+  final Set<String> bloodTypeFilter; // empty = All
   final String availabilityFilter; // '' = All, 'true', 'false'
 
   const DonorsState({
@@ -15,7 +15,7 @@ class DonorsState {
     this.donors            = const [],
     this.error,
     this.search            = '',
-    this.bloodTypeFilter   = '',
+    this.bloodTypeFilter   = const {},
     this.availabilityFilter = '',
   });
 
@@ -27,7 +27,7 @@ class DonorsState {
           d.phone.contains(q) ||
           (d.address.toLowerCase().contains(q));
       final matchBlood = bloodTypeFilter.isEmpty ||
-          d.bloodType == bloodTypeFilter;
+          bloodTypeFilter.contains(d.bloodType);
       final matchAvail = availabilityFilter.isEmpty ||
           d.isAvailable.toString() == availabilityFilter;
       return matchSearch && matchBlood && matchAvail;
@@ -40,7 +40,7 @@ class DonorsState {
     String? error,
     bool clearError = false,
     String? search,
-    String? bloodTypeFilter,
+    Set<String>? bloodTypeFilter,
     String? availabilityFilter,
   }) {
     return DonorsState(
@@ -77,7 +77,7 @@ class DonorsViewModel extends StateNotifier<DonorsState> {
   void setSearch(String value) =>
       state = state.copyWith(search: value);
 
-  void setBloodType(String value) =>
+  void setBloodTypes(Set<String> value) =>
       state = state.copyWith(bloodTypeFilter: value);
 
   void setAvailability(String value) =>

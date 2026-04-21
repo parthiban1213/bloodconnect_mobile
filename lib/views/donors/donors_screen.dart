@@ -55,7 +55,7 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
   void _showDonorFilterPopup(
       BuildContext context, DonorsState state, DonorsViewModel vm) {
     // selected values must live OUTSIDE the builder so setPopState doesn't reset them
-    String selBlood = state.bloodTypeFilter;
+    Set<String> selBlood = Set.from(state.bloodTypeFilter);
     String selAvail = state.availabilityFilter;
     showDialog(
       context: context,
@@ -116,10 +116,13 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                       spacing: 8,
                       runSpacing: 8,
                       children: _bloodTypes.map((bt) {
-                        final active = selBlood == bt;
+                        final active = selBlood.contains(bt);
                         return GestureDetector(
-                          onTap: () => setPopState(
-                              () => selBlood = active ? '' : bt),
+                          onTap: () => setPopState(() {
+                            final s = Set<String>.from(selBlood);
+                            active ? s.remove(bt) : s.add(bt);
+                            selBlood = s;
+                          }),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 120),
                             padding: const EdgeInsets.symmetric(
@@ -190,7 +193,7 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                         Expanded(
                           child: GestureDetector(
                             onTap: () {
-                              vm.setBloodType('');
+                              vm.setBloodTypes({});
                               vm.setAvailability('');
                               Navigator.pop(ctx);
                             },
@@ -219,7 +222,7 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                         flex: 2,
                         child: GestureDetector(
                           onTap: () {
-                            vm.setBloodType(selBlood);
+                            vm.setBloodTypes(selBlood);
                             vm.setAvailability(selAvail);
                             Navigator.pop(ctx);
                           },
@@ -377,23 +380,24 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                   // Fix #3: active filter chips with clear
                   if (_hasActiveFilter(state)) ...[
                     const SizedBox(height: 8),
-                    Row(children: [
-                      if (state.bloodTypeFilter.isNotEmpty) ...[
-                        _ActiveFilterChip(
-                          label: state.bloodTypeFilter,
-                          onClear: () => vm.setBloodType(''),
-                        ),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        ...state.bloodTypeFilter.map((bt) => _ActiveFilterChip(
+                              label: bt,
+                              onClear: () => vm.setBloodTypes(
+                                  Set.from(state.bloodTypeFilter)..remove(bt)),
+                            )),
                         if (state.availabilityFilter.isNotEmpty)
-                          const SizedBox(width: 6),
+                          _ActiveFilterChip(
+                            label: state.availabilityFilter == 'true'
+                                ? 'Available'
+                                : 'Unavailable',
+                            onClear: () => vm.setAvailability(''),
+                          ),
                       ],
-                      if (state.availabilityFilter.isNotEmpty)
-                        _ActiveFilterChip(
-                          label: state.availabilityFilter == 'true'
-                              ? 'Available'
-                              : 'Unavailable',
-                          onClear: () => vm.setAvailability(''),
-                        ),
-                    ]),
+                    ),
                   ],
                   const SizedBox(height: 14),
                 ],
@@ -792,6 +796,9 @@ class _DonorDetailPopup extends StatelessWidget {
                     label: AppConfig.donorFieldAddress,
                     value:
                         donor.address.isNotEmpty ? donor.address : '—'),
+                _DetailRow(
+                    label: AppConfig.donorFieldCity,
+                    value: donor.city.isNotEmpty ? donor.city : '—'),
                 _DetailRow(
                     label: AppConfig.donorFieldLastDonation,
                     value: _fmt(donor.lastDonationDate)),

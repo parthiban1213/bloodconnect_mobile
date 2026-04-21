@@ -380,45 +380,30 @@ class RequirementCard extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                    ],
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: canDonate
-                            ? () {
-                                ref
-                                    .read(requirementsViewModelProvider.notifier)
-                                    .declineDonation(requirement.id);
-                              }
-                            : null,
+                    ] else ...[
+                      Expanded(
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 11),
                           decoration: BoxDecoration(
-                            color: canDonate
-                                ? AppColors.background
-                                : AppColors.border.withOpacity(0.35),
+                            color: AppColors.border.withOpacity(0.35),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: canDonate
-                                  ? AppColors.border
-                                  : AppColors.border.withOpacity(0.5),
+                              color: AppColors.border.withOpacity(0.5),
                             ),
                           ),
                           child: Center(
                             child: Text(
-                              canDonate ? AppConfig.cardCantHelpBtn : "Not my type",
+                              "Not my type",
                               style: GoogleFonts.syne(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: canDonate
-                                    ? AppColors.textSecondary
-                                    : AppColors.textMuted,
+                                color: AppColors.textMuted,
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ]),
               ] else ...[
                 const SizedBox(height: 8),

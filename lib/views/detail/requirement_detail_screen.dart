@@ -665,38 +665,29 @@ class _RequirementDetailScreenState
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
             ],
-            Expanded(
-              child: GestureDetector(
-                onTap: canDonate ? () => context.pop() : null,
+            if (!canDonate)
+              Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: canDonate
-                        ? AppColors.background
-                        : AppColors.border.withOpacity(0.35),
+                    color: AppColors.border.withOpacity(0.35),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.fromBorderSide(BorderSide(
-                      color: canDonate
-                          ? AppColors.border
-                          : AppColors.border.withOpacity(0.5),
+                      color: AppColors.border.withOpacity(0.5),
                     )),
                   ),
                   child: Center(
                     child: Text(
-                      canDonate ? AppConfig.cardDeclineBtn : AppConfig.cardNotMyTypeBtn,
+                      AppConfig.cardNotMyTypeBtn,
                       style: GoogleFonts.dmSans(
                         fontSize: 12,
-                        color: canDonate
-                            ? AppColors.textSecondary
-                            : AppColors.textMuted,
+                        color: AppColors.textMuted,
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),

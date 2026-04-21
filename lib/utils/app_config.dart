@@ -398,6 +398,7 @@ class AppConfig {
   // ── Donor detail popup — field labels ───────────────────────
   static const String donorFieldPhone       = 'Phone';
   static const String donorFieldAddress     = 'Address';
+  static const String donorFieldCity        = 'City';
   static const String donorFieldLastDonation = 'Last Donation';
   static const String donorFieldRegistered  = 'Registered';
 

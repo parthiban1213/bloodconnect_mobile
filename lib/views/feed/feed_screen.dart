@@ -558,25 +558,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    // Map / List toggle button
-                    GestureDetector(
-                      onTap: () => setState(() => _showMap = !_showMap),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: _showMap ? AppColors.primary : AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _showMap ? AppColors.primary : AppColors.border,
-                          ),
-                        ),
-                        child: Icon(
-                          _showMap ? Icons.view_list_rounded : Icons.map_rounded,
-                          size: 18,
-                          color: _showMap ? Colors.white : AppColors.textSecondary,
-                        ),
-                      ),
+                    // List / Map segmented pill
+                    _ViewTogglePill(
+                      showMap: _showMap,
+                      onToggle: (v) => setState(() => _showMap = v),
                     ),
                     const SizedBox(width: 6),
                     // Status/urgency filter button
@@ -786,6 +771,91 @@ class _FilterChip extends StatelessWidget {
           child: const Icon(Icons.close_rounded, size: 12, color: Colors.white),
         ),
       ]),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  LIST / MAP SEGMENTED TOGGLE PILL
+// ════════════════════════════════════════════════════════════
+
+class _ViewTogglePill extends StatelessWidget {
+  final bool showMap;
+  final ValueChanged<bool> onToggle;
+
+  const _ViewTogglePill({required this.showMap, required this.onToggle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      padding: const EdgeInsets.all(3),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _Segment(
+            icon: Icons.view_list_rounded,
+            label: 'List',
+            active: !showMap,
+            onTap: () => onToggle(false),
+          ),
+          _Segment(
+            icon: Icons.map_rounded,
+            label: 'Map',
+            active: showMap,
+            onTap: () => onToggle(true),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Segment extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _Segment({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13,
+                color: active ? Colors.white : AppColors.textSecondary),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: GoogleFonts.syne(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: active ? Colors.white : AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
