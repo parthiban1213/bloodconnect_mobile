@@ -91,25 +91,49 @@ class _MainShellState extends ConsumerState<MainShell> {
       _onLocationChanged(location);
     });
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        systemNavigationBarColor:          Colors.transparent,
-        systemNavigationBarIconBrightness: Brightness.dark,
-        statusBarColor:                    Colors.transparent,
-        statusBarIconBrightness:           Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        resizeToAvoidBottomInset: false,
-        extendBody: true,
-        drawer: const AppDrawer(),
-        appBar: _GlobalAppBar(title: _titleFor(location), unreadCount: unreadCount),
-        body: widget.child,
-        bottomNavigationBar: _FloatingNav(
-          tabs:         _allTabs,
-          currentIndex: currentIdx,
-          onTabTap:     _onTabTap,
-          pendingCount: pendingCount,
+    final isOnFeed = location.startsWith('/feed');
+
+    void handleBack() {
+      final router = GoRouter.of(context);
+      if (router.canPop()) {
+        router.pop();
+      } else if (isOnFeed) {
+        SystemNavigator.pop();
+      } else {
+        context.go('/feed');
+      }
+    }
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) handleBack();
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          systemNavigationBarColor:          Colors.transparent,
+          systemNavigationBarIconBrightness: Brightness.dark,
+          statusBarColor:                    Colors.transparent,
+          statusBarIconBrightness:           Brightness.dark,
+        ),
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          resizeToAvoidBottomInset: false,
+          extendBody: true,
+          drawer: const AppDrawer(),
+          appBar: _GlobalAppBar(
+            title: _titleFor(location),
+            unreadCount: unreadCount,
+            showBack: !isOnFeed,
+            onBack: handleBack,
+          ),
+          body: widget.child,
+          bottomNavigationBar: _FloatingNav(
+            tabs:         _allTabs,
+            currentIndex: currentIdx,
+            onTabTap:     _onTabTap,
+            pendingCount: pendingCount,
+          ),
         ),
       ),
     );
@@ -265,7 +289,14 @@ class _PillTab extends StatelessWidget {
 class _GlobalAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final int unreadCount;
-  const _GlobalAppBar({required this.title, required this.unreadCount});
+  final bool showBack;
+  final VoidCallback? onBack;
+  const _GlobalAppBar({
+    required this.title,
+    required this.unreadCount,
+    this.showBack = false,
+    this.onBack,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(54);
@@ -277,24 +308,33 @@ class _GlobalAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       leadingWidth: 52,
-      leading: Builder(
-        builder: (ctx) => GestureDetector(
-          onTap: () => Scaffold.of(ctx).openDrawer(),
-          behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _Bar(18), const SizedBox(height: 4),
-                _Bar(13), const SizedBox(height: 4),
-                _Bar(18),
-              ],
+      leading: showBack
+          ? GestureDetector(
+              onTap: onBack,
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.only(left: 16),
+                child: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: AppColors.textPrimary),
+              ),
+            )
+          : Builder(
+              builder: (ctx) => GestureDetector(
+                onTap: () => Scaffold.of(ctx).openDrawer(),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _Bar(18), const SizedBox(height: 4),
+                      _Bar(13), const SizedBox(height: 4),
+                      _Bar(18),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
       title: Text(
         title,
         style: GoogleFonts.syne(

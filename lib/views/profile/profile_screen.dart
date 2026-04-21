@@ -34,29 +34,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user      = authState.user;
 
     if (user == null && authState.isLoading) {
-      return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, _) {
-          if (!didPop) context.go('/feed');
-        },
-        child: Scaffold(
-          backgroundColor: AppColors.background,
-          body: SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 110),
-              children: List.generate(5, (_) => const CardShimmer()),
-            ),
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 110),
+            children: List.generate(5, (_) => const CardShimmer()),
           ),
         ),
       );
     }
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) context.go('/feed');
-      },
-      child: Scaffold(
+    return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
@@ -229,7 +218,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           ),
         ),
-      ),
       ),
     );
   }

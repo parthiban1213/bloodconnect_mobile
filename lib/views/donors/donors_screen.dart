@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
@@ -257,12 +256,7 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
     final state = ref.watch(donorsViewModelProvider);
     final vm    = ref.read(donorsViewModelProvider.notifier);
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) context.go('/feed');
-      },
-      child: Scaffold(
+    return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
@@ -447,7 +441,6 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
             ),
           ],
         ),
-      ),
       ),
     );
   }

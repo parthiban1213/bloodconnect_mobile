@@ -47,12 +47,7 @@ class _MyRequestsScreenState extends ConsumerState<MyRequestsScreen>
     final state = ref.watch(myRequestsViewModelProvider);
     final vm    = ref.read(myRequestsViewModelProvider.notifier);
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) context.go('/feed');
-      },
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: AppColors.background,
         body: SafeArea(
           child: state.isLoading
@@ -122,7 +117,6 @@ class _MyRequestsScreenState extends ConsumerState<MyRequestsScreen>
                       ],
                     ),
         ),
-      ),
     );
   }
 
