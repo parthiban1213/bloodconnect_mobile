@@ -165,19 +165,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     iconColor: AppColors.closedText,
                     label: AppConfig.profileChangePassword,
                     onTap: () => _showChangePasswordDialog(context, ref),
-                    showDivider: true,
-                  ),
-                  _MenuItem(
-                    icon: user?.isAdmin == true
-                        ? Icons.admin_panel_settings_outlined
-                        : Icons.info_outline_rounded,
-                    iconBg: AppColors.moderateBg,
-                    iconColor: AppColors.moderateText,
-                    label: AppConfig.profileAccountRole,
-                    value: user?.role.isNotEmpty == true
-                        ? user!.role[0].toUpperCase() + user.role.substring(1)
-                        : 'User',
-                    onTap: null,
                     showDivider: false,
                   ),
                 ]),

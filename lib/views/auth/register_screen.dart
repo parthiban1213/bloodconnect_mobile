@@ -219,7 +219,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
         otp:              otp,
         username:         username,
         firstName:        firstName,
-        lastName:         lastName.isNotEmpty ? lastName : firstName, // fallback
+        lastName:         lastName.isNotEmpty ? lastName : '',
         bloodType:        _selectedBloodType!,
         email:            email.isNotEmpty ? email : null,
         address:          _addressCtrl.text.trim().isNotEmpty

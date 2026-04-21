@@ -551,7 +551,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                           ),
                         ),
                         child: Icon(
-                          Icons.location_on_rounded,
+                          Icons.near_me,
                           size: 18,
                           color: isLocationFiltered ? Colors.white : AppColors.textSecondary,
                         ),
