@@ -111,7 +111,9 @@ class AuthViewModel extends StateNotifier<AuthState> {
   Future<int> _fetchDonationCount() async {
     try {
       final donations = await _reqService.getMyDonations();
-      return donations.length;
+    // Only count donations the requester has marked as Completed.
+    // Pending pledges do not increment the donated count.
+      return donations.where((d) => d.isCompleted).length;
     } catch (_) {
       return state.user?.donationCount ?? 0;
     }

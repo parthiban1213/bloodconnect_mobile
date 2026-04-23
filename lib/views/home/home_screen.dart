@@ -44,21 +44,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final authState   = ref.watch(authViewModelProvider);
-    final reqState    = ref.watch(requirementsViewModelProvider);
     final myReqState  = ref.watch(myRequestsViewModelProvider);
+    // Use the dedicated home provider so the feed's locationFilter never
+    // contaminates the "Urgent near you" list.
+    final urgentAsync = ref.watch(homeUrgentRequirementsProvider);
     final user        = authState.user;
 
-    final lastDonation   = user?.lastDonationDate;
     final donationCount  = user?.donationCount ?? 0;
     final activeRequests = myReqState.activeRequests;
     final pendingCount   = activeRequests.fold<int>(0, (s, r) => s + r.pendingCount);
     final images         = AppConfig.carouselImages;
-
-    // Top 3 urgent open requirements
-    final urgentItems = reqState.requirements
-        .where((r) => r.isOpen)
-        .take(3)
-        .toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -67,7 +62,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           color: AppColors.primary,
           backgroundColor: AppColors.surface,
           onRefresh: () async {
-            ref.read(requirementsViewModelProvider.notifier).load();
+            ref.invalidate(homeUrgentRequirementsProvider);
             ref.read(myRequestsViewModelProvider.notifier).load();
             ref.read(authViewModelProvider.notifier).refreshProfile();
           },
@@ -107,17 +102,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               const SizedBox(height: 8),
 
-              if (reqState.isLoading)
-                const CardShimmer()
-              else if (urgentItems.isEmpty)
-                const _EmptyUrgent()
-              else
-                ...urgentItems.map(
-                  (r) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: _UrgentCard(requirement: r),
-                  ),
+              urgentAsync.when(
+                loading: () => const CardShimmer(),
+                error:   (_, __) => const _EmptyUrgent(),
+                data: (urgentItems) => urgentItems.isEmpty
+                    ? const _EmptyUrgent()
+                    : Column(
+                  children: urgentItems.map(
+                        (r) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _UrgentCard(requirement: r),
+                    ),
+                  ).toList(),
                 ),
+              ),
 
               const SizedBox(height: 6),
             ],
@@ -287,11 +285,11 @@ class _StatItem extends StatelessWidget {
 class _VerticalDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
-        width: 1,
-        height: 36,
-        margin: const EdgeInsets.symmetric(horizontal: 12),
-        color: Colors.white.withOpacity(0.08),
-      );
+    width: 1,
+    height: 36,
+    margin: const EdgeInsets.symmetric(horizontal: 12),
+    color: Colors.white.withOpacity(0.08),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -600,7 +598,7 @@ class _UrgentCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     '${requirement.remainingUnits} unit${requirement.remainingUnits != 1 ? 's' : ''} needed'
-                    '${requirement.location.isNotEmpty ? ' · ${requirement.location}' : ''}',
+                        '${requirement.location.isNotEmpty ? ' · ${requirement.location}' : ''}',
                     style: GoogleFonts.dmSans(
                       fontSize: 11,
                       color: AppColors.textSecondary,
@@ -664,5 +662,3 @@ class _EmptyUrgent extends StatelessWidget {
     );
   }
 }
-
-

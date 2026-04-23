@@ -153,10 +153,10 @@ class RequirementsState {
       final q = searchQuery.trim().toLowerCase();
       base = base.where((r) {
         return r.hospital.toLowerCase().contains(q) ||
-               r.bloodType.toLowerCase().contains(q) ||
-               r.patientName.toLowerCase().contains(q) ||
-               r.location.toLowerCase().contains(q) ||
-               r.city.toLowerCase().contains(q);
+            r.bloodType.toLowerCase().contains(q) ||
+            r.patientName.toLowerCase().contains(q) ||
+            r.location.toLowerCase().contains(q) ||
+            r.city.toLowerCase().contains(q);
       }).toList();
     }
 
@@ -227,7 +227,7 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = Timer.periodic(
       const Duration(seconds: 3),
-      (_) => _silentRefresh(),
+          (_) => _silentRefresh(),
     );
   }
 
@@ -371,10 +371,10 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
   }
 
   Future<BloodRequirement?> donate(
-    String id, {
-    required String scheduledDate,
-    required String scheduledTime,
-  }) async {
+      String id, {
+        required String scheduledDate,
+        required String scheduledTime,
+      }) async {
     final donating = Set<String>.from(state.donatingIds)..add(id);
     state = state.copyWith(donatingIds: donating, clearError: true);
     try {
@@ -458,6 +458,50 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
 }
 
 final requirementsViewModelProvider =
-    StateNotifierProvider<RequirementsViewModel, RequirementsState>((ref) {
+StateNotifierProvider<RequirementsViewModel, RequirementsState>((ref) {
   return RequirementsViewModel(ref);
+});
+
+/// Fetches the top urgent open requirements for the home screen, independent
+/// of the feed's location filter.
+///
+/// Priority:
+///   1. GPS available → fetch within 25 km of the user's coordinates.
+///   2. GPS not available → fetch by the user's profile city.
+///
+/// This provider never reads [RequirementsState.locationFilter], so changing
+/// the location filter in the feed screen has no effect on the home screen.
+final homeUrgentRequirementsProvider =
+FutureProvider.autoDispose<List<BloodRequirement>>((ref) async {
+  final service  = RequirementsService();
+  final userCity = ref.watch(authViewModelProvider).user?.city ?? '';
+
+  // Reuse the GPS location that _initLocation() already resolved, if any.
+  final cachedGps = LocationService.instance.currentLocation;
+  final hasGps    = cachedGps?.isGps == true;
+
+  double? latitude, longitude, maxDistance;
+  String? city;
+
+  if (hasGps) {
+    latitude    = cachedGps!.latitude;
+    longitude   = cachedGps.longitude;
+    maxDistance = 25; // always 25 km for the home screen
+  } else if (userCity.isNotEmpty) {
+    city = userCity;
+  }
+
+  final result = await service.getRequirements(
+    latitude:    latitude,
+    longitude:   longitude,
+    maxDistance: maxDistance,
+    city:        city,
+    page:        1,
+    limit:       20,
+  );
+
+  return result.items
+      .where((r) => r.isOpen)
+      .take(3)
+      .toList();
 });
