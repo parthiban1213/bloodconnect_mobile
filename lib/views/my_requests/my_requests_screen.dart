@@ -9,6 +9,7 @@ import '../../utils/app_config.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/blood_type_badge.dart';
 import 'request_status_modal.dart';
+import 'pledged_donors_modal.dart' as pdm;
 import '../../widgets/ripple_badge.dart';
 
 class MyRequestsScreen extends ConsumerStatefulWidget {
@@ -294,7 +295,10 @@ class _RequestCard extends ConsumerWidget {
 
     return PendingPledgeAnimation(
       active: hasPending,
-      child: Container(
+      child: GestureDetector(
+        onTap: () => showRequestStatusModal(
+          context, requirement, isRequester: true),
+        child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -393,8 +397,8 @@ class _RequestCard extends ConsumerWidget {
                   // Pledged Donors — wide, bounces when pending
                   Expanded(
                     child: GestureDetector(
-                        onTap: () => showRequestStatusModal(
-                          context, requirement, isRequester: true),
+                        behavior: HitTestBehavior.opaque,
+                      onTap: () => pdm.showPledgedDonorsModal(context, requirement),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                               vertical: 10, horizontal: 12),
@@ -440,6 +444,7 @@ class _RequestCard extends ConsumerWidget {
                   const SizedBox(width: 8),
                   // Edit icon button
                   GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: () async {
                       await context.push('/add-requirement',
                           extra: {'existing': requirement});
@@ -461,6 +466,7 @@ class _RequestCard extends ConsumerWidget {
                   const SizedBox(width: 8),
                   // Close icon button
                   GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: () => _confirmClose(context, ref),
                     child: Container(
                       width: 38, height: 38,
@@ -481,6 +487,7 @@ class _RequestCard extends ConsumerWidget {
               // Fulfilled or Cancelled — View Status only
               const SizedBox(height: 12),
               GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () => showRequestStatusModal(
                   context, requirement, isRequester: true),
                 child: Container(
@@ -520,7 +527,8 @@ class _RequestCard extends ConsumerWidget {
             ],
           ],
         ),
-      ),
+      ),   // Container
+      ), // GestureDetector
     );
   }
 }
