@@ -327,7 +327,7 @@ class AppConfig {
 
   // ── Shell / AppBar ───────────────────────────────────────────
   static const Map<String, String> shellTitles = {
-    '/home':            'Home',
+    '/home':            'Welcome!!',
     '/feed':            'Feed',
     '/my-requests':     'My Requests',
     '/donors':          'Donors',
