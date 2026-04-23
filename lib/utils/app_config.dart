@@ -327,6 +327,7 @@ class AppConfig {
 
   // ── Shell / AppBar ───────────────────────────────────────────
   static const Map<String, String> shellTitles = {
+    '/home':            'Home',
     '/feed':            'Feed',
     '/my-requests':     'My Requests',
     '/donors':          'Donors',
@@ -340,6 +341,7 @@ class AppConfig {
   static const String shellDefaultTitle = 'BloodConnect';
 
   // ── Nav tabs ─────────────────────────────────────────────────
+  static const String navHome     = 'Home';
   static const String navFeed     = 'Feed';
   static const String navRequests = 'Requests';
   static const String navDonors   = 'Donors';
@@ -499,4 +501,15 @@ class AppConfig {
         'Please share to help save a life!\n'
         'Download $appName to respond.';
   }
+
+  // ── Home screen banner carousel ──────────────────────────────
+  // Add or remove image paths here to control what appears in the carousel.
+  // All paths must be declared under flutter › assets in pubspec.yaml.
+  // The carousel will show exactly as many slides as there are entries.
+  static const List<String> carouselImages = [
+    'assets/images/banner_1.png',
+    'assets/images/banner_2.png',
+    'assets/images/banner_3.png',
+    'assets/images/banner_4.png',
+  ];
 }

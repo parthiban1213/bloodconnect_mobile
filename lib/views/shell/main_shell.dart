@@ -23,9 +23,10 @@ class MainShell extends ConsumerStatefulWidget {
 class _MainShellState extends ConsumerState<MainShell> {
 
   static const _allTabs = [
-    _Tab('/my-requests', Icons.bloodtype_outlined,             Icons.bloodtype_rounded,          'Requests'),
-    _Tab('/feed',        Icons.grid_view_rounded,              Icons.grid_view_rounded,          'Feed'),
-    _Tab('/donors',      Icons.volunteer_activism_outlined,    Icons.volunteer_activism_rounded, 'Donors'),
+    _Tab('/home',        Icons.home_outlined,               Icons.home_rounded,               'Home'),
+    _Tab('/feed',        Icons.grid_view_outlined,          Icons.grid_view_rounded,          'Feed'),
+    _Tab('/my-requests', Icons.bloodtype_outlined,          Icons.bloodtype_rounded,          'Requests'),
+    _Tab('/donors',      Icons.volunteer_activism_outlined, Icons.volunteer_activism_rounded, 'Donors'),
   ];
 
   static Map<String, String> get _titles => AppConfig.shellTitles;
@@ -49,6 +50,11 @@ class _MainShellState extends ConsumerState<MainShell> {
   void _onTabTap(int index) {
     final path = _allTabs[index].path;
     context.go(path);
+    _refreshForPath(path);
+    _prevLocation = path;
+  }
+
+  void _refreshForPath(String path) {
     if (path.startsWith('/feed')) {
       ref.read(requirementsViewModelProvider.notifier).load();
     } else if (path.startsWith('/my-requests')) {
@@ -58,21 +64,12 @@ class _MainShellState extends ConsumerState<MainShell> {
     } else if (path.startsWith('/history')) {
       ref.read(historyViewModelProvider.notifier).load();
     }
-    _prevLocation = path;
   }
 
   void _onLocationChanged(String location) {
     if (location == _prevLocation) return;
     _prevLocation = location;
-    if (location.startsWith('/feed')) {
-      ref.read(requirementsViewModelProvider.notifier).load();
-    } else if (location.startsWith('/my-requests')) {
-      ref.read(myRequestsViewModelProvider.notifier).load();
-    } else if (location.startsWith('/donors')) {
-      ref.read(donorsViewModelProvider.notifier).load();
-    } else if (location.startsWith('/history')) {
-      ref.read(historyViewModelProvider.notifier).load();
-    }
+    _refreshForPath(location);
   }
 
   @override
@@ -81,8 +78,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     final currentIdx  = _locationToIndex(location);
     final unreadCount = ref.watch(notificationsViewModelProvider).unreadCount;
 
-    // Watch pending pledge count across all active requests
-    final myReqState  = ref.watch(myRequestsViewModelProvider);
+    final myReqState   = ref.watch(myRequestsViewModelProvider);
     final pendingCount = myReqState.activeRequests.fold<int>(
       0, (sum, r) => sum + r.pendingCount,
     );
@@ -91,16 +87,17 @@ class _MainShellState extends ConsumerState<MainShell> {
       _onLocationChanged(location);
     });
 
-    final isOnFeed = location.startsWith('/feed');
+    // Back button: home tab exits the app; all other tabs go back to /home.
+    final isOnHome = location.startsWith('/home');
 
     void handleBack() {
       final router = GoRouter.of(context);
       if (router.canPop()) {
         router.pop();
-      } else if (isOnFeed) {
+      } else if (isOnHome) {
         SystemNavigator.pop();
       } else {
-        context.go('/feed');
+        context.go('/home');
       }
     }
 
@@ -124,7 +121,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           appBar: _GlobalAppBar(
             title: _titleFor(location),
             unreadCount: unreadCount,
-            showBack: !isOnFeed,
+            showBack: !isOnHome,
             onBack: handleBack,
           ),
           body: widget.child,
@@ -133,6 +130,7 @@ class _MainShellState extends ConsumerState<MainShell> {
             currentIndex: currentIdx,
             onTabTap:     _onTabTap,
             pendingCount: pendingCount,
+            onPost:       () => context.push('/add-requirement'),
           ),
         ),
       ),
@@ -141,57 +139,124 @@ class _MainShellState extends ConsumerState<MainShell> {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Floating Nav
+//  Floating Nav — 4 tabs
 // ─────────────────────────────────────────────────────────────
 class _FloatingNav extends StatelessWidget {
   final List<_Tab> tabs;
   final int currentIndex;
   final ValueChanged<int> onTabTap;
   final int pendingCount;
+  final VoidCallback onPost;
 
   const _FloatingNav({
     required this.tabs,
     required this.currentIndex,
     required this.onTabTap,
     required this.pendingCount,
+    required this.onPost,
   });
 
   static const _pillH = 62.0;
+  // FAB diameter — sized to sit flush within the pill height
+  static const _fabSize = 46.0;
 
   @override
   Widget build(BuildContext context) {
+    // Split tabs into left half and right half around the FAB
+    final leftTabs  = tabs.sublist(0, tabs.length ~/ 2);
+    final rightTabs = tabs.sublist(tabs.length ~/ 2);
+
     return SafeArea(
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-        child: Container(
+        child: SizedBox(
           height: _pillH,
-          decoration: BoxDecoration(
-            color: AppColors.navBg,
-            borderRadius: BorderRadius.circular(34),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.navBg.withOpacity(0.38),
-                blurRadius: 22,
-                offset: const Offset(0, 8),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              // ── Nav pill ───────────────────────────────────────────
+              Container(
+                height: _pillH,
+                decoration: BoxDecoration(
+                  color: AppColors.navBg,
+                  borderRadius: BorderRadius.circular(34),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.navBg.withOpacity(0.38),
+                      blurRadius: 22,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Left tabs
+                    ...leftTabs.map((tab) {
+                      final i = tabs.indexOf(tab);
+                      final badge = (i == 2 && pendingCount > 0) ? pendingCount : 0;
+                      return Expanded(
+                        child: _PillTab(
+                          icon:       tab.icon,
+                          activeIcon: tab.activeIcon,
+                          label:      tab.label,
+                          active:     currentIndex == i,
+                          onTap:      () => onTabTap(i),
+                          badgeCount: badge,
+                        ),
+                      );
+                    }),
+                    // Centre gap — space reserved for the FAB
+                    SizedBox(width: _fabSize + 8),
+                    // Right tabs
+                    ...rightTabs.map((tab) {
+                      final i = tabs.indexOf(tab);
+                      final badge = (i == 2 && pendingCount > 0) ? pendingCount : 0;
+                      return Expanded(
+                        child: _PillTab(
+                          icon:       tab.icon,
+                          activeIcon: tab.activeIcon,
+                          label:      tab.label,
+                          active:     currentIndex == i,
+                          onTap:      () => onTabTap(i),
+                          badgeCount: badge,
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+
+              // ── FAB centred over the nav pill ─────────────────────
+              GestureDetector(
+                onTap: onPost,
+                child: Container(
+                  width:  _fabSize,
+                  height: _fabSize,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.background,
+                      width: 3,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.40),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
               ),
             ],
-          ),
-          child: Row(
-            children: List.generate(tabs.length, (i) {
-              // Show pending badge only on the Requests tab (index 0)
-              final badge = (i == 0 && pendingCount > 0) ? pendingCount : 0;
-              return Expanded(
-                child: _PillTab(
-                  icon:        tabs[i].icon,
-                  activeIcon:  tabs[i].activeIcon,
-                  label:       tabs[i].label,
-                  active:      currentIndex == i,
-                  onTap:       () => onTabTap(i),
-                  badgeCount:  badge,
-                ),
-              );
-            }),
           ),
         ),
       ),
@@ -200,7 +265,7 @@ class _FloatingNav extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Pill tab item — with optional badge
+//  Pill tab item
 // ─────────────────────────────────────────────────────────────
 class _PillTab extends StatelessWidget {
   final IconData icon;
@@ -254,7 +319,6 @@ class _PillTab extends StatelessWidget {
                 ),
               ],
             ),
-            // Badge count
             if (badgeCount > 0)
               Positioned(
                 top: 2,
@@ -284,7 +348,7 @@ class _PillTab extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  AppBar
+//  App Bar
 // ─────────────────────────────────────────────────────────────
 class _GlobalAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -314,7 +378,8 @@ class _GlobalAppBar extends StatelessWidget implements PreferredSizeWidget {
               behavior: HitTestBehavior.opaque,
               child: const Padding(
                 padding: EdgeInsets.only(left: 16),
-                child: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: AppColors.textPrimary),
+                child: Icon(Icons.arrow_back_ios_new_rounded,
+                    size: 20, color: AppColors.textPrimary),
               ),
             )
           : Builder(
@@ -387,7 +452,8 @@ class _BellWithBadge extends StatelessWidget {
             border: Border.all(color: AppColors.border),
           ),
           child: const Center(
-            child: Icon(Icons.notifications_outlined, size: 18, color: AppColors.textSecondary),
+            child: Icon(Icons.notifications_outlined,
+                size: 18, color: AppColors.textSecondary),
           ),
         ),
         if (unreadCount > 0)

@@ -6,7 +6,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../utils/firebase_options.dart';
-import '../utils/prefs_service.dart';
 import 'api_client.dart';
 
 // ─────────────────────────────────────────────────────────────
@@ -49,6 +48,7 @@ class FcmService {
   bool    _tokenSavedToBackend = false; // true once backend confirmed token
   Timer?  _retryTimer;                 // background retry timer
   String  _currentBloodType   = '';
+  String  _currentUsername    = '';
 
   /// Register background handler — must be called before runApp().
   static Future<void> setupBackground() async {
@@ -63,8 +63,9 @@ class FcmService {
   //  • Subscribes to blood-type topic (retried until success)
   //  • Starts a background retry timer for transient FIS failures
   // ─────────────────────────────────────────────────────────────
-  Future<void> ensureInitialized({required String bloodType}) async {
+  Future<void> ensureInitialized({required String bloodType, String username = ''}) async {
     _currentBloodType = bloodType;
+    _currentUsername  = username;
 
     if (!_listenersRegistered) {
       _listenersRegistered = true;
@@ -205,24 +206,47 @@ class FcmService {
 
   // ─────────────────────────────────────────────────────────────
   //  _shouldShowNotification
-  //  Suppresses new-requirement notifications for the user who
-  //  created the requirement. The server topic push cannot exclude
-  //  a specific user, so we filter on the client side using the
-  //  stored username.
+  //
+  //  Two filters for requirement notifications:
+  //
+  //  1. Blood-type mismatch — topic subscriptions can lag (e.g.
+  //     after reinstall / blood-type change), so we verify that
+  //     the requirement's bloodType actually matches the user's.
+  //
+  //  2. Creator suppression — FCM topic push cannot exclude the
+  //     user who created the requirement server-side, so we drop
+  //     it here using the createdBy field the server now sends.
+  //
+  //  All other notification types (pledge, etc.) pass through.
   // ─────────────────────────────────────────────────────────────
   Future<bool> _shouldShowNotification(RemoteMessage msg) async {
     try {
       final type = msg.data['type'];
-      if (type != 'requirement') return true; // always show pledge/other
+      if (type != 'requirement') return true; // always show pledge / other types
 
-      // Suppress if the current user is the one who created this requirement.
-      // We can't know createdBy from the FCM payload (server doesn't send it),
-      // but we can check: if this is a requirement notification AND the user's
-      // blood type matches, they'd normally see it — but if they're the requester
-      // they already know about it. Unfortunately without createdBy in the payload
-      // we can't suppress it perfectly. The server should exclude them from
-      // per-device push already. Topic push will always reach them.
-      // For now: always show requirement notifications (in-app they can see it's theirs).
+      // ── Filter 1: blood-type mismatch ──────────────────────
+      final requirementBloodType = msg.data['bloodType'] as String?;
+      if (requirementBloodType != null && _currentBloodType.isNotEmpty) {
+        if (requirementBloodType != _currentBloodType) {
+          debugPrint(
+            'FCM: suppressed — requirement needs $requirementBloodType, '
+            'user is $_currentBloodType',
+          );
+          return false;
+        }
+      }
+
+      // ── Filter 2: creator suppression ──────────────────────
+      final createdBy = msg.data['createdBy'] as String?;
+      if (createdBy != null && createdBy.isNotEmpty && _currentUsername.isNotEmpty) {
+        if (_currentUsername == createdBy) {
+          debugPrint(
+            'FCM: suppressed — user "$_currentUsername" is the requester',
+          );
+          return false;
+        }
+      }
+
       return true;
     } catch (_) {
       return true;

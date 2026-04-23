@@ -15,6 +15,7 @@ import '../views/profile/edit_profile_screen.dart';
 import '../views/my_requests/my_requests_screen.dart';
 import '../views/my_requests/add_requirement_screen.dart';
 import '../views/history/history_screen.dart';
+import '../views/home/home_screen.dart';
 import '../views/shell/main_shell.dart';
 import '../views/support/support_screen.dart';
 
@@ -56,11 +57,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     // always built and sitting underneath the splash overlay. When
     // _checkAuth finished and the overlay was removed, the user saw
     // LoginScreen for a brief moment before the router redirected to
-    // /feed — the "login screen flash" bug.
+    // /home — the "login screen flash" bug.
     //
     // With /splash as the holding route, LoginScreen is never built
     // during _checkAuth. When auth check completes the router goes
-    // directly to /feed (if logged in) or /login (if not) — no flash.
+    // directly to /home (if logged in) or /login (if not) — no flash.
     initialLocation: '/splash',
     refreshListenable: notifier,
     redirect: (context, state) {
@@ -81,13 +82,13 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Auth check done — /splash has served its purpose. Navigate
       // directly to the correct destination with no intermediate stop.
-      if (loc == '/splash') return isLoggedIn ? '/feed' : '/login';
+      if (loc == '/splash') return isLoggedIn ? '/home' : '/login';
 
       // Not logged in and not on an auth page → send to login.
       if (!isLoggedIn && loc != '/login') return '/login';
 
-      // Logged in but on login page → send to feed.
-      if (isLoggedIn && loc == '/login') return '/feed';
+      // Logged in but on login page → send to home.
+      if (isLoggedIn && loc == '/login') return '/home';
 
       return null;
     },
@@ -128,6 +129,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
+          GoRoute(
+            path: '/home',
+            name: 'home',
+            builder: (_, __) => const HomeScreen(),
+          ),
           GoRoute(
             path: '/feed',
             name: 'feed',
@@ -210,7 +216,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/',
-        redirect: (_, __) => '/feed',
+        redirect: (_, __) => '/home',
       ),
     ],
   );

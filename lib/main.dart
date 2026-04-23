@@ -67,7 +67,7 @@ class _BloodConnectAppState extends ConsumerState<BloodConnectApp>
         //  - topic subscription is verified / re-established
         //  - FCM token is saved to backend (retried if it failed before)
         final bloodType = next.user?.bloodType ?? '';
-        FcmService().ensureInitialized(bloodType: bloodType);
+        FcmService().ensureInitialized(bloodType: bloodType, username: next.user?.username ?? '');
       });
 
       // ── Cold-start: already logged in ────────────────────
@@ -80,6 +80,7 @@ class _BloodConnectAppState extends ConsumerState<BloodConnectApp>
       if (authState.isLoggedIn) {
         FcmService().ensureInitialized(
           bloodType: authState.user?.bloodType ?? '',
+          username:  authState.user?.username  ?? '',
         );
       }
     });
@@ -112,6 +113,7 @@ class _BloodConnectAppState extends ConsumerState<BloodConnectApp>
       if (authState.isLoggedIn) {
         FcmService().ensureInitialized(
           bloodType: authState.user?.bloodType ?? '',
+          username:  authState.user?.username  ?? '',
         );
       }
     }
