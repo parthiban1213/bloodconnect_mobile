@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../models/user_model.dart';
 import '../utils/api_exception.dart';
 import 'api_client.dart';
@@ -36,7 +37,7 @@ class AuthService {
   // ── OTP: send (register — server blocks if mobile already exists) ─────
   Future<void> sendOtpForRegister(String mobile) async {
     try {
-      final res = await _client.post('/auth/otp/send', data: {
+      await _client.post('/auth/otp/send', data: {
         'mobile':  mobile,
         'purpose': 'register',
       });
@@ -170,9 +171,9 @@ class AuthService {
     required String confirmPassword,
   }) async {
     await _client.post('/auth/forgot-password', data: {
-      'username':     username.trim(),
-      'email':        email.trim(),
-      'newPassword': newPassword,
+      'username':        username.trim(),
+      'email':           email.trim(),
+      'newPassword':     newPassword,
       'confirmPassword': confirmPassword,
     });
   }
@@ -185,7 +186,26 @@ class AuthService {
     await _client.delete('/auth/account');
   }
 
-  Future<void> logout() async => _client.clearToken();
+  // ── Logout ──────────────────────────────────────────────────
+  // 1. Fetches this device's FCM token and calls DELETE /auth/fcm-token so the
+  //    backend removes only this device from the user's token list.
+  //    This prevents the previously logged-in user from continuing to receive
+  //    direct push notifications (pledge alerts) on this device after logout.
+  // 2. Clears the local JWT regardless of whether the FCM token removal
+  //    succeeded — logout must always complete even on network failure.
+  Future<void> logout() async {
+    // Remove this device's FCM token from the backend BEFORE clearing the
+    // local auth token so the DELETE request is still authenticated.
+    try {
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken != null) {
+        await _client.delete('/auth/fcm-token', data: {'token': fcmToken});
+      }
+    } catch (_) {
+      // Best-effort — network failure or FCM unavailable must never block logout.
+    }
+    await _client.clearToken();
+  }
 
   Future<bool> isLoggedIn() async => (await _client.getToken()) != null;
 }

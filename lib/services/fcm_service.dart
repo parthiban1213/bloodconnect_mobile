@@ -19,7 +19,7 @@ import 'api_client.dart';
 //     Subscription retried in background until confirmed.
 //
 //  2. DIRECT push → donor pledges, requester is notified
-//     Server looks up requester's fcmToken in DB and sends directly.
+//     Server looks up requester's fcmTokens in DB and sends directly.
 //     Token must be saved via POST /auth/fcm-token.
 //     Token save retried in background until confirmed.
 // ─────────────────────────────────────────────────────────────
@@ -43,12 +43,16 @@ class FcmService {
   static const String _channelName = 'Blood Alerts';
   static const String _channelDesc = 'Notifications for blood donation requests';
 
-  bool    _listenersRegistered = false; // permission + listeners done once
+  bool    _listenersRegistered = false; // permission + listeners done once per login
   String? _subscribedTopic;            // topic currently confirmed on device
   bool    _tokenSavedToBackend = false; // true once backend confirmed token
   Timer?  _retryTimer;                 // background retry timer
   String  _currentBloodType   = '';
   String  _currentUsername    = '';
+
+  // Stored subscription so we can cancel it on logout and avoid stacking
+  // duplicate foreground listeners across multiple login/logout cycles.
+  StreamSubscription<RemoteMessage>? _onMessageSub;
 
   /// Register background handler — must be called before runApp().
   static Future<void> setupBackground() async {
@@ -58,7 +62,7 @@ class FcmService {
   // ─────────────────────────────────────────────────────────────
   //  ensureInitialized — call after login AND on app resume.
   //
-  //  • Runs permission + listeners once
+  //  • Runs permission + listeners once per login session
   //  • Saves FCM token to backend (retried until success)
   //  • Subscribes to blood-type topic (retried until success)
   //  • Starts a background retry timer for transient FIS failures
@@ -84,7 +88,11 @@ class FcmService {
   }
 
   // ─────────────────────────────────────────────────────────────
-  //  _setupPermissionsAndListeners — runs exactly once per session
+  //  _setupPermissionsAndListeners — runs exactly once per login session.
+  //
+  //  The previous _onMessageSub is cancelled before a new one is registered,
+  //  preventing duplicate foreground notification listeners from stacking up
+  //  across multiple login/logout/login cycles on the same device.
   // ─────────────────────────────────────────────────────────────
   Future<void> _setupPermissionsAndListeners() async {
     final messaging = FirebaseMessaging.instance;
@@ -100,8 +108,11 @@ class FcmService {
     // Local notifications for foreground heads-up
     await _initLocalNotifications();
 
-    // Foreground message handler
-    FirebaseMessaging.onMessage.listen((RemoteMessage msg) {
+    // Cancel any existing foreground listener before registering a new one.
+    // Without this, each login after logout would add another listener,
+    // causing the same notification to be shown multiple times.
+    await _onMessageSub?.cancel();
+    _onMessageSub = FirebaseMessaging.onMessage.listen((RemoteMessage msg) {
       debugPrint('FCM foreground: ${msg.notification?.title}');
       // Suppress new-requirement notifications for the user who created it.
       // The topic push cannot exclude the requester server-side, so we filter here.
@@ -253,10 +264,23 @@ class FcmService {
     }
   }
 
-  /// Call on logout to clean up subscriptions and cancel retries.
+  // ─────────────────────────────────────────────────────────────
+  //  unsubscribeAll — call on logout to clean up fully.
+  //
+  //  Fixes addressed here:
+  //  • _currentUsername is now reset so the next user's suppression
+  //    filter starts clean (previously it retained the old username).
+  //  • _onMessageSub is cancelled so the foreground listener is removed;
+  //    the next login re-registers a fresh one via _setupPermissionsAndListeners.
+  // ─────────────────────────────────────────────────────────────
   Future<void> unsubscribeAll() async {
     _retryTimer?.cancel();
     _retryTimer = null;
+
+    // Cancel foreground message listener — prevents stale listener from
+    // the previous user's session being active during the next user's session.
+    await _onMessageSub?.cancel();
+    _onMessageSub = null;
 
     final messaging = FirebaseMessaging.instance;
     if (_subscribedTopic != null && _subscribedTopic!.isNotEmpty) {
@@ -267,10 +291,13 @@ class FcmService {
         debugPrint('FCM: could not unsubscribe on logout: $e');
       }
     }
+
     _listenersRegistered = false;
     _subscribedTopic     = null;
     _tokenSavedToBackend = false;
     _currentBloodType    = '';
+    _currentUsername     = ''; // ← was missing; caused stale username in
+                                //   _shouldShowNotification after user switch
   }
 
   // ─────────────────────────────────────────────────────────────

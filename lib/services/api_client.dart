@@ -86,9 +86,12 @@ class ApiClient {
     }
   }
 
-  Future<Map<String, dynamic>> delete(String path) async {
+  // data parameter added so DELETE /auth/fcm-token can send the token body,
+  // allowing the backend to remove only this device's token on logout.
+  Future<Map<String, dynamic>> delete(String path,
+      {Map<String, dynamic>? data}) async {
     try {
-      final response = await _dio.delete(path);
+      final response = await _dio.delete(path, data: data);
       return _handleResponse(response);
     } on DioException catch (e) {
       throw _mapError(e);
