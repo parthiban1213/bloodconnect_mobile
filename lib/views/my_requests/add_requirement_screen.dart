@@ -157,7 +157,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
@@ -182,7 +182,10 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
+            padding: EdgeInsets.fromLTRB(
+              14, 6, 14,
+              10 + MediaQuery.of(context).viewInsets.bottom,
+            ),
             child: Column(
               children: [
 
