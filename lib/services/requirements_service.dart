@@ -119,10 +119,10 @@ class RequirementsService {
   /// triggers an in-app notification + FCM push to the requester internally
   /// via notifyRequesterOfPledge(). No separate notify call is needed.
   Future<BloodRequirement> donateToRequirement(
-    String id, {
-    required String scheduledDate,
-    required String scheduledTime,
-  }) async {
+      String id, {
+        required String scheduledDate,
+        required String scheduledTime,
+      }) async {
     // Step 1: create the pledge — the server sends the requester notification
     // automatically as part of this call (notifyRequesterOfPledge is called
     // inside the donate endpoint before responding).
@@ -134,6 +134,11 @@ class RequirementsService {
 
     // Step 2: return the refreshed requirement
     return getRequirement(id);
+  }
+
+  // ── Cancel pledge (donor withdraws their own pledge) ─────
+  Future<void> cancelPledge(String id) async {
+    await _client.delete('/requirements/$id/donate');
   }
 
   // ── Decline endpoint ─────────────────────────────────────

@@ -14,7 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/blood_type_badge.dart';
 import '../../widgets/schedule_pledge_modal.dart';
 
-class RequirementCard extends ConsumerWidget {
+class RequirementCard extends ConsumerStatefulWidget {
   final BloodRequirement requirement;
   /// Whether to show distance (only when GPS location is available)
   final bool showDistance;
@@ -25,10 +25,19 @@ class RequirementCard extends ConsumerWidget {
     this.showDistance = false,
   });
 
+  @override
+  ConsumerState<RequirementCard> createState() => _RequirementCardState();
+}
+
+class _RequirementCardState extends ConsumerState<RequirementCard> {
+  bool _isCancellingPledge = false;
+
+  BloodRequirement get requirement => widget.requirement;
+  bool get showDistance => widget.showDistance;
   bool get _isClosed =>
       requirement.status == 'Fulfilled' || requirement.status == 'Cancelled';
 
-  Future<void> _handleDonate(BuildContext context, WidgetRef ref) async {
+  Future<void> _handleDonate(BuildContext context) async {
     // Step 1: ask for scheduled date + time
     final schedule = await showSchedulePledgeModal(
       context,
@@ -85,14 +94,68 @@ class RequirementCard extends ConsumerWidget {
     await Share.share(text);
   }
 
+  Future<void> _cancelPledge(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          AppConfig.detailCancelPledgeConfirmTitle,
+          style: GoogleFonts.syne(
+              fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        ),
+        content: Text(
+          AppConfig.detailCancelPledgeConfirmBody,
+          style: GoogleFonts.dmSans(
+              fontSize: 13, color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Keep Pledge',
+                style: GoogleFonts.dmSans(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              AppConfig.detailCancelPledgeBtn,
+              style: GoogleFonts.dmSans(
+                  color: AppColors.primary, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isCancellingPledge = true);
+    final ok = await ref
+        .read(requirementsViewModelProvider.notifier)
+        .cancelPledge(requirement.id);
+    if (!mounted) return;
+    setState(() => _isCancellingPledge = false);
+
+    if (!ok) {
+      final err = ref.read(requirementsViewModelProvider).error;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(err ?? 'Failed to cancel pledge. Please try again.',
+            style: GoogleFonts.dmSans(fontSize: 13)),
+        backgroundColor: AppColors.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ));
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final state           = ref.watch(requirementsViewModelProvider);
     final authState       = ref.watch(authViewModelProvider);
     final isDonating      = state.isDonating(requirement.id);
     final hasDonated      = state.hasDonated(requirement.id);
     final canDonate       = state.userBloodType.isNotEmpty &&
-                            state.userBloodType == requirement.bloodType;
+        state.userBloodType == requirement.bloodType;
     final lastDonation    = authState.user?.lastDonationDate;
     final isInCooldown    = !ReminderService.isEligible(lastDonation);
     final isUnavailable   = authState.user?.isAvailable == false;
@@ -108,9 +171,9 @@ class RequirementCard extends ConsumerWidget {
         onTap: _isClosed
             ? null
             : () => context.push(
-                  '/requirement/${requirement.id}',
-                  extra: {'requirement': requirement},
-                ),
+          '/requirement/${requirement.id}',
+          extra: {'requirement': requirement},
+        ),
         child: Container(
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(16),
@@ -263,148 +326,186 @@ class RequirementCard extends ConsumerWidget {
                       ],
                     ),
                   )
-                // Scheduled / awaiting approval badge
+                // Scheduled / awaiting approval + Cancel Pledge button
                 else if (isScheduledPending)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFFCD34D)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.hourglass_top_rounded,
-                            size: 14, color: Color(0xFF92400E)),
-                        const SizedBox(width: 6),
-                        Text(
-                          '⏳ Scheduled — awaiting approval',
-                          style: GoogleFonts.syne(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF92400E),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                // "Not Eligible" only when blood type matches but user is in cooldown
-                else if (canDonate && isInCooldown)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    decoration: BoxDecoration(
-                      color: AppColors.moderateBg,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.moderateBorder),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.block_rounded,
-                            size: 14, color: AppColors.moderateAccent),
-                        const SizedBox(width: 6),
-                        Text(
-                          AppConfig.cardNotEligibleBtn,
-                          style: GoogleFonts.syne(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.moderateAccent,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                // Unavailable donor — matching type only
-                else if (canDonate && isUnavailable)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    decoration: BoxDecoration(
-                      color: AppColors.closedBg,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.closedBorder),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.do_not_disturb_rounded,
-                            size: 14, color: AppColors.closedAccent),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Update availability in Profile',
-                          style: GoogleFonts.syne(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.closedText,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  Row(children: [
-                    if (canDonate) ...[
+                  Row(
+                    children: [
+                      // Pending status indicator
                       Expanded(
-                        child: GestureDetector(
-                          onTap: isDonating
-                              ? null
-                              : () => _handleDonate(context, ref),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            padding: const EdgeInsets.symmetric(vertical: 11),
-                            decoration: BoxDecoration(
-                              color: isDonating
-                                  ? AppColors.primary.withOpacity(0.55)
-                                  : AppColors.primary,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Center(
-                              child: isDonating
-                                  ? const SizedBox(
-                                      width: 14, height: 14,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2, color: Colors.white),
-                                    )
-                                  : Text(
-                                      AppConfig.cardDonateBtn,
-                                      style: GoogleFonts.syne(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                            ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 11, horizontal: 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFFCD34D)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.hourglass_top_rounded,
+                                  size: 13, color: Color(0xFF92400E)),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  AppConfig.detailScheduledPending,
+                                  style: GoogleFonts.syne(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF92400E),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ] else ...[
-                      Expanded(
+                      const SizedBox(width: 8),
+                      // Cancel pledge button (icon only)
+                      GestureDetector(
+                        onTap: _isCancellingPledge
+                            ? null
+                            : () => _cancelPledge(context),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          width: 38,
+                          height: 38,
                           decoration: BoxDecoration(
-                            color: AppColors.border.withOpacity(0.35),
+                            color: AppColors.closedBg,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: AppColors.border.withOpacity(0.5),
-                            ),
+                            border: Border.all(color: AppColors.closedBorder),
                           ),
                           child: Center(
-                            child: Text(
-                              "Not my type",
-                              style: GoogleFonts.syne(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textMuted,
-                              ),
-                            ),
+                            child: _isCancellingPledge
+                                ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.closedText),
+                            )
+                                : const Icon(Icons.cancel_outlined,
+                                size: 16, color: AppColors.closedText),
                           ),
                         ),
                       ),
                     ],
-                  ]),
+                  )
+                // "Not Eligible" only when blood type matches but user is in cooldown
+                else if (canDonate && isInCooldown)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      decoration: BoxDecoration(
+                        color: AppColors.moderateBg,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.moderateBorder),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.block_rounded,
+                              size: 14, color: AppColors.moderateAccent),
+                          const SizedBox(width: 6),
+                          Text(
+                            AppConfig.cardNotEligibleBtn,
+                            style: GoogleFonts.syne(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.moderateAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  // Unavailable donor — matching type only
+                  else if (canDonate && isUnavailable)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        decoration: BoxDecoration(
+                          color: AppColors.closedBg,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.closedBorder),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.do_not_disturb_rounded,
+                                size: 14, color: AppColors.closedAccent),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Update availability in Profile',
+                              style: GoogleFonts.syne(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.closedText,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Row(children: [
+                        if (canDonate) ...[
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: isDonating
+                                  ? null
+                                  : () => _handleDonate(context),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(vertical: 11),
+                                decoration: BoxDecoration(
+                                  color: isDonating
+                                      ? AppColors.primary.withOpacity(0.55)
+                                      : AppColors.primary,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Center(
+                                  child: isDonating
+                                      ? const SizedBox(
+                                    width: 14, height: 14,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white),
+                                  )
+                                      : Text(
+                                    AppConfig.cardDonateBtn,
+                                    style: GoogleFonts.syne(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 11),
+                              decoration: BoxDecoration(
+                                color: AppColors.border.withOpacity(0.35),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppColors.border.withOpacity(0.5),
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "Not my type",
+                                  style: GoogleFonts.syne(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ]),
               ] else ...[
                 const SizedBox(height: 8),
                 Text(

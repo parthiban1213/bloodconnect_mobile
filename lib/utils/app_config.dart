@@ -179,6 +179,10 @@ class AppConfig {
   static const String detailRequiredBy      = 'Required by: ';
   static const String detailAlreadyDonated  = 'Already Donated';
   static const String detailScheduledPending = 'Scheduled — awaiting approval';
+  static const String detailCancelPledgeBtn          = 'Cancel Pledge';
+  static const String detailCancelPledgeConfirmTitle = 'Cancel your pledge?';
+  static const String detailCancelPledgeConfirmBody  =
+      'Are you sure you want to withdraw your pledge for this request?';
 
   // ── Directory screen ─────────────────────────────────────────
   static const String directoryTitle       = 'Directory';

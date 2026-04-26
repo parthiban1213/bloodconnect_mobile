@@ -425,6 +425,28 @@ class RequirementsViewModel extends StateNotifier<RequirementsState> {
     return true;
   }
 
+  /// Donor cancels their own pending pledge.
+  Future<bool> cancelPledge(String id) async {
+    try {
+      await _service.cancelPledge(id);
+      // Remove from donatedIds so the UI reverts to the "Donate" state
+      final donated = Set<String>.from(state.donatedIds)..remove(id);
+      // Refresh the requirement in the list to clear the pledge data
+      final updated = await _service.getRequirement(id);
+      final newList = state.requirements
+          .map((r) => r.id == id ? updated : r)
+          .toList();
+      state = state.copyWith(requirements: newList, donatedIds: donated);
+      return true;
+    } on ApiException catch (e) {
+      state = state.copyWith(error: e.message);
+      return false;
+    } catch (_) {
+      state = state.copyWith(error: 'Failed to cancel pledge. Please try again.');
+      return false;
+    }
+  }
+
   Future<bool> updateDonationStatus({
     required String requirementId,
     required String donorUsername,

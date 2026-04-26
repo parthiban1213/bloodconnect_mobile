@@ -651,7 +651,7 @@ class _EmptyUrgent extends StatelessWidget {
               size: 28, color: AppColors.textMuted),
           const SizedBox(height: 8),
           Text(
-            'No urgent requests near you',
+            'No urgent requests near you within 25 kms',
             style: GoogleFonts.dmSans(
               fontSize: 12,
               color: AppColors.textSecondary,

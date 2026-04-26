@@ -36,6 +36,7 @@ class _RequirementDetailScreenState
   BloodRequirement? _requirement;
   bool _isLoading = false;
   bool _isConfirming = false;
+  bool _isCancellingPledge = false;
   String? _error;
 
   @override
@@ -78,10 +79,10 @@ class _RequirementDetailScreenState
     final updated = await ref
         .read(requirementsViewModelProvider.notifier)
         .donate(
-          _requirement!.id,
-          scheduledDate: schedule.scheduledDate,
-          scheduledTime: schedule.scheduledTime,
-        );
+      _requirement!.id,
+      scheduledDate: schedule.scheduledDate,
+      scheduledTime: schedule.scheduledTime,
+    );
     setState(() => _isConfirming = false);
     if (updated != null && mounted) {
       // NOTE: ReminderService is NOT called here — the 90-day cooldown
@@ -102,6 +103,63 @@ class _RequirementDetailScreenState
     }
   }
 
+  Future<void> _cancelPledge() async {
+    if (_requirement == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          AppConfig.detailCancelPledgeConfirmTitle,
+          style: GoogleFonts.syne(
+              fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        ),
+        content: Text(
+          AppConfig.detailCancelPledgeConfirmBody,
+          style: GoogleFonts.dmSans(
+              fontSize: 13, color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Keep Pledge',
+                style: GoogleFonts.dmSans(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              AppConfig.detailCancelPledgeBtn,
+              style: GoogleFonts.dmSans(
+                  color: AppColors.primary, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isCancellingPledge = true);
+    final ok = await ref
+        .read(requirementsViewModelProvider.notifier)
+        .cancelPledge(_requirement!.id);
+    if (!mounted) return;
+    setState(() => _isCancellingPledge = false);
+
+    if (ok) {
+      // Re-fetch detail so the action bar reverts to the donate state
+      await _fetchDetail();
+    } else {
+      final err = ref.read(requirementsViewModelProvider).error;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(err ?? 'Failed to cancel pledge. Please try again.'),
+        backgroundColor: AppColors.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -113,13 +171,13 @@ class _RequirementDetailScreenState
               child: _isLoading
                   ? const AppLoader()
                   : _error != null
-                      ? ErrorView(
-                          message: _error!,
-                          onRetry: _fetchDetail,
-                        )
-                      : _requirement == null
-                          ? const ErrorView(message: AppConfig.detailNotFound)
-                          : _buildContent(),
+                  ? ErrorView(
+                message: _error!,
+                onRetry: _fetchDetail,
+              )
+                  : _requirement == null
+                  ? const ErrorView(message: AppConfig.detailNotFound)
+                  : _buildContent(),
             ),
             if (_requirement != null && _requirement!.isOpen)
               _buildActionBar(),
@@ -189,9 +247,9 @@ class _RequirementDetailScreenState
                               size: 13, color: AppColors.plannedText),
                           const SizedBox(width: 5),
                           Text(AppConfig.shareBtn,
-                            style: GoogleFonts.dmSans(
-                              fontSize: 11, fontWeight: FontWeight.w500,
-                              color: AppColors.plannedText)),
+                              style: GoogleFonts.dmSans(
+                                  fontSize: 11, fontWeight: FontWeight.w500,
+                                  color: AppColors.plannedText)),
                         ]),
                       ),
                     ),
@@ -243,7 +301,7 @@ class _RequirementDetailScreenState
                                           style: GoogleFonts.dmSans(
                                             fontSize: 11,
                                             color: AppColors.primary,
-                                              fontWeight: FontWeight.bold,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -313,7 +371,7 @@ class _RequirementDetailScreenState
                   _InfoTile(
                       label: AppConfig.detailUnitsNeeded,
                       value:
-                          '${req.unitsRequired} unit${req.unitsRequired > 1 ? 's' : ''}'),
+                      '${req.unitsRequired} unit${req.unitsRequired > 1 ? 's' : ''}'),
                   _InfoTile(
                       label: AppConfig.detailPatient,
                       value: req.patientName.isNotEmpty
@@ -505,7 +563,7 @@ class _RequirementDetailScreenState
     // Only show green "Already Donated" badge when pledge is actually Completed
     final isDonationCompleted = myPledge != null && myPledge.isCompleted;
 
-    // Show "⏳ Scheduled — awaiting approval" when pledged but not yet approved
+    // Show "⏳ Scheduled — awaiting approval" + Cancel Pledge button
     if (hasDonated && isScheduledPending) {
       return Container(
         decoration: const BoxDecoration(
@@ -515,30 +573,67 @@ class _RequirementDetailScreenState
         padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
         child: SafeArea(
           top: false,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFFCD34D)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.hourglass_top_rounded,
-                    size: 16, color: Color(0xFF92400E)),
-                const SizedBox(width: 8),
-                Text(
-                  AppConfig.detailScheduledPending,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF92400E),
+          child: Row(
+            children: [
+              // Pending status indicator
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFFCD34D)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.hourglass_top_rounded,
+                          size: 15, color: Color(0xFF92400E)),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          AppConfig.detailScheduledPending,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF92400E),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 10),
+              // Cancel pledge button (icon only)
+              GestureDetector(
+                onTap: _isCancellingPledge
+                    ? null
+                    : () => _cancelPledge(),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.closedBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.closedBorder),
+                  ),
+                  child: Center(
+                    child: _isCancellingPledge
+                        ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.closedText),
+                    )
+                        : const Icon(Icons.cancel_outlined,
+                        size: 18, color: AppColors.closedText),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -648,19 +743,19 @@ class _RequirementDetailScreenState
                     child: Center(
                       child: _isConfirming
                           ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2),
-                            )
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
+                      )
                           : Text(
-                              AppConfig.cardConfirmDonation,
-                              style: GoogleFonts.dmSans(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                              ),
-                            ),
+                        AppConfig.cardConfirmDonation,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -711,7 +806,7 @@ class _InfoTile extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border:
-            const Border.fromBorderSide(BorderSide(color: AppColors.border)),
+        const Border.fromBorderSide(BorderSide(color: AppColors.border)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
