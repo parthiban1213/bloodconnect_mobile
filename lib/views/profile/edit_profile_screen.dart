@@ -154,9 +154,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final isLoading = ref.watch(authViewModelProvider).isLoading;
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.background,
-      body: SafeArea(
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: SafeArea(
         child: Column(children: [
 
           // ── Header ───────────────────────────────────────────
@@ -179,7 +182,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             child: Form(
               key: _formKey,
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 100),
+                padding: EdgeInsets.fromLTRB(14, 0, 14, 100 + MediaQuery.of(context).viewInsets.bottom),
                 children: [
 
                   // ── Personal info fields ──────────────────────
@@ -295,6 +298,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
           ),
         ]),
+        ),
       ),
     );
   }

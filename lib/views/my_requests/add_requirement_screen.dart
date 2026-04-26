@@ -177,7 +177,10 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
         ),
         centerTitle: true,
       ),
-      body: SafeArea(
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: SafeArea(
         top: false,
         child: Form(
           key: _formKey,
@@ -619,7 +622,8 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
             ),           // Column
           ),             // SingleChildScrollView
         ),               // Form
-      ),                 // SafeArea
+        ),               // SafeArea
+        ),               // GestureDetector
     );
   }
 }

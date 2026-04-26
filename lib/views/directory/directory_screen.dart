@@ -40,8 +40,11 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
+      resizeToAvoidBottomInset: false,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -190,6 +193,7 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
                             ),
             ),
           ],
+        ),
         ),
       ),
     );

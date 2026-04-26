@@ -392,9 +392,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
         if (!didPop) context.go('/home');
       },
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.background,
-        body: SafeArea(
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          behavior: HitTestBehavior.translucent,
+          child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -800,6 +803,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
