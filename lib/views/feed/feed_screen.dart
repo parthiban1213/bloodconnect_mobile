@@ -285,7 +285,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                       // Disable distance-based filters when no GPS
                       final isDistanceFilter =
                           f != LocationFilterRadius.sameCity &&
-                          f != LocationFilterRadius.allLocations;
+                              f != LocationFilterRadius.allLocations;
                       final disabled = isDistanceFilter && !hasGps;
 
                       return GestureDetector(
@@ -300,8 +300,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                             color: active
                                 ? AppColors.navBg
                                 : disabled
-                                    ? AppColors.border.withOpacity(0.3)
-                                    : AppColors.surface,
+                                ? AppColors.border.withOpacity(0.3)
+                                : AppColors.surface,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: active ? AppColors.navBg : AppColors.border,
@@ -316,8 +316,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                               color: active
                                   ? Colors.white
                                   : disabled
-                                      ? AppColors.textMuted.withOpacity(0.5)
-                                      : AppColors.textSecondary,
+                                  ? AppColors.textMuted.withOpacity(0.5)
+                                  : AppColors.textSecondary,
                             ),
                           ),
                         ),
@@ -392,313 +392,422 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
         if (!didPop) context.go('/home');
       },
       child: Scaffold(
-      resizeToAvoidBottomInset: true,
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Greeting + blood type badge ────────────────────────────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _greeting().toUpperCase(),
-                            style: GoogleFonts.syne(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textMuted,
-                              letterSpacing: 0.9,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            user?.displayName ?? 'Welcome',
-                            style: GoogleFonts.cormorantGaramond(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (user?.bloodType.isNotEmpty == true)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryLight,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                                color: AppColors.urgentBorder, width: 1),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 6, height: 6,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.primary,
-                                  shape: BoxShape.circle,
-                                ),
+        resizeToAvoidBottomInset: true,
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Greeting row with inline open count ───────────────────
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _greeting().toUpperCase(),
+                              style: GoogleFonts.syne(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textMuted,
+                                letterSpacing: 0.9,
                               ),
-                              const SizedBox(width: 5),
-                              Text(
-                                user!.bloodType,
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  user?.firstName ?? user?.displayName ?? 'Welcome',
+                                  style: GoogleFonts.cormorantGaramond(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                // Inline open request count pill
+                                if (!reqState.isLoading && reqState.error == null) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryLight,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                          color: AppColors.urgentBorder, width: 1),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 5, height: 5,
+                                          decoration: const BoxDecoration(
+                                            color: AppColors.primary,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${reqState.filtered.where((r) => r.isOpen).length}',
+                                          style: GoogleFonts.syne(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          'open',
+                                          style: GoogleFonts.syne(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.primaryDark,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                        // Blood type badge
+                        if (user?.bloodType.isNotEmpty == true)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryLight,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: AppColors.urgentBorder, width: 1),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 6, height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  user!.bloodType,
+                                  style: GoogleFonts.syne(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.primaryDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          Container(
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(11),
+                            ),
+                            child: Center(
+                              child: Text(
+                                user?.initials ?? '?',
                                 style: GoogleFonts.syne(
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.primaryDark,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
                                 ),
                               ),
-                            ],
-                          ),
-                        )
-                      else
-                        Container(
-                          width: 36, height: 36,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(11),
-                          ),
-                          child: Center(
-                            child: Text(
-                              user?.initials ?? '?',
-                              style: GoogleFonts.syne(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
+                      ],
+                    ),
 
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 10),
 
-                  // ── Open request count ────────────────────────────────────
-                  if (!reqState.isLoading && reqState.error == null)
-                    _OpenRequestCount(count: reqState.filtered.where((r) => r.isOpen).length),
-
-                  const SizedBox(height: 12),
-
-                  // ── Search bar + filter buttons row ─────────────────────────
-                  Row(children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border, width: 1),
-                        ),
-                        child: Row(children: [
-                          const Icon(Icons.search_rounded,
-                              size: 15, color: AppColors.textMuted),
-                          const SizedBox(width: 9),
-                          Expanded(
-                            child: TextField(
-                              controller: _searchCtrl,
-                              focusNode: _searchFocus,
-                              style: GoogleFonts.dmSans(
-                                  fontSize: 12, color: AppColors.textPrimary),
-                              decoration: InputDecoration(
-                                hintText: AppConfig.feedSearchHint,
-                                hintStyle: GoogleFonts.dmSans(
-                                    fontSize: 12, color: AppColors.textMuted),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding:
-                                    const EdgeInsets.symmetric(vertical: 10),
+                    // ── Unified search + filter card ───────────────────────────
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        children: [
+                          // Search input row
+                          Row(children: [
+                            Container(
+                              width: 30, height: 30,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLight,
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              onChanged: (v) => ref
-                                  .read(requirementsViewModelProvider.notifier)
-                                  .setSearchQuery(v),
+                              child: const Icon(Icons.search_rounded,
+                                  size: 15, color: AppColors.primary),
                             ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _searchCtrl,
+                                focusNode: _searchFocus,
+                                style: GoogleFonts.dmSans(
+                                    fontSize: 12, color: AppColors.textPrimary),
+                                decoration: InputDecoration(
+                                  hintText: AppConfig.feedSearchHint,
+                                  hintStyle: GoogleFonts.dmSans(
+                                      fontSize: 12, color: AppColors.textMuted),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 8),
+                                ),
+                                onChanged: (v) => ref
+                                    .read(requirementsViewModelProvider.notifier)
+                                    .setSearchQuery(v),
+                              ),
+                            ),
+                            if (reqState.searchQuery.isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  _searchCtrl.clear();
+                                  _searchFocus.unfocus();
+                                  ref.read(requirementsViewModelProvider.notifier)
+                                      .setSearchQuery('');
+                                },
+                                child: const Icon(Icons.close_rounded,
+                                    size: 15, color: AppColors.textMuted),
+                              ),
+                          ]),
+
+                          // Divider
+                          Container(
+                            height: 1,
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            color: AppColors.borderSoft,
                           ),
-                          if (reqState.searchQuery.isNotEmpty)
+
+                          // Filter row
+                          Row(children: [
+                            // Location filter chip
                             GestureDetector(
-                              onTap: () {
-                                _searchCtrl.clear();
-                                _searchFocus.unfocus();
-                                ref.read(requirementsViewModelProvider.notifier)
-                                    .setSearchQuery('');
-                              },
-                              child: const Icon(Icons.close_rounded,
-                                  size: 15, color: AppColors.textMuted),
-                            ),
-                        ]),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Location filter button
-                    GestureDetector(
-                      onTap: () => _showLocationFilterPopup(context, reqState, reqVm),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: isLocationFiltered ? AppColors.primary : AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isLocationFiltered ? AppColors.primary : AppColors.border,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.near_me,
-                          size: 18,
-                          color: isLocationFiltered ? Colors.white : AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    // List / Map segmented pill
-                    _ViewTogglePill(
-                      showMap: _showMap,
-                      onToggle: (v) => setState(() => _showMap = v),
-                    ),
-                    const SizedBox(width: 6),
-                    // Status/urgency filter button
-                    GestureDetector(
-                      onTap: () => _showFilterPopup(context, reqState, reqVm),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: isFiltered ? AppColors.navBg : AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isFiltered ? AppColors.navBg : AppColors.border,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.tune_rounded,
-                          size: 18,
-                          color: isFiltered ? Colors.white : AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ]),
-
-                  // Active filter chips
-                  if (isFiltered || isLocationFiltered) ...[
-                    const SizedBox(height: 8),
-                    Row(children: [
-                      if (isLocationFiltered)
-                        _FilterChip(
-                          label: locationFilter.label,
-                          icon: Icons.location_on_rounded,
-                          onClear: () => reqVm.setLocationFilter(LocationFilterRadius.allLocations),
-                        ),
-                      if (isLocationFiltered && isFiltered)
-                        const SizedBox(width: 6),
-                      if (isFiltered)
-                        _FilterChip(
-                          label: activeFilter,
-                          icon: Icons.tune_rounded,
-                          onClear: () => reqVm.setFilter('All'),
-                        ),
-                    ]),
-                  ],
-
-                  const SizedBox(height: 14),
-                ],
-              ),
-            ),
-
-            // ── Cooldown / unavailable banners ────────────────────────────
-            Builder(builder: (context) {
-              final lastDonation  = authState.user?.lastDonationDate;
-              final isInCooldown  = !ReminderService.isEligible(lastDonation);
-              final isUnavailable = authState.user?.isAvailable == false;
-              final nextDate      = ReminderService.nextEligibleDate(lastDonation);
-              final daysLeft      = ReminderService.daysUntilEligible(lastDonation);
-
-              if (!isInCooldown && !isUnavailable) return const SizedBox.shrink();
-              return Column(children: [
-                if (isInCooldown && nextDate != null)
-                  _FeedBanner(
-                    icon: Icons.hourglass_top_rounded,
-                    color: const Color(0xFF92400E),
-                    bgColor: const Color(0xFFFEF3C7),
-                    borderColor: const Color(0xFFFCD34D),
-                    message:
-                        '${AppConfig.cooldownBannerTitle} — '
-                        '${AppConfig.cooldownBannerPrefix}'
-                        '${nextDate.day} ${_monthAbbr(nextDate.month)} ${nextDate.year}'
-                        ' ($daysLeft day${daysLeft != 1 ? 's' : ''}'
-                        '${AppConfig.cooldownBannerSuffix})',
-                  ),
-              ]);
-            }),
-
-            // ── Feed list / map ─────────────────────────────────────────
-            Expanded(
-              child: reqState.isLoading
-                  ? _buildShimmer()
-                  : reqState.error != null
-                      ? ErrorView(
-                          message: reqState.error!,
-                          onRetry: () => reqVm.load())
-                      : _showMap
-                          // ── MAP VIEW ──────────────────────────────
-                          ? const FeedMapView()
-                          // ── LIST VIEW ─────────────────────────────
-                          : reqState.filtered.isEmpty
-                              ? RefreshIndicator(
-                                  color: AppColors.primary,
-                                  backgroundColor: AppColors.surface,
-                                  onRefresh: () => reqVm.load(),
-                                  child: CustomScrollView(
-                                    physics: const AlwaysScrollableScrollPhysics(),
-                                    slivers: [
-                                      SliverFillRemaining(
-                                        child: EmptyView(
-                                          title: reqState.searchQuery.isNotEmpty
-                                              ? 'No results'
-                                              : bloodType.isNotEmpty
-                                                  ? 'No $bloodType requests'
-                                                  : 'No requests found',
-                                          subtitle: reqState.searchQuery.isNotEmpty
-                                              ? 'Try a different hospital name or blood type.'
-                                              : isLocationFiltered
-                                                  ? 'No requests nearby. Try expanding the location filter.'
-                                                  : bloodType.isNotEmpty
-                                                      ? 'No open requests for $bloodType right now.'
-                                                      : 'No open blood requests right now.',
-                                          icon: Icons.bloodtype_outlined,
-                                        ),
+                              onTap: () => _showLocationFilterPopup(
+                                  context, reqState, reqVm),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 9, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isLocationFiltered
+                                      ? AppColors.primaryLight
+                                      : AppColors.background,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: isLocationFiltered
+                                        ? AppColors.urgentBorder
+                                        : AppColors.border,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.near_me_rounded,
+                                      size: 11,
+                                      color: isLocationFiltered
+                                          ? AppColors.primary
+                                          : AppColors.textSecondary,
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      isLocationFiltered
+                                          ? locationFilter.label
+                                          : 'Nearby',
+                                      style: GoogleFonts.syne(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: isLocationFiltered
+                                            ? AppColors.primary
+                                            : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    if (isLocationFiltered) ...[
+                                      const SizedBox(width: 4),
+                                      GestureDetector(
+                                        onTap: () => reqVm.setLocationFilter(
+                                            LocationFilterRadius.allLocations),
+                                        child: const Icon(Icons.close_rounded,
+                                            size: 10, color: AppColors.primary),
                                       ),
                                     ],
-                                  ),
-                                )
-                              : RefreshIndicator(
-                                  color: AppColors.primary,
-                                  backgroundColor: AppColors.surface,
-                                  onRefresh: () => reqVm.load(),
-                                  child: _buildList(reqState),
+                                  ],
                                 ),
-            ),
-          ],
+                              ),
+                            ),
+
+                            const SizedBox(width: 6),
+
+                            // Urgency/status filter chip
+                            GestureDetector(
+                              onTap: () =>
+                                  _showFilterPopup(context, reqState, reqVm),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 9, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isFiltered
+                                      ? AppColors.navBg
+                                      : AppColors.background,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: isFiltered
+                                        ? AppColors.navBg
+                                        : AppColors.border,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.tune_rounded,
+                                      size: 11,
+                                      color: isFiltered
+                                          ? Colors.white
+                                          : AppColors.textSecondary,
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      isFiltered ? activeFilter : 'All',
+                                      style: GoogleFonts.syne(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: isFiltered
+                                            ? Colors.white
+                                            : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    if (isFiltered) ...[
+                                      const SizedBox(width: 4),
+                                      GestureDetector(
+                                        onTap: () => reqVm.setFilter('All'),
+                                        child: const Icon(Icons.close_rounded,
+                                            size: 10, color: Colors.white),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            const Spacer(),
+
+                            // List / Map toggle
+                            _ViewTogglePill(
+                              showMap: _showMap,
+                              onToggle: (v) => setState(() => _showMap = v),
+                            ),
+                          ]),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Cooldown / unavailable banners ────────────────────────────
+              Builder(builder: (context) {
+                final lastDonation  = authState.user?.lastDonationDate;
+                final isInCooldown  = !ReminderService.isEligible(lastDonation);
+                final isUnavailable = authState.user?.isAvailable == false;
+                final nextDate      = ReminderService.nextEligibleDate(lastDonation);
+                final daysLeft      = ReminderService.daysUntilEligible(lastDonation);
+
+                if (!isInCooldown && !isUnavailable) return const SizedBox.shrink();
+                return Column(children: [
+                  if (isInCooldown && nextDate != null)
+                    _FeedBanner(
+                      icon: Icons.hourglass_top_rounded,
+                      color: const Color(0xFF92400E),
+                      bgColor: const Color(0xFFFEF3C7),
+                      borderColor: const Color(0xFFFCD34D),
+                      message:
+                      '${AppConfig.cooldownBannerTitle} — '
+                          '${AppConfig.cooldownBannerPrefix}'
+                          '${nextDate.day} ${_monthAbbr(nextDate.month)} ${nextDate.year}'
+                          ' ($daysLeft day${daysLeft != 1 ? 's' : ''}'
+                          '${AppConfig.cooldownBannerSuffix})',
+                    ),
+                ]);
+              }),
+
+              // ── Feed list / map ─────────────────────────────────────────
+              Expanded(
+                child: reqState.isLoading
+                    ? _buildShimmer()
+                    : reqState.error != null
+                    ? ErrorView(
+                    message: reqState.error!,
+                    onRetry: () => reqVm.load())
+                    : _showMap
+                // ── MAP VIEW ──────────────────────────────
+                    ? const FeedMapView()
+                // ── LIST VIEW ─────────────────────────────
+                    : reqState.filtered.isEmpty
+                    ? RefreshIndicator(
+                  color: AppColors.primary,
+                  backgroundColor: AppColors.surface,
+                  onRefresh: () => reqVm.load(),
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverFillRemaining(
+                        child: EmptyView(
+                          title: reqState.searchQuery.isNotEmpty
+                              ? 'No results'
+                              : bloodType.isNotEmpty
+                              ? 'No $bloodType requests'
+                              : 'No requests found',
+                          subtitle: reqState.searchQuery.isNotEmpty
+                              ? 'Try a different hospital name or blood type.'
+                              : isLocationFiltered
+                              ? 'No requests nearby. Try expanding the location filter.'
+                              : bloodType.isNotEmpty
+                              ? 'No open requests for $bloodType right now.'
+                              : 'No open blood requests right now.',
+                          icon: Icons.bloodtype_outlined,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                    : RefreshIndicator(
+                  color: AppColors.primary,
+                  backgroundColor: AppColors.surface,
+                  onRefresh: () => reqVm.load(),
+                  child: _buildList(reqState),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
 
   static String _monthAbbr(int month) {
     const months = ['Jan','Feb','Mar','Apr','May','Jun',
-                    'Jul','Aug','Sep','Oct','Nov','Dec'];
+      'Jul','Aug','Sep','Oct','Nov','Dec'];
     return months[(month - 1).clamp(0, 11)];
   }
 
@@ -732,51 +841,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   }
 
   Widget _buildShimmer() => ListView.builder(
-        padding: const EdgeInsets.fromLTRB(14, 0, 14, 110),
-        itemCount: 4,
-        itemBuilder: (_, __) => const CardShimmer(),
-      );
-}
-
-// ── Filter chip widget ────────────────────────────────────────────
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onClear;
-
-  const _FilterChip({
-    required this.label,
-    required this.icon,
-    required this.onClear,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.navBg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 10, color: Colors.white),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: GoogleFonts.syne(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(width: 6),
-        GestureDetector(
-          onTap: onClear,
-          child: const Icon(Icons.close_rounded, size: 12, color: Colors.white),
-        ),
-      ]),
-    );
-  }
+    padding: const EdgeInsets.fromLTRB(14, 0, 14, 110),
+    itemCount: 4,
+    itemBuilder: (_, __) => const CardShimmer(),
+  );
 }
 
 // ════════════════════════════════════════════════════════════
@@ -862,47 +930,6 @@ class _Segment extends StatelessWidget {
       ),
     );
   }
-}
-
-// ════════════════════════════════════════════════════════════
-//  OPEN REQUEST COUNT
-// ════════════════════════════════════════════════════════════
-
-class _OpenRequestCount extends StatelessWidget {
-  final int count;
-  const _OpenRequestCount({required this.count});
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.bloodtype_outlined, size: 16, color: AppColors.primary),
-            const SizedBox(width: 10),
-            Text(
-              '$count',
-              style: GoogleFonts.syne(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              AppConfig.feedOpenRequests,
-              style: GoogleFonts.dmSans(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      );
 }
 
 // ── Banner widget shown above the feed for cooldown / unavailable ─────────────

@@ -24,7 +24,6 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
   final _formKey = GlobalKey<FormState>();
   final _service = RequirementsService();
 
-  // Controllers
   final _patientNameCtrl   = TextEditingController();
   final _hospitalCtrl      = TextEditingController();
   final _locationCtrl      = TextEditingController();
@@ -32,7 +31,6 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
   final _contactPhoneCtrl  = TextEditingController();
   final _notesCtrl         = TextEditingController();
 
-  // FocusNodes for keyboard Next chain
   final _patientFocus   = FocusNode();
   final _hospitalFocus  = FocusNode();
   final _locationFocus  = FocusNode();
@@ -40,7 +38,6 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
   final _contactPhFocus = FocusNode();
   final _notesFocus     = FocusNode();
 
-  // Values
   String    _bloodType = '';
   String    _urgency   = 'Medium';
   String    _status    = 'Open';
@@ -52,18 +49,11 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
 
   bool get _isEditing => widget.existing != null;
 
-  // Urgency config
   static const _urgencyColors = {
     'Critical': Color(0xFFC8102E),
     'High':     Color(0xFFE85D2F),
     'Medium':   Color(0xFFF5A623),
     'Low':      Color(0xFF1D9E75),
-  };
-  static const _urgencyIcons = {
-    'Critical': Icons.local_fire_department_rounded,
-    'High':     Icons.arrow_upward_rounded,
-    'Medium':   Icons.remove_rounded,
-    'Low':      Icons.arrow_downward_rounded,
   };
 
   @override
@@ -104,21 +94,13 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
 
   Future<void> _pickDate() async {
     context.dismissKeyboard();
-    final picked = await showDatePicker(
+    final picked = await showDialog<DateTime>(
       context: context,
-      initialDate: _requiredBy ?? DateTime.now().add(const Duration(days: 1)),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: AppColors.primary,
-            onPrimary: Colors.white,
-            surface: AppColors.surface,
-            onSurface: AppColors.textPrimary,
-          ),
-        ),
-        child: child!,
+      barrierColor: Colors.black.withOpacity(0.35),
+      builder: (_) => _CompactDatePicker(
+        initial: _requiredBy ?? DateTime.now().add(const Duration(days: 1)),
+        firstDate: DateTime.now(),
+        lastDate: DateTime.now().add(const Duration(days: 365)),
       ),
     );
     if (picked != null) setState(() => _requiredBy = picked);
@@ -189,7 +171,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
         title: Text(
           _isEditing ? AppConfig.addReqTitleEdit : AppConfig.addReqTitleNew,
           style: GoogleFonts.syne(
-            fontSize: 17, fontWeight: FontWeight.w700,
+            fontSize: 20, fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
           ),
         ),
@@ -199,271 +181,523 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
         top: false,
         child: Form(
           key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
-            children: [
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
+            child: Column(
+              children: [
 
-              // ── Error banner ────────────────────────────
-              if (_saveError != null) ...[
-                _ErrorBanner(message: _saveError!),
-                const SizedBox(height: 14),
-              ],
-
-              // ── PATIENT SECTION ─────────────────────────
-              _SectionHeader(
-                icon: Icons.person_outline_rounded,
-                label: AppConfig.addReqSectionPatient,
-              ),
-              const SizedBox(height: 12),
-
-              _FormField(
-                label: AppConfig.addReqPatientName,
-                hint: AppConfig.addReqPatientHint,
-                required: true,
-                controller: _patientNameCtrl,
-                focusNode: _patientFocus,
-                nextFocus: _hospitalFocus,
-                textInputAction: TextInputAction.next,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Patient name is required' : null,
-              ),
-              const SizedBox(height: 12),
-
-              _FormField(
-                label: AppConfig.addReqHospital,
-                hint: AppConfig.addReqHospitalHint,
-                required: true,
-                controller: _hospitalCtrl,
-                focusNode: _hospitalFocus,
-                nextFocus: _locationFocus,
-                textInputAction: TextInputAction.next,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Hospital name is required' : null,
-              ),
-              const SizedBox(height: 12),
-
-              _FormField(
-                label: AppConfig.addReqLocation,
-                hint: AppConfig.addReqLocationHint,
-                required: false,
-                controller: _locationCtrl,
-                focusNode: _locationFocus,
-                nextFocus: _contactPFocus,
-                textInputAction: TextInputAction.next,
-              ),
-
-              const SizedBox(height: 22),
-
-              // ── CONTACT SECTION ─────────────────────────
-              _SectionHeader(
-                icon: Icons.phone_outlined,
-                label: AppConfig.addReqSectionContact,
-              ),
-              const SizedBox(height: 12),
-
-              _FormField(
-                label: AppConfig.addReqContactPerson,
-                hint: AppConfig.addReqContactHint,
-                required: true,
-                controller: _contactPersonCtrl,
-                focusNode: _contactPFocus,
-                nextFocus: _contactPhFocus,
-                textInputAction: TextInputAction.next,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Contact person is required' : null,
-              ),
-              const SizedBox(height: 12),
-
-              _FormField(
-                label: AppConfig.addReqContactPhone,
-                hint: AppConfig.addReqPhoneHint,
-                required: true,
-                controller: _contactPhoneCtrl,
-                focusNode: _contactPhFocus,
-                textInputAction: TextInputAction.done,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9+ ]'))
+                // ── Error banner ──────────────────────────────
+                if (_saveError != null) ...[
+                  _ErrorBanner(message: _saveError!),
+                  const SizedBox(height: 8),
                 ],
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Phone number is required';
-                  if (v.trim().length < 10) return 'Enter a valid phone number';
-                  return null;
-                },
-              ),
 
-              const SizedBox(height: 22),
-
-              // ── DETAILS SECTION ─────────────────────────
-              _SectionHeader(
-                icon: Icons.bloodtype_outlined,
-                label: AppConfig.addReqSectionDetails,
-              ),
-              const SizedBox(height: 14),
-
-              // Blood Type — chip grid
-              _FieldLabel(label: AppConfig.addReqBloodType, required: true),
-              const SizedBox(height: 8),
-              _BloodTypeGrid(
-                selected: _bloodType,
-                onSelect: (t) {
-                  setState(() { _bloodType = t; _saveError = null; });
-                },
-              ),
-              if (_bloodType.isEmpty && _saveError != null &&
-                  _saveError!.contains('blood type'))
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Text('Please select a blood type',
-                    style: GoogleFonts.dmSans(
-                        fontSize: 11, color: AppColors.primary)),
+                // ── PATIENT card ──────────────────────────────
+                _SectionCard(
+                  icon: Icons.person_outline_rounded,
+                  label: 'Patient',
+                  child: Column(
+                    children: [
+                      Row(children: [
+                        Expanded(child: _CompactField(
+                          hint: 'Patient name *',
+                          controller: _patientNameCtrl,
+                          focusNode: _patientFocus,
+                          nextFocus: _hospitalFocus,
+                          validator: (v) => v == null || v.trim().isEmpty
+                              ? 'Required' : null,
+                        )),
+                        const SizedBox(width: 8),
+                        Expanded(child: _CompactField(
+                          hint: 'Hospital *',
+                          controller: _hospitalCtrl,
+                          focusNode: _hospitalFocus,
+                          nextFocus: _locationFocus,
+                          validator: (v) => v == null || v.trim().isEmpty
+                              ? 'Required' : null,
+                        )),
+                      ]),
+                      const SizedBox(height: 7),
+                      _CompactField(
+                        hint: 'Location (optional)',
+                        controller: _locationCtrl,
+                        focusNode: _locationFocus,
+                        nextFocus: _contactPFocus,
+                      ),
+                    ],
+                  ),
                 ),
 
-              const SizedBox(height: 18),
+                const SizedBox(height: 6),
 
-              // Units stepper
-              _FieldLabel(label: AppConfig.addReqUnits, required: true),
-              const SizedBox(height: 8),
-              _UnitsStepper(
-                value: _units,
-                onDecrement: () { if (_units > 1) setState(() => _units--); },
-                onIncrement: () => setState(() => _units++),
-              ),
+                // ── CONTACT card ──────────────────────────────
+                _SectionCard(
+                  icon: Icons.phone_outlined,
+                  label: 'Contact',
+                  child: Row(children: [
+                    Expanded(child: _CompactField(
+                      hint: 'Contact person *',
+                      controller: _contactPersonCtrl,
+                      focusNode: _contactPFocus,
+                      nextFocus: _contactPhFocus,
+                      validator: (v) => v == null || v.trim().isEmpty
+                          ? 'Required' : null,
+                    )),
+                    const SizedBox(width: 8),
+                    Expanded(child: _CompactField(
+                      hint: 'Phone *',
+                      controller: _contactPhoneCtrl,
+                      focusNode: _contactPhFocus,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9+ ]'))
+                      ],
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Required';
+                        if (v.trim().length < 10) return 'Too short';
+                        return null;
+                      },
+                    )),
+                  ]),
+                ),
 
-              const SizedBox(height: 18),
+                const SizedBox(height: 6),
 
-              // Urgency — chip row
-              _FieldLabel(label: AppConfig.addReqUrgency, required: true),
-              const SizedBox(height: 8),
-              _UrgencyChips(
-                selected: _urgency,
-                colors: _urgencyColors,
-                icons: _urgencyIcons,
-                onSelect: (u) => setState(() => _urgency = u),
-              ),
+                // ── BLOOD DETAILS card ────────────────────────
+                _SectionCard(
+                  icon: Icons.bloodtype_outlined,
+                  label: 'Blood details',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Blood type grid 4x2
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          crossAxisSpacing: 6,
+                          mainAxisSpacing: 6,
+                          childAspectRatio: 2.4,
+                        ),
+                        itemCount: AppConstants.bloodTypes.length,
+                        itemBuilder: (_, i) {
+                          final t = AppConstants.bloodTypes[i];
+                          final sel = t == _bloodType;
+                          return GestureDetector(
+                            onTap: () => setState(() {
+                              _bloodType = t;
+                              _saveError = null;
+                            }),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 140),
+                              decoration: BoxDecoration(
+                                color: sel
+                                    ? AppColors.primary
+                                    : AppColors.background,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: sel
+                                      ? AppColors.primary
+                                      : AppColors.border,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(t,
+                                  style: GoogleFonts.syne(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: sel
+                                        ? Colors.white
+                                        : AppColors.textSecondary,
+                                  )),
+                            ),
+                          );
+                        },
+                      ),
 
-              const SizedBox(height: 18),
+                      const SizedBox(height: 8),
 
-              // Required By date
-              _FieldLabel(label: AppConfig.addReqRequiredBy, required: false),
-              const SizedBox(height: 8),
-              _DatePickerTile(
-                date: _requiredBy,
-                hint: AppConfig.addReqDateHint,
-                onTap: _pickDate,
-                onClear: () => setState(() => _requiredBy = null),
-              ),
+                      // Units stepper + Urgency chips
+                      Row(children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: AppColors.background,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Row(children: [
+                              GestureDetector(
+                                onTap: () {
+                                  if (_units > 1) setState(() => _units--);
+                                },
+                                child: Container(
+                                  width: 26, height: 26,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    borderRadius: BorderRadius.circular(7),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: const Icon(Icons.remove_rounded,
+                                      size: 14,
+                                      color: AppColors.textSecondary),
+                                ),
+                              ),
+                              Expanded(child: Column(children: [
+                                Text('$_units',
+                                    style: GoogleFonts.syne(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    textAlign: TextAlign.center),
+                                Text('unit${_units != 1 ? 's' : ''}',
+                                    style: GoogleFonts.dmSans(
+                                        fontSize: 9,
+                                        color: AppColors.textMuted),
+                                    textAlign: TextAlign.center),
+                              ])),
+                              GestureDetector(
+                                onTap: () => setState(() => _units++),
+                                child: Container(
+                                  width: 26, height: 26,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(7),
+                                  ),
+                                  child: const Icon(Icons.add_rounded,
+                                      size: 14, color: Colors.white),
+                                ),
+                              ),
+                            ]),
+                          ),
+                        ),
 
-              // Status (edit only)
-              if (_isEditing) ...[
-                const SizedBox(height: 18),
-                _FieldLabel(label: AppConfig.addReqStatus, required: false),
-                const SizedBox(height: 8),
-                _StatusDropdown(
-                  value: _status,
-                  items: AppConstants.requirementStatuses,
-                  onChanged: (v) => setState(() => _status = v ?? 'Open'),
+                        const SizedBox(width: 8),
+
+                        Expanded(
+                          flex: 2,
+                          child: Row(
+                            children: AppConstants.urgencyLevels.map((u) {
+                              final sel = u == _urgency;
+                              final color = _urgencyColors[u]!;
+                              return Expanded(
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    right: u == AppConstants.urgencyLevels.last
+                                        ? 0 : 5,
+                                  ),
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _urgency = u),
+                                    child: AnimatedContainer(
+                                      duration:
+                                      const Duration(milliseconds: 140),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 9),
+                                      decoration: BoxDecoration(
+                                        color: sel
+                                            ? color.withOpacity(0.12)
+                                            : AppColors.background,
+                                        borderRadius:
+                                        BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: sel
+                                              ? color
+                                              : AppColors.border,
+                                          width: sel ? 1.5 : 1,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        u[0],
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.syne(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: sel
+                                              ? color
+                                              : AppColors.textMuted,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ]),
+
+                      const SizedBox(height: 8),
+
+                      // Required by + Notes
+                      Row(children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: _pickDate,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 9),
+                              decoration: BoxDecoration(
+                                color: AppColors.background,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Row(children: [
+                                Icon(Icons.calendar_today_outlined,
+                                    size: 13,
+                                    color: _requiredBy != null
+                                        ? AppColors.primary
+                                        : AppColors.textMuted),
+                                const SizedBox(width: 6),
+                                Expanded(child: Text(
+                                  _requiredBy != null
+                                      ? DateFormat('d MMM yy')
+                                      .format(_requiredBy!)
+                                      : 'Required by',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 11,
+                                    color: _requiredBy != null
+                                        ? AppColors.textPrimary
+                                        : AppColors.textMuted,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                )),
+                                if (_requiredBy != null)
+                                  GestureDetector(
+                                    onTap: () =>
+                                        setState(() => _requiredBy = null),
+                                    child: const Icon(Icons.close_rounded,
+                                        size: 12,
+                                        color: AppColors.textMuted),
+                                  ),
+                              ]),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        Expanded(
+                          child: TextFormField(
+                            controller: _notesCtrl,
+                            focusNode: _notesFocus,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => _notesFocus.unfocus(),
+                            style: GoogleFonts.dmSans(
+                                fontSize: 11,
+                                color: AppColors.textPrimary),
+                            decoration: InputDecoration(
+                              hintText: 'Notes (optional)',
+                              hintStyle: GoogleFonts.dmSans(
+                                  fontSize: 11,
+                                  color: AppColors.textMuted),
+                              filled: true,
+                              fillColor: AppColors.background,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: AppColors.border),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: AppColors.border),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: AppColors.primary, width: 1.5),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ]),
+
+                      // Status dropdown (edit only)
+                      if (_isEditing) ...[
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          value: _status,
+                          decoration: InputDecoration(
+                            labelText: 'Status',
+                            labelStyle: GoogleFonts.dmSans(
+                                fontSize: 11,
+                                color: AppColors.textMuted),
+                            filled: true,
+                            fillColor: AppColors.background,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 9),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide:
+                              const BorderSide(color: AppColors.border),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide:
+                              const BorderSide(color: AppColors.border),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                  color: AppColors.primary, width: 1.5),
+                            ),
+                          ),
+                          style: GoogleFonts.dmSans(
+                              fontSize: 12, color: AppColors.textPrimary),
+                          dropdownColor: AppColors.surface,
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                              size: 18, color: AppColors.textMuted),
+                          items: AppConstants.requirementStatuses
+                              .map((s) =>
+                              DropdownMenuItem(value: s, child: Text(s)))
+                              .toList(),
+                          onChanged: (v) =>
+                              setState(() => _status = v ?? 'Open'),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
+
+                // ── Save button ───────────────────────────────
+                GestureDetector(
+                  onTap: _saving ? null : _save,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _saving
+                          ? AppColors.primary.withOpacity(0.55)
+                          : AppColors.primary,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Center(
+                      child: _saving
+                          ? const SizedBox(
+                        width: 18, height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      )
+                          : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _isEditing
+                                ? Icons.check_rounded
+                                : Icons.add_rounded,
+                            color: Colors.white, size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            AppConfig.addReqSaveBtn,
+                            style: GoogleFonts.syne(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ],
-
-              const SizedBox(height: 18),
-
-              // Notes
-              _FieldLabel(label: AppConfig.addReqNotes, required: false),
-              const SizedBox(height: 8),
-              _NotesField(
-                controller: _notesCtrl,
-                focusNode: _notesFocus,
-                hint: AppConfig.addReqNotesHint,
-              ),
-
-              const SizedBox(height: 32),
-
-              // ── Save button ─────────────────────────────
-              _SaveButton(saving: _saving, isEditing: _isEditing, onTap: _save),
-
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
+            ),           // Column
+          ),             // SingleChildScrollView
+        ),               // Form
+      ),                 // SafeArea
     );
   }
 }
 
 // ════════════════════════════════════════════════════════════
-//  COMPONENTS
+//  SHARED COMPONENTS
 // ════════════════════════════════════════════════════════════
 
-class _SectionHeader extends StatelessWidget {
+class _SectionCard extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _SectionHeader({required this.icon, required this.label});
+  final Widget child;
+
+  const _SectionCard({
+    required this.icon,
+    required this.label,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      Container(
-        width: 28, height: 28,
-        decoration: BoxDecoration(
-          color: AppColors.urgentBg,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, size: 15, color: AppColors.primary),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
       ),
-      const SizedBox(width: 8),
-      Text(
-        label,
-        style: GoogleFonts.syne(
-          fontSize: 12, fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary, letterSpacing: 0.2,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: const BoxDecoration(
+              border: Border(
+                  bottom: BorderSide(color: AppColors.borderSoft)),
+            ),
+            child: Row(children: [
+              Container(
+                width: 20, height: 20,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(icon, size: 12, color: AppColors.primary),
+              ),
+              const SizedBox(width: 7),
+              Text(
+                label.toUpperCase(),
+                style: GoogleFonts.syne(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textMuted,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: child,
+          ),
+        ],
       ),
-    ]);
+    );
   }
 }
 
-class _FieldLabel extends StatelessWidget {
-  final String label;
-  final bool required;
-  const _FieldLabel({required this.label, required this.required});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(children: [
-      Text(label,
-        style: GoogleFonts.dmSans(
-          fontSize: 13, fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary,
-        ),
-      ),
-      if (required)
-        Text(' *', style: GoogleFonts.dmSans(
-            fontSize: 13, fontWeight: FontWeight.w600,
-            color: AppColors.primary)),
-    ]);
-  }
-}
-
-class _FormField extends StatelessWidget {
-  final String label;
+class _CompactField extends StatelessWidget {
   final String hint;
-  final bool required;
   final TextEditingController controller;
   final FocusNode focusNode;
   final FocusNode? nextFocus;
-  final TextInputAction textInputAction;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
 
-  const _FormField({
-    required this.label,
+  const _CompactField({
     required this.hint,
-    required this.required,
     required this.controller,
     required this.focusNode,
-    required this.textInputAction,
     this.nextFocus,
     this.keyboardType,
     this.inputFormatters,
@@ -472,476 +706,315 @@ class _FormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _FieldLabel(label: label, required: required),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: controller,
-          focusNode: focusNode,
-          textInputAction: textInputAction,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          validator: validator,
-          onFieldSubmitted: (_) {
-            if (nextFocus != null) {
-              FocusScope.of(context).requestFocus(nextFocus);
-            } else {
-              focusNode.unfocus();
-            }
-          },
-          style: GoogleFonts.dmSans(
-              fontSize: 14, color: AppColors.textPrimary),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.dmSans(
-                fontSize: 14, color: AppColors.textMuted),
-            filled: true,
-            fillColor: AppColors.surface,
-            contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 14),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                  color: AppColors.primary, width: 1.5),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                  color: AppColors.primary, width: 1.5),
-            ),
-            errorStyle: GoogleFonts.dmSans(
-                fontSize: 11, color: AppColors.primary),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _BloodTypeGrid extends StatelessWidget {
-  final String selected;
-  final ValueChanged<String> onSelect;
-  const _BloodTypeGrid({required this.selected, required this.onSelect});
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        childAspectRatio: 2.0,
-      ),
-      itemCount: AppConstants.bloodTypes.length,
-      itemBuilder: (_, i) {
-        final t = AppConstants.bloodTypes[i];
-        final isSelected = t == selected;
-        return GestureDetector(
-          onTap: () => onSelect(t),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : AppColors.surface,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.border,
-                width: isSelected ? 0 : 1,
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              t,
-              style: GoogleFonts.syne(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-              ),
-            ),
-          ),
-        );
+    return TextFormField(
+      controller: controller,
+      focusNode: focusNode,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      validator: validator,
+      textInputAction:
+      nextFocus != null ? TextInputAction.next : TextInputAction.done,
+      onFieldSubmitted: (_) {
+        if (nextFocus != null) {
+          FocusScope.of(context).requestFocus(nextFocus);
+        } else {
+          focusNode.unfocus();
+        }
       },
+      style: GoogleFonts.dmSans(
+          fontSize: 12, color: AppColors.textPrimary),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle:
+        GoogleFonts.dmSans(fontSize: 12, color: AppColors.textMuted),
+        filled: true,
+        fillColor: AppColors.background,
+        isDense: true,
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide:
+          const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.primary),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide:
+          const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
+        errorStyle:
+        GoogleFonts.dmSans(fontSize: 10, color: AppColors.primary),
+      ),
     );
   }
 }
 
-class _UnitsStepper extends StatelessWidget {
-  final int value;
-  final VoidCallback onDecrement;
-  final VoidCallback onIncrement;
-  const _UnitsStepper({
-    required this.value,
-    required this.onDecrement,
-    required this.onIncrement,
+// ════════════════════════════════════════════════════════════
+//  COMPACT DATE PICKER
+// ════════════════════════════════════════════════════════════
+
+class _CompactDatePicker extends StatefulWidget {
+  final DateTime initial;
+  final DateTime firstDate;
+  final DateTime lastDate;
+
+  const _CompactDatePicker({
+    required this.initial,
+    required this.firstDate,
+    required this.lastDate,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(children: [
-        _StepBtn(
-          icon: Icons.remove_rounded,
-          enabled: value > 1,
-          onTap: onDecrement,
-        ),
-        Expanded(
-          child: Column(
-            children: [
-              Text(
-                '$value',
-                style: GoogleFonts.syne(
-                  fontSize: 22, fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              Text(
-                value == 1 ? 'unit' : 'units',
-                style: GoogleFonts.dmSans(
-                    fontSize: 11, color: AppColors.textMuted),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-        _StepBtn(
-          icon: Icons.add_rounded,
-          enabled: true,
-          onTap: onIncrement,
-          filled: true,
-        ),
-      ]),
-    );
-  }
+  State<_CompactDatePicker> createState() => _CompactDatePickerState();
 }
 
-class _StepBtn extends StatelessWidget {
+class _CompactDatePickerState extends State<_CompactDatePicker> {
+  late DateTime _cursor;   // month being displayed
+  late DateTime _selected;
+
+  static const _weekLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.initial;
+    _cursor   = DateTime(widget.initial.year, widget.initial.month);
+  }
+
+  void _shiftMonth(int delta) {
+    final next = DateTime(_cursor.year, _cursor.month + delta);
+    final minMonth = DateTime(widget.firstDate.year, widget.firstDate.month);
+    final maxMonth = DateTime(widget.lastDate.year,  widget.lastDate.month);
+    if (next.isBefore(minMonth) || next.isAfter(maxMonth)) return;
+    setState(() => _cursor = next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final firstOfMonth = DateTime(_cursor.year, _cursor.month, 1);
+    final daysInMonth  = DateTime(_cursor.year, _cursor.month + 1, 0).day;
+    final startOffset  = firstOfMonth.weekday % 7; // Sun=0
+    final totalCells   = startOffset + daysInMonth;
+
+    final minMonth = DateTime(widget.firstDate.year, widget.firstDate.month);
+    final maxMonth = DateTime(widget.lastDate.year,  widget.lastDate.month);
+    final canGoBack = _cursor.isAfter(minMonth);
+    final canGoFwd  = _cursor.isBefore(maxMonth);
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+
+            // ── month navigation ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Row(children: [
+                _NavBtn(
+                  icon: Icons.chevron_left_rounded,
+                  enabled: canGoBack,
+                  onTap: () => _shiftMonth(-1),
+                ),
+                Expanded(
+                  child: Text(
+                    '${_monthName(_cursor.month)} ${_cursor.year}',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.syne(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                _NavBtn(
+                  icon: Icons.chevron_right_rounded,
+                  enabled: canGoFwd,
+                  onTap: () => _shiftMonth(1),
+                ),
+              ]),
+            ),
+
+            // ── weekday labels ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: _weekLabels.map((d) => Expanded(
+                  child: Text(d,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                )).toList(),
+              ),
+            ),
+
+            const SizedBox(height: 4),
+
+            // ── day grid ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  mainAxisSpacing: 2,
+                  crossAxisSpacing: 2,
+                  childAspectRatio: 1.15,
+                ),
+                itemCount: totalCells,
+                itemBuilder: (_, idx) {
+                  if (idx < startOffset) return const SizedBox.shrink();
+                  final day  = idx - startOffset + 1;
+                  final date = DateTime(_cursor.year, _cursor.month, day);
+                  final isSel = date.year  == _selected.year  &&
+                      date.month == _selected.month &&
+                      date.day   == _selected.day;
+                  final isToday = date.year  == DateTime.now().year  &&
+                      date.month == DateTime.now().month &&
+                      date.day   == DateTime.now().day;
+                  final enabled = !date.isBefore(
+                      DateTime(widget.firstDate.year, widget.firstDate.month, widget.firstDate.day)) &&
+                      !date.isAfter(
+                          DateTime(widget.lastDate.year,  widget.lastDate.month,  widget.lastDate.day));
+
+                  return GestureDetector(
+                    onTap: enabled ? () => setState(() => _selected = date) : null,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 120),
+                      decoration: BoxDecoration(
+                        color: isSel
+                            ? AppColors.primary
+                            : isToday
+                            ? AppColors.primaryLight
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '$day',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          fontWeight: isSel ? FontWeight.w700 : FontWeight.w400,
+                          color: isSel
+                              ? Colors.white
+                              : !enabled
+                              ? AppColors.textMuted.withOpacity(0.4)
+                              : isToday
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            // ── action row ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              child: Row(children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text('Cancel',
+                        style: GoogleFonts.syne(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).pop(_selected),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text('Confirm',
+                        style: GoogleFonts.syne(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+          ],
+        ),   // Column
+      ),     // Container
+    );       // Dialog
+  }
+
+  static String _monthName(int m) => const [
+    '', 'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ][m];
+}
+
+class _NavBtn extends StatelessWidget {
   final IconData icon;
   final bool enabled;
-  final bool filled;
   final VoidCallback onTap;
-  const _StepBtn({
-    required this.icon,
-    required this.enabled,
-    required this.onTap,
-    this.filled = false,
-  });
+
+  const _NavBtn({required this.icon, required this.enabled, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
-        width: 44, height: 44,
+        width: 30, height: 30,
         decoration: BoxDecoration(
-          color: !enabled
-              ? AppColors.background
-              : filled
-                  ? AppColors.primary
-                  : AppColors.background,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: !enabled
-                ? AppColors.border
-                : filled
-                    ? AppColors.primary
-                    : AppColors.border,
-          ),
-        ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: !enabled
-              ? AppColors.textMuted
-              : filled
-                  ? Colors.white
-                  : AppColors.textSecondary,
-        ),
-      ),
-    );
-  }
-}
-
-class _UrgencyChips extends StatelessWidget {
-  final String selected;
-  final Map<String, Color> colors;
-  final Map<String, IconData> icons;
-  final ValueChanged<String> onSelect;
-  const _UrgencyChips({
-    required this.selected,
-    required this.colors,
-    required this.icons,
-    required this.onSelect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: AppConstants.urgencyLevels.map((u) {
-        final isSelected = u == selected;
-        final color = colors[u]!;
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(
-              right: u == AppConstants.urgencyLevels.last ? 0 : 8,
-            ),
-            child: GestureDetector(
-              onTap: () => onSelect(u),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? color.withOpacity(0.12)
-                      : AppColors.surface,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelected ? color : AppColors.border,
-                    width: isSelected ? 1.5 : 1,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Icon(icons[u], size: 16,
-                        color: isSelected ? color : AppColors.textMuted),
-                    const SizedBox(height: 4),
-                    Text(u,
-                      style: GoogleFonts.dmSans(
-                        fontSize: 11,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                        color: isSelected ? color : AppColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _DatePickerTile extends StatelessWidget {
-  final DateTime? date;
-  final String hint;
-  final VoidCallback onTap;
-  final VoidCallback onClear;
-  const _DatePickerTile({
-    required this.date,
-    required this.hint,
-    required this.onTap,
-    required this.onClear,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: AppColors.border),
         ),
-        child: Row(children: [
-          Icon(Icons.calendar_today_outlined,
-              size: 16,
-              color: date != null ? AppColors.primary : AppColors.textMuted),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              date != null
-                  ? DateFormat('d MMM yyyy').format(date!)
-                  : hint,
-              style: GoogleFonts.dmSans(
-                fontSize: 14,
-                color: date != null
-                    ? AppColors.textPrimary
-                    : AppColors.textMuted,
-              ),
-            ),
-          ),
-          if (date != null)
-            GestureDetector(
-              onTap: onClear,
-              child: const Icon(Icons.close_rounded,
-                  size: 16, color: AppColors.textMuted),
-            )
-          else
-            const Icon(Icons.chevron_right_rounded,
-                size: 18, color: AppColors.textMuted),
-        ]),
-      ),
-    );
-  }
-}
-
-class _StatusDropdown extends StatelessWidget {
-  final String value;
-  final List<String> items;
-  final ValueChanged<String?> onChanged;
-  const _StatusDropdown({
-    required this.value,
-    required this.items,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded,
-              size: 20, color: AppColors.textMuted),
-          style: GoogleFonts.dmSans(
-              fontSize: 14, color: AppColors.textPrimary),
-          dropdownColor: AppColors.surface,
-          items: items
-              .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-              .toList(),
-          onChanged: onChanged,
-        ),
-      ),
-    );
-  }
-}
-
-class _NotesField extends StatelessWidget {
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final String hint;
-  const _NotesField({
-    required this.controller,
-    required this.focusNode,
-    required this.hint,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      focusNode: focusNode,
-      maxLines: 4,
-      textInputAction: TextInputAction.done,
-      onFieldSubmitted: (_) => focusNode.unfocus(),
-      style: GoogleFonts.dmSans(fontSize: 14, color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: GoogleFonts.dmSans(
-            fontSize: 14, color: AppColors.textMuted),
-        filled: true,
-        fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.all(14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-              color: AppColors.primary, width: 1.5),
-        ),
-      ),
-    );
-  }
-}
-
-class _SaveButton extends StatelessWidget {
-  final bool saving;
-  final bool isEditing;
-  final VoidCallback onTap;
-  const _SaveButton({
-    required this.saving,
-    required this.isEditing,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: saving ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: saving
-              ? AppColors.primary.withOpacity(0.55)
-              : AppColors.primary,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: saving
-              ? []
-              : [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.25),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  )
-                ],
-        ),
-        child: Center(
-          child: saving
-              ? const SizedBox(
-                  width: 20, height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white),
-                )
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isEditing
-                          ? Icons.check_rounded
-                          : Icons.add_rounded,
-                      color: Colors.white, size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      AppConfig.addReqSaveBtn,
-                      style: GoogleFonts.syne(
-                        fontSize: 15, fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+        child: Icon(icon,
+          size: 18,
+          color: enabled ? AppColors.textPrimary : AppColors.textMuted.withOpacity(0.3),
         ),
       ),
     );
@@ -955,7 +1028,7 @@ class _ErrorBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.urgentBg,
         borderRadius: BorderRadius.circular(10),
@@ -963,12 +1036,12 @@ class _ErrorBanner extends StatelessWidget {
       ),
       child: Row(children: [
         const Icon(Icons.error_outline_rounded,
-            color: AppColors.primary, size: 16),
-        const SizedBox(width: 8),
+            color: AppColors.primary, size: 14),
+        const SizedBox(width: 7),
         Expanded(
           child: Text(message,
-            style: GoogleFonts.dmSans(
-                fontSize: 12, color: AppColors.urgentText)),
+              style: GoogleFonts.dmSans(
+                  fontSize: 11, color: AppColors.urgentText)),
         ),
       ]),
     );
