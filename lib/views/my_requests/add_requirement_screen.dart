@@ -39,7 +39,6 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
   final _notesFocus     = FocusNode();
 
   String    _bloodType = '';
-  String    _urgency   = 'Medium';
   String    _status    = 'Open';
   int       _units     = 1;
   DateTime? _requiredBy;
@@ -48,13 +47,6 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
   String? _saveError;
 
   bool get _isEditing => widget.existing != null;
-
-  static const _urgencyColors = {
-    'Critical': Color(0xFFC8102E),
-    'High':     Color(0xFFE85D2F),
-    'Medium':   Color(0xFFF5A623),
-    'Low':      Color(0xFF1D9E75),
-  };
 
   @override
   void initState() {
@@ -68,7 +60,6 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
       _contactPhoneCtrl.text  = e.contactPhone;
       _notesCtrl.text         = e.notes;
       _bloodType  = e.bloodType;
-      _urgency    = e.urgency;
       _status     = e.status;
       _units      = e.unitsRequired;
       _requiredBy = e.requiredBy;
@@ -123,7 +114,6 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
         'contactPhone':  _contactPhoneCtrl.text.trim(),
         'bloodType':     _bloodType,
         'unitsRequired': _units,
-        'urgency':       _urgency,
         'status':        'Open',
         'notes':         _notesCtrl.text.trim(),
         if (_requiredBy != null) 'requiredBy': _requiredBy!.toIso8601String(),
@@ -181,324 +171,264 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.translucent,
         child: SafeArea(
-        top: false,
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              14, 6, 14,
-              10 + MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Column(
-              children: [
+          top: false,
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                14, 6, 14,
+                10 + MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Column(
+                children: [
 
-                // ── Error banner ──────────────────────────────
-                if (_saveError != null) ...[
-                  _ErrorBanner(message: _saveError!),
-                  const SizedBox(height: 8),
-                ],
+                  // ── Error banner ──────────────────────────────
+                  if (_saveError != null) ...[
+                    _ErrorBanner(message: _saveError!),
+                    const SizedBox(height: 8),
+                  ],
 
-                // ── PATIENT card ──────────────────────────────
-                _SectionCard(
-                  icon: Icons.person_outline_rounded,
-                  label: 'Patient',
-                  child: Column(
-                    children: [
-                      Row(children: [
-                        Expanded(child: _CompactField(
-                          hint: 'Patient name *',
-                          controller: _patientNameCtrl,
-                          focusNode: _patientFocus,
-                          nextFocus: _hospitalFocus,
-                          validator: (v) => v == null || v.trim().isEmpty
-                              ? 'Required' : null,
-                        )),
-                        const SizedBox(width: 8),
-                        Expanded(child: _CompactField(
-                          hint: 'Hospital *',
-                          controller: _hospitalCtrl,
-                          focusNode: _hospitalFocus,
-                          nextFocus: _locationFocus,
-                          validator: (v) => v == null || v.trim().isEmpty
-                              ? 'Required' : null,
-                        )),
-                      ]),
-                      const SizedBox(height: 7),
-                      _CompactField(
-                        hint: 'Location (optional)',
-                        controller: _locationCtrl,
-                        focusNode: _locationFocus,
-                        nextFocus: _contactPFocus,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                // ── CONTACT card ──────────────────────────────
-                _SectionCard(
-                  icon: Icons.phone_outlined,
-                  label: 'Contact',
-                  child: Row(children: [
-                    Expanded(child: _CompactField(
-                      hint: 'Contact person *',
-                      controller: _contactPersonCtrl,
-                      focusNode: _contactPFocus,
-                      nextFocus: _contactPhFocus,
-                      validator: (v) => v == null || v.trim().isEmpty
-                          ? 'Required' : null,
-                    )),
-                    const SizedBox(width: 8),
-                    Expanded(child: _CompactField(
-                      hint: 'Phone *',
-                      controller: _contactPhoneCtrl,
-                      focusNode: _contactPhFocus,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9+ ]'))
+                  // ── PATIENT card ──────────────────────────────
+                  _SectionCard(
+                    icon: Icons.person_outline_rounded,
+                    label: 'Patient',
+                    child: Column(
+                      children: [
+                        Row(children: [
+                          Expanded(child: _CompactField(
+                            hint: 'Patient name *',
+                            controller: _patientNameCtrl,
+                            focusNode: _patientFocus,
+                            nextFocus: _hospitalFocus,
+                            validator: (v) => v == null || v.trim().isEmpty
+                                ? 'Required' : null,
+                          )),
+                          const SizedBox(width: 8),
+                          Expanded(child: _CompactField(
+                            hint: 'Hospital *',
+                            controller: _hospitalCtrl,
+                            focusNode: _hospitalFocus,
+                            nextFocus: _locationFocus,
+                            validator: (v) => v == null || v.trim().isEmpty
+                                ? 'Required' : null,
+                          )),
+                        ]),
+                        const SizedBox(height: 7),
+                        _CompactField(
+                          hint: 'Location (optional)',
+                          controller: _locationCtrl,
+                          focusNode: _locationFocus,
+                          nextFocus: _contactPFocus,
+                        ),
                       ],
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Required';
-                        if (v.trim().length < 10) return 'Too short';
-                        return null;
-                      },
-                    )),
-                  ]),
-                ),
+                    ),
+                  ),
 
-                const SizedBox(height: 6),
+                  const SizedBox(height: 6),
 
-                // ── BLOOD DETAILS card ────────────────────────
-                _SectionCard(
-                  icon: Icons.bloodtype_outlined,
-                  label: 'Blood details',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Blood type grid 4x2
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          crossAxisSpacing: 6,
-                          mainAxisSpacing: 6,
-                          childAspectRatio: 2.4,
-                        ),
-                        itemCount: AppConstants.bloodTypes.length,
-                        itemBuilder: (_, i) {
-                          final t = AppConstants.bloodTypes[i];
-                          final sel = t == _bloodType;
-                          return GestureDetector(
-                            onTap: () => setState(() {
-                              _bloodType = t;
-                              _saveError = null;
-                            }),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 140),
-                              decoration: BoxDecoration(
-                                color: sel
-                                    ? AppColors.primary
-                                    : AppColors.background,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: sel
-                                      ? AppColors.primary
-                                      : AppColors.border,
-                                ),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(t,
-                                  style: GoogleFonts.syne(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: sel
-                                        ? Colors.white
-                                        : AppColors.textSecondary,
-                                  )),
-                            ),
-                          );
+                  // ── CONTACT card ──────────────────────────────
+                  _SectionCard(
+                    icon: Icons.phone_outlined,
+                    label: 'Contact',
+                    child: Row(children: [
+                      Expanded(child: _CompactField(
+                        hint: 'Contact person *',
+                        controller: _contactPersonCtrl,
+                        focusNode: _contactPFocus,
+                        nextFocus: _contactPhFocus,
+                        validator: (v) => v == null || v.trim().isEmpty
+                            ? 'Required' : null,
+                      )),
+                      const SizedBox(width: 8),
+                      Expanded(child: _CompactField(
+                        hint: 'Phone *',
+                        controller: _contactPhoneCtrl,
+                        focusNode: _contactPhFocus,
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9+ ]'))
+                        ],
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Required';
+                          if (v.trim().length < 10) return 'Too short';
+                          return null;
                         },
-                      ),
+                      )),
+                    ]),
+                  ),
 
-                      const SizedBox(height: 8),
+                  const SizedBox(height: 6),
 
-                      // Units stepper + Urgency chips
-                      Row(children: [
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 7),
-                            decoration: BoxDecoration(
-                              color: AppColors.background,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppColors.border),
+                  // ── BLOOD DETAILS card ────────────────────────
+                  _SectionCard(
+                    icon: Icons.bloodtype_outlined,
+                    label: 'Blood details',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Blood type custom picker
+                        _BloodTypePicker(
+                          selected: _bloodType,
+                          onChanged: (v) => setState(() {
+                            _bloodType = v;
+                            _saveError = null;
+                          }),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Units stepper
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: AppColors.background,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Row(children: [
+                            GestureDetector(
+                              onTap: () {
+                                if (_units > 1) setState(() => _units--);
+                              },
+                              child: Container(
+                                width: 26, height: 26,
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(7),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: const Icon(Icons.remove_rounded,
+                                    size: 14,
+                                    color: AppColors.textSecondary),
+                              ),
                             ),
-                            child: Row(children: [
-                              GestureDetector(
-                                onTap: () {
-                                  if (_units > 1) setState(() => _units--);
-                                },
-                                child: Container(
-                                  width: 26, height: 26,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.surface,
-                                    borderRadius: BorderRadius.circular(7),
-                                    border: Border.all(color: AppColors.border),
+                            Expanded(child: Column(children: [
+                              Text('$_units',
+                                  style: GoogleFonts.syne(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
                                   ),
-                                  child: const Icon(Icons.remove_rounded,
-                                      size: 14,
-                                      color: AppColors.textSecondary),
-                                ),
-                              ),
-                              Expanded(child: Column(children: [
-                                Text('$_units',
-                                    style: GoogleFonts.syne(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                    textAlign: TextAlign.center),
-                                Text('unit${_units != 1 ? 's' : ''}',
-                                    style: GoogleFonts.dmSans(
-                                        fontSize: 9,
-                                        color: AppColors.textMuted),
-                                    textAlign: TextAlign.center),
-                              ])),
-                              GestureDetector(
-                                onTap: () => setState(() => _units++),
-                                child: Container(
-                                  width: 26, height: 26,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: BorderRadius.circular(7),
-                                  ),
-                                  child: const Icon(Icons.add_rounded,
-                                      size: 14, color: Colors.white),
-                                ),
-                              ),
-                            ]),
-                          ),
-                        ),
-
-                        const SizedBox(width: 8),
-
-                        Expanded(
-                          flex: 2,
-                          child: Row(
-                            children: AppConstants.urgencyLevels.map((u) {
-                              final sel = u == _urgency;
-                              final color = _urgencyColors[u]!;
-                              return Expanded(
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                    right: u == AppConstants.urgencyLevels.last
-                                        ? 0 : 5,
-                                  ),
-                                  child: GestureDetector(
-                                    onTap: () => setState(() => _urgency = u),
-                                    child: AnimatedContainer(
-                                      duration:
-                                      const Duration(milliseconds: 140),
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 9),
-                                      decoration: BoxDecoration(
-                                        color: sel
-                                            ? color.withOpacity(0.12)
-                                            : AppColors.background,
-                                        borderRadius:
-                                        BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: sel
-                                              ? color
-                                              : AppColors.border,
-                                          width: sel ? 1.5 : 1,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        u[0],
-                                        textAlign: TextAlign.center,
-                                        style: GoogleFonts.syne(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: sel
-                                              ? color
-                                              : AppColors.textMuted,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ]),
-
-                      const SizedBox(height: 8),
-
-                      // Required by + Notes
-                      Row(children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: _pickDate,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 9),
-                              decoration: BoxDecoration(
-                                color: AppColors.background,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: Row(children: [
-                                Icon(Icons.calendar_today_outlined,
-                                    size: 13,
-                                    color: _requiredBy != null
-                                        ? AppColors.primary
-                                        : AppColors.textMuted),
-                                const SizedBox(width: 6),
-                                Expanded(child: Text(
-                                  _requiredBy != null
-                                      ? DateFormat('d MMM yy')
-                                      .format(_requiredBy!)
-                                      : 'Required by',
+                                  textAlign: TextAlign.center),
+                              Text('unit${_units != 1 ? 's' : ''}',
                                   style: GoogleFonts.dmSans(
-                                    fontSize: 11,
-                                    color: _requiredBy != null
-                                        ? AppColors.textPrimary
-                                        : AppColors.textMuted,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                )),
-                                if (_requiredBy != null)
-                                  GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _requiredBy = null),
-                                    child: const Icon(Icons.close_rounded,
-                                        size: 12,
-                                        color: AppColors.textMuted),
-                                  ),
-                              ]),
+                                      fontSize: 9,
+                                      color: AppColors.textMuted),
+                                  textAlign: TextAlign.center),
+                            ])),
+                            GestureDetector(
+                              onTap: () => setState(() => _units++),
+                              child: Container(
+                                width: 26, height: 26,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(7),
+                                ),
+                                child: const Icon(Icons.add_rounded,
+                                    size: 14, color: Colors.white),
+                              ),
                             ),
-                          ),
+                          ]),
                         ),
 
-                        const SizedBox(width: 8),
+                        const SizedBox(height: 8),
 
-                        Expanded(
-                          child: TextFormField(
-                            controller: _notesCtrl,
-                            focusNode: _notesFocus,
-                            textInputAction: TextInputAction.done,
-                            onFieldSubmitted: (_) => _notesFocus.unfocus(),
-                            style: GoogleFonts.dmSans(
-                                fontSize: 11,
-                                color: AppColors.textPrimary),
+                        // Required by + Notes
+                        Row(children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: _pickDate,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 9),
+                                decoration: BoxDecoration(
+                                  color: AppColors.background,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Row(children: [
+                                  Icon(Icons.calendar_today_outlined,
+                                      size: 13,
+                                      color: _requiredBy != null
+                                          ? AppColors.primary
+                                          : AppColors.textMuted),
+                                  const SizedBox(width: 6),
+                                  Expanded(child: Text(
+                                    _requiredBy != null
+                                        ? DateFormat('d MMM yy')
+                                        .format(_requiredBy!)
+                                        : 'Required by',
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 11,
+                                      color: _requiredBy != null
+                                          ? AppColors.textPrimary
+                                          : AppColors.textMuted,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                                  if (_requiredBy != null)
+                                    GestureDetector(
+                                      onTap: () =>
+                                          setState(() => _requiredBy = null),
+                                      child: const Icon(Icons.close_rounded,
+                                          size: 12,
+                                          color: AppColors.textMuted),
+                                    ),
+                                ]),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          Expanded(
+                            child: TextFormField(
+                              controller: _notesCtrl,
+                              focusNode: _notesFocus,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) => _notesFocus.unfocus(),
+                              style: GoogleFonts.dmSans(
+                                  fontSize: 11,
+                                  color: AppColors.textPrimary),
+                              decoration: InputDecoration(
+                                hintText: 'Notes (optional)',
+                                hintStyle: GoogleFonts.dmSans(
+                                    fontSize: 11,
+                                    color: AppColors.textMuted),
+                                filled: true,
+                                fillColor: AppColors.background,
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 9),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                      color: AppColors.border),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                      color: AppColors.border),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                      color: AppColors.primary, width: 1.5),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ]),
+
+                        // Status dropdown (edit only)
+                        if (_isEditing) ...[
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            value: _status,
                             decoration: InputDecoration(
-                              hintText: 'Notes (optional)',
-                              hintStyle: GoogleFonts.dmSans(
+                              labelText: 'Status',
+                              labelStyle: GoogleFonts.dmSans(
                                   fontSize: 11,
                                   color: AppColors.textMuted),
                               filled: true,
@@ -508,13 +438,13 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
                                   horizontal: 10, vertical: 9),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                    color: AppColors.border),
+                                borderSide:
+                                const BorderSide(color: AppColors.border),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                    color: AppColors.border),
+                                borderSide:
+                                const BorderSide(color: AppColors.border),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -522,108 +452,73 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
                                     color: AppColors.primary, width: 1.5),
                               ),
                             ),
-                          ),
-                        ),
-                      ]),
-
-                      // Status dropdown (edit only)
-                      if (_isEditing) ...[
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          value: _status,
-                          decoration: InputDecoration(
-                            labelText: 'Status',
-                            labelStyle: GoogleFonts.dmSans(
-                                fontSize: 11,
-                                color: AppColors.textMuted),
-                            filled: true,
-                            fillColor: AppColors.background,
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 9),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide:
-                              const BorderSide(color: AppColors.border),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide:
-                              const BorderSide(color: AppColors.border),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: AppColors.primary, width: 1.5),
-                            ),
-                          ),
-                          style: GoogleFonts.dmSans(
-                              fontSize: 12, color: AppColors.textPrimary),
-                          dropdownColor: AppColors.surface,
-                          icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                              size: 18, color: AppColors.textMuted),
-                          items: AppConstants.requirementStatuses
-                              .map((s) =>
-                              DropdownMenuItem(value: s, child: Text(s)))
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _status = v ?? 'Open'),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-
-
-                // ── Save button ───────────────────────────────
-                GestureDetector(
-                  onTap: _saving ? null : _save,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _saving
-                          ? AppColors.primary.withOpacity(0.55)
-                          : AppColors.primary,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Center(
-                      child: _saving
-                          ? const SizedBox(
-                        width: 18, height: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
-                          : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _isEditing
-                                ? Icons.check_rounded
-                                : Icons.add_rounded,
-                            color: Colors.white, size: 16,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            AppConfig.addReqSaveBtn,
-                            style: GoogleFonts.syne(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
+                            style: GoogleFonts.dmSans(
+                                fontSize: 12, color: AppColors.textPrimary),
+                            dropdownColor: AppColors.surface,
+                            icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                                size: 18, color: AppColors.textMuted),
+                            items: AppConstants.requirementStatuses
+                                .map((s) =>
+                                DropdownMenuItem(value: s, child: Text(s)))
+                                .toList(),
+                            onChanged: (v) =>
+                                setState(() => _status = v ?? 'Open'),
                           ),
                         ],
+                      ],
+                    ),
+                  ),
+
+
+                  // ── Save button ───────────────────────────────
+                  GestureDetector(
+                    onTap: _saving ? null : _save,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _saving
+                            ? AppColors.primary.withOpacity(0.55)
+                            : AppColors.primary,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Center(
+                        child: _saving
+                            ? const SizedBox(
+                          width: 18, height: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                            : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _isEditing
+                                  ? Icons.check_rounded
+                                  : Icons.add_rounded,
+                              color: Colors.white, size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              AppConfig.addReqSaveBtn,
+                              style: GoogleFonts.syne(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),           // Column
-          ),             // SingleChildScrollView
-        ),               // Form
+                ],
+              ),           // Column
+            ),             // SingleChildScrollView
+          ),               // Form
         ),               // SafeArea
-        ),               // GestureDetector
+      ),               // GestureDetector
     );
   }
 }
@@ -1023,6 +918,242 @@ class _NavBtn extends StatelessWidget {
           size: 18,
           color: enabled ? AppColors.textPrimary : AppColors.textMuted.withOpacity(0.3),
         ),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  BLOOD TYPE PICKER
+// ════════════════════════════════════════════════════════════
+
+const _bloodTypeColors = {
+  'A+':  Color(0xFFE53935),
+  'A-':  Color(0xFFEF5350),
+  'B+':  Color(0xFF8E24AA),
+  'B-':  Color(0xFFAB47BC),
+  'AB+': Color(0xFF1E88E5),
+  'AB-': Color(0xFF42A5F5),
+  'O+':  Color(0xFF00897B),
+  'O-':  Color(0xFF26A69A),
+};
+
+class _BloodTypePicker extends StatelessWidget {
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  const _BloodTypePicker({required this.selected, required this.onChanged});
+
+  void _openSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _BloodTypeSheet(
+        selected: selected,
+        onSelect: (v) {
+          Navigator.of(context).pop();
+          onChanged(v);
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasValue = selected.isNotEmpty;
+    final color = hasValue ? (_bloodTypeColors[selected] ?? AppColors.primary) : null;
+
+    return GestureDetector(
+      onTap: () => _openSheet(context),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: hasValue ? color!.withOpacity(0.06) : AppColors.background,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: hasValue ? color! : AppColors.border,
+            width: hasValue ? 1.5 : 1,
+          ),
+        ),
+        child: Row(children: [
+          // Badge
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: hasValue ? color!.withOpacity(0.15) : AppColors.surface,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: hasValue ? color!.withOpacity(0.4) : AppColors.border,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: hasValue
+                ? Text(
+              selected,
+              style: GoogleFonts.syne(
+                fontSize: selected.length > 2 ? 9 : 11,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            )
+                : Icon(Icons.bloodtype_outlined,
+                size: 16, color: AppColors.textMuted),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  hasValue ? selected : 'Select blood type',
+                  style: GoogleFonts.syne(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: hasValue ? color! : AppColors.textMuted,
+                  ),
+                ),
+                if (hasValue)
+                  Text(
+                    _bloodTypeLabel(selected),
+                    style: GoogleFonts.dmSans(
+                      fontSize: 10,
+                      color: color!.withOpacity(0.75),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.keyboard_arrow_down_rounded,
+            size: 18,
+            color: hasValue ? color! : AppColors.textMuted,
+          ),
+        ]),
+      ),
+    );
+  }
+
+  static String _bloodTypeLabel(String t) {
+    const labels = {
+      'A+': 'Type A Positive',
+      'A-': 'Type A Negative',
+      'B+': 'Type B Positive',
+      'B-': 'Type B Negative',
+      'AB+': 'Type AB Positive',
+      'AB-': 'Type AB Negative',
+      'O+': 'Type O Positive',
+      'O-': 'Type O Negative',
+    };
+    return labels[t] ?? t;
+  }
+}
+
+class _BloodTypeSheet extends StatelessWidget {
+  final String selected;
+  final ValueChanged<String> onSelect;
+
+  const _BloodTypeSheet({required this.selected, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    final types = AppConstants.bloodTypes;
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 10),
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.border,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+            child: Row(children: [
+              const Icon(Icons.bloodtype_outlined,
+                  size: 16, color: AppColors.textMuted),
+              const SizedBox(width: 7),
+              Text(
+                'SELECT BLOOD TYPE',
+                style: GoogleFonts.syne(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textMuted,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                childAspectRatio: 1.1,
+              ),
+              itemCount: types.length,
+              itemBuilder: (_, i) {
+                final t = types[i];
+                final isSel = t == selected;
+                final color = _bloodTypeColors[t] ?? AppColors.primary;
+                return GestureDetector(
+                  onTap: () => onSelect(t),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    decoration: BoxDecoration(
+                      color: isSel ? color.withOpacity(0.12) : AppColors.background,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSel ? color : AppColors.border,
+                        width: isSel ? 2 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          t,
+                          style: GoogleFonts.syne(
+                            fontSize: t.length > 2 ? 14 : 17,
+                            fontWeight: FontWeight.w800,
+                            color: isSel ? color : AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Container(
+                          width: 18,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: isSel
+                                ? color
+                                : AppColors.border,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom),
+        ],
       ),
     );
   }
