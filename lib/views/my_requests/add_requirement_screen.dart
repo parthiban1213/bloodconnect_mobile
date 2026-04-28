@@ -948,6 +948,7 @@ class _BloodTypePicker extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (_) => _BloodTypeSheet(
         selected: selected,
         onSelect: (v) {
@@ -1152,7 +1153,10 @@ class _BloodTypeSheet extends StatelessWidget {
               },
             ),
           ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom),
+          SizedBox(
+            height: MediaQuery.of(context).padding.bottom +
+                MediaQuery.of(context).viewInsets.bottom,
+          ),
         ],
       ),
     );
