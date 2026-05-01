@@ -1,0 +1,383 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../services/app_update_service.dart';
+import '../utils/app_theme.dart';
+
+/// A bottom-sheet-style dialog shown when a new app version is available.
+///
+/// Usage (from initState via addPostFrameCallback):
+/// ```dart
+///   final info = await AppUpdateService.checkForUpdate();
+///   if (info.hasUpdate && mounted) {
+///     await AppUpdateDialog.show(context, info);
+///   }
+/// ```
+class AppUpdateDialog extends StatelessWidget {
+  final UpdateInfo info;
+
+  const AppUpdateDialog({super.key, required this.info});
+
+  // ── Store URLs ─────────────────────────────────────────────────────────────
+  // Replace these with your actual Play Store / App Store listing URLs.
+  static const _playStoreUrl =
+      'https://play.google.com/store/apps/details?id=com.hsblood.bloodconnect';
+  static const _appStoreUrl =
+      'https://apps.apple.com/app/bloodconnect/id000000000';
+
+  // ── Session flag ───────────────────────────────────────────────────────────
+  // Set to true when the user taps "Remind Me Later" so the dialog is not
+  // shown again during the same app session (e.g. on the home screen after
+  // being dismissed on the login screen).
+  // Resets to false when the app is fully restarted.
+  static bool _dismissedThisSession = false;
+
+  /// Shows the update dialog.  When [info.isForced] is true the dialog is
+  /// not dismissible — the user must tap "Update Now".
+  static Future<void> show(BuildContext context, UpdateInfo info) {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: !info.isForced,
+      builder: (_) => AppUpdateDialog(info: info),
+    );
+  }
+
+  /// Checks Remote Config and shows the dialog if an update is available.
+  /// Skips silently if the user already tapped "Remind Me Later" this session.
+  /// Safe to call from initState via addPostFrameCallback.
+  static Future<void> showIfNeeded(BuildContext context) async {
+    if (_dismissedThisSession) return;
+    final info = await AppUpdateService.checkForUpdate();
+    if (!info.hasUpdate) return;
+    if (!context.mounted) return;
+    await AppUpdateDialog.show(context, info);
+  }
+
+  Future<void> _openStore() async {
+    // Try Play Store first; fall back to App Store.
+    final uri = Uri.parse(_playStoreUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      final iosUri = Uri.parse(_appStoreUrl);
+      if (await canLaunchUrl(iosUri)) {
+        await launchUrl(iosUri, mode: LaunchMode.externalApplication);
+      }
+    }
+  }
+
+  List<String> get _bullets {
+    final notes = info.releaseNotes.trim();
+    if (notes.isEmpty) {
+      // Fallback bullets when no release notes are configured in Remote Config.
+      return [
+        'Performance and stability improvements',
+        'Bug fixes',
+        'Security updates',
+      ];
+    }
+    return notes.split('\n').where((l) => l.trim().isNotEmpty).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      // Prevent back button dismissal when update is forced.
+      onWillPop: () async => !info.isForced,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: _DialogContent(
+          info: info,
+          bullets: _bullets,
+          onUpdate: _openStore,
+          onLater: info.isForced
+              ? null
+              : () {
+            AppUpdateDialog._dismissedThisSession = true;
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ── Private widget — keeps the build method clean ─────────────────────────────
+
+class _DialogContent extends StatelessWidget {
+  final UpdateInfo info;
+  final List<String> bullets;
+  final VoidCallback onUpdate;
+  final VoidCallback? onLater;
+
+  const _DialogContent({
+    required this.info,
+    required this.bullets,
+    required this.onUpdate,
+    this.onLater,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Red header ───────────────────────────────────────────────────
+          Container(
+            width: double.infinity,
+            color: AppColors.primary,
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+            child: Column(
+              children: [
+                // Blood-drop icon with version badge
+                _BloodDropIcon(label: 'NEW'),
+                const SizedBox(height: 12),
+                Text(
+                  info.isForced ? 'Update Required' : 'Update Available',
+                  style: GoogleFonts.cormorantGaramond(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  info.isForced
+                      ? 'Version ${info.latestVersion} is required to continue'
+                      : 'Version ${info.latestVersion} is ready',
+                  style: GoogleFonts.syne(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white70,
+                    letterSpacing: 0.06,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── White body ───────────────────────────────────────────────────
+          Container(
+            color: AppColors.surface,
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Description
+                Text(
+                  info.isForced
+                      ? 'This version of BloodConnect is no longer supported. '
+                      'Please update to continue using the app.'
+                      : 'A new version of BloodConnect is available on the '
+                      'App Store & Play Store with improvements and fixes.',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // What's new section
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "WHAT'S NEW",
+                        style: GoogleFonts.syne(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryDark,
+                          letterSpacing: 0.08,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...bullets.map((b) => _Bullet(text: b)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Buttons
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onUpdate,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Update Now',
+                      style: GoogleFonts.syne(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.04,
+                      ),
+                    ),
+                  ),
+                ),
+
+                if (onLater != null) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: onLater,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textSecondary,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        'Remind Me Later',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 10),
+                Center(
+                  child: Text(
+                    info.isForced
+                        ? 'You must update to continue using BloodConnect'
+                        : 'You can also update later from the App Store',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Bullet extends StatelessWidget {
+  final String text;
+  const _Bullet({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 5),
+            child: Container(
+              width: 6,
+              height: 6,
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.dmSans(
+                fontSize: 12,
+                color: AppColors.textPrimary,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BloodDropIcon extends StatelessWidget {
+  final String label;
+  const _BloodDropIcon({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 48,
+      height: 56,
+      child: CustomPaint(painter: _DropPainter(label: label)),
+    );
+  }
+}
+
+class _DropPainter extends CustomPainter {
+  final String label;
+  const _DropPainter({required this.label});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.9)
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    final cx = size.width / 2;
+    // Drop shape: pointed top, rounded bottom
+    path.moveTo(cx, 0);
+    path.cubicTo(cx + 20, size.height * 0.35, size.width, size.height * 0.55,
+        size.width, size.height * 0.72);
+    path.arcToPoint(
+      Offset(0, size.height * 0.72),
+      radius: Radius.circular(size.width / 2),
+      largeArc: true,
+    );
+    path.cubicTo(0, size.height * 0.55, cx - 20, size.height * 0.35, cx, 0);
+    path.close();
+    canvas.drawPath(path, paint);
+
+    // Label text inside drop
+    final tp = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: TextStyle(
+          fontFamily: 'Syne',
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: AppColors.primary,
+          letterSpacing: 0.04,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(
+      canvas,
+      Offset(cx - tp.width / 2, size.height * 0.52 - tp.height / 2),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_DropPainter old) => old.label != label;
+}

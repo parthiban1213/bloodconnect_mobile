@@ -7,6 +7,7 @@ import 'utils/app_router.dart';
 import 'utils/firebase_options.dart';
 import 'views/auth/splash_screen.dart';
 import 'services/fcm_service.dart';
+import 'services/app_update_service.dart';
 import 'viewmodels/auth_viewmodel.dart';
 
 void main() async {
@@ -15,6 +16,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialise Remote Config defaults + fetch latest values.
+  await AppUpdateService.initialize();
 
   // Register background FCM handler before runApp
   await FcmService.setupBackground();

@@ -12,6 +12,7 @@ import '../../utils/app_theme.dart';
 import '../../utils/app_config.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/password_prompt_dialog.dart';
+import '../../widgets/app_update_dialog.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -31,22 +32,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ref.read(requirementsViewModelProvider.notifier).load();
       ref.read(myRequestsViewModelProvider.notifier).load();
       if (mounted) await PasswordPromptDialog.showIfNeeded(context);
+      if (mounted) await AppUpdateDialog.showIfNeeded(context);
     });
   }
 
   String _greeting() {
     final h = DateTime.now().hour;
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (h < 12) return 'Good morning,';
+    if (h < 17) return 'Good afternoon,';
+    return 'Good evening,';
   }
 
   @override
   Widget build(BuildContext context) {
     final authState   = ref.watch(authViewModelProvider);
     final myReqState  = ref.watch(myRequestsViewModelProvider);
-    // Use the dedicated home provider so the feed's locationFilter never
-    // contaminates the "Urgent near you" list.
     final urgentAsync = ref.watch(homeUrgentRequirementsProvider);
     final user        = authState.user;
 
@@ -67,10 +67,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ref.read(authViewModelProvider.notifier).refreshProfile();
           },
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 110),
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 110),
             children: [
-              // ── Hero dark card ────────────────────────────────────────
-              _HeroCard(
+              // ── Header (Option D — light, white stat cards) ───────
+              _HomeHeader(
                 greeting: _greeting(),
                 user: user,
                 donationCount: donationCount,
@@ -78,46 +78,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 pendingCount: pendingCount,
               ),
 
-              const SizedBox(height: 10),
+              // ── Body content ──────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
 
-              // ── Image carousel ────────────────────────────────────────
-              if (images.isNotEmpty) ...[
-                _ImageCarousel(images: images),
-                const SizedBox(height: 10),
-              ],
+                    // ── Pending pledge alert ───────────────────────
+                    if (pendingCount > 0) ...[
+                      const SizedBox(height: 12),
+                      _PendingAlert(
+                        count: pendingCount,
+                        onTap: () => context.go('/my-requests'),
+                      ),
+                    ],
 
-              // ── Pending pledge alert ───────────────────────────────────
-              if (pendingCount > 0) ...[
-                _PendingAlert(
-                  count: pendingCount,
-                  onTap: () => context.go('/my-requests'),
-                ),
-                const SizedBox(height: 10),
-              ],
+                    // ── Image carousel ────────────────────────────
+                    if (images.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _ImageCarousel(images: images),
+                    ],
 
-              // ── Urgent near you ───────────────────────────────────────
-              _SectionHeader(
-                title: 'Urgent near you',
-                onSeeAll: () => context.go('/feed'),
-              ),
-              const SizedBox(height: 8),
+                    const SizedBox(height: 14),
 
-              urgentAsync.when(
-                loading: () => const CardShimmer(),
-                error:   (_, __) => const _EmptyUrgent(),
-                data: (urgentItems) => urgentItems.isEmpty
-                    ? const _EmptyUrgent()
-                    : Column(
-                  children: urgentItems.map(
-                        (r) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _UrgentCard(requirement: r),
+                    // ── Urgent near you ───────────────────────────
+                    _SectionHeader(
+                      title: 'Urgent near you',
+                      onSeeAll: () => context.go('/feed'),
                     ),
-                  ).toList(),
+                    const SizedBox(height: 8),
+
+                    urgentAsync.when(
+                      loading: () => const CardShimmer(),
+                      error:   (_, __) => const _EmptyUrgent(),
+                      data: (urgentItems) => urgentItems.isEmpty
+                          ? const _EmptyUrgent()
+                          : Column(
+                        children: urgentItems.map(
+                              (r) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _UrgentCard(requirement: r),
+                          ),
+                        ).toList(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 6),
+                  ],
                 ),
               ),
-
-              const SizedBox(height: 6),
             ],
           ),
         ),
@@ -127,16 +137,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Hero dark card  (Concept A)
+//  Header — Option D (light background, white stat cards)
 // ─────────────────────────────────────────────────────────────
-class _HeroCard extends StatelessWidget {
+class _HomeHeader extends StatelessWidget {
   final String greeting;
   final UserModel? user;
   final int donationCount;
   final int activeRequestCount;
   final int pendingCount;
 
-  const _HeroCard({
+  const _HomeHeader({
     required this.greeting,
     required this.user,
     required this.donationCount,
@@ -146,15 +156,12 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.navBg,
-        borderRadius: BorderRadius.circular(20),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row: greeting + blood type badge
+          // ── Top row: greeting / name / actions ──────────────
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -163,141 +170,136 @@ class _HeroCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      greeting.toUpperCase(),
-                      style: GoogleFonts.syne(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white.withOpacity(0.45),
-                        letterSpacing: 0.8,
+                      greeting,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Text(
-                      user?.displayName ?? 'Welcome',
+                      user?.displayName?.split(' ').first ?? 'Welcome',
                       style: GoogleFonts.cormorantGaramond(
-                        fontSize: 22,
+                        fontSize: 26,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
+                        height: 1.1,
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 10),
+              // Blood type badge
               if (user?.bloodType.isNotEmpty == true)
                 Container(
+                  margin: const EdgeInsets.only(top: 4),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 5),
+                      horizontal: 11, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.32),
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     user!.bloodType,
                     style: GoogleFonts.syne(
                       fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.urgentAccent,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
                     ),
                   ),
                 ),
             ],
           ),
 
-          const SizedBox(height: 12),
-          Container(height: 1, color: Colors.white.withOpacity(0.08)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // Stat trio
+          // ── Stat cards row ───────────────────────────────────
           Row(
             children: [
-              _StatItem(
+              _StatCard(
                 label: 'DONATED',
                 value: '$donationCount',
-                alignment: CrossAxisAlignment.start,
+                valueColor: AppColors.textPrimary,
               ),
-              _VerticalDivider(),
-              _StatItem(
+              const SizedBox(width: 10),
+              _StatCard(
                 label: 'REQUESTS',
                 value: '$activeRequestCount',
-                alignment: CrossAxisAlignment.center,
+                valueColor: AppColors.textPrimary,
               ),
-              _VerticalDivider(),
-              _StatItem(
+              const SizedBox(width: 10),
+              _StatCard(
                 label: 'PENDING',
                 value: '$pendingCount',
                 valueColor: pendingCount > 0
                     ? AppColors.primary
-                    : Colors.white,
-                alignment: CrossAxisAlignment.end,
+                    : AppColors.textPrimary,
               ),
             ],
           ),
+
+          const SizedBox(height: 4),
         ],
       ),
     );
   }
 }
 
-class _StatItem extends StatelessWidget {
+class _StatCard extends StatelessWidget {
   final String label;
   final String value;
-  final Color? valueColor;
-  final CrossAxisAlignment alignment;
+  final Color valueColor;
 
-  const _StatItem({
+  const _StatCard({
     required this.label,
     required this.value,
-    this.valueColor,
-    required this.alignment,
+    required this.valueColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        crossAxisAlignment: alignment,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.syne(
-              fontSize: 7,
-              fontWeight: FontWeight.w700,
-              color: Colors.white.withOpacity(0.45),
-              letterSpacing: 0.05,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFBEAF0),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFF4C0D1)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: GoogleFonts.syne(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: valueColor,
+                height: 1,
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: GoogleFonts.syne(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: valueColor ?? Colors.white,
-              height: 1,
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: GoogleFonts.syne(
+                fontSize: 8,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF993556),
+                letterSpacing: 0.08,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _VerticalDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 1,
-    height: 36,
-    margin: const EdgeInsets.symmetric(horizontal: 12),
-    color: Colors.white.withOpacity(0.08),
-  );
-}
-
 // ─────────────────────────────────────────────────────────────
-//  Image carousel
+//  Image carousel (unchanged)
 // ─────────────────────────────────────────────────────────────
 class _ImageCarousel extends StatefulWidget {
   final List<String> images;
-
   const _ImageCarousel({required this.images});
 
   @override
@@ -309,13 +311,11 @@ class _ImageCarouselState extends State<_ImageCarousel> {
   late int _currentPage;
   Timer? _timer;
 
-  // Auto-scroll interval — change here to adjust speed
   static const _autoScrollInterval = Duration(seconds: 4);
 
   @override
   void initState() {
     super.initState();
-    // Start at a large offset so infinite-style scrolling works in both directions
     _currentPage = widget.images.length * 500;
     _ctrl = PageController(
       viewportFraction: 0.88,
@@ -348,7 +348,6 @@ class _ImageCarouselState extends State<_ImageCarousel> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Slide area — AspectRatio matches the banner dimensions exactly
         AspectRatio(
           aspectRatio: 1200 / 600,
           child: PageView.builder(
@@ -385,8 +384,6 @@ class _ImageCarouselState extends State<_ImageCarousel> {
             },
           ),
         ),
-
-        // Dot indicators — only when more than one image
         if (widget.images.length > 1) ...[
           const SizedBox(height: 8),
           Row(
@@ -412,7 +409,7 @@ class _ImageCarouselState extends State<_ImageCarousel> {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Pending pledge alert banner
+//  Pending pledge alert banner (unchanged)
 // ─────────────────────────────────────────────────────────────
 class _PendingAlert extends StatelessWidget {
   final int count;
@@ -463,7 +460,7 @@ class _PendingAlert extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Section header
+//  Section header (unchanged)
 // ─────────────────────────────────────────────────────────────
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -501,7 +498,7 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Lightweight urgent requirement card (no donate button / progress bar)
+//  Urgent requirement card (unchanged)
 // ─────────────────────────────────────────────────────────────
 class _UrgentCard extends StatelessWidget {
   final BloodRequirement requirement;
@@ -559,13 +556,23 @@ class _UrgentCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Blood type circle
+            // ── Urgency accent bar ─────────────────────────────
             Container(
-              width: 42,
-              height: 42,
+              width: 4,
+              height: 44,
+              decoration: BoxDecoration(
+                color: _urgencyColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 10),
+            // ── Blood type badge ───────────────────────────────
+            Container(
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: _urgencyBg,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: _urgencyBorder),
               ),
               child: Center(
@@ -580,7 +587,7 @@ class _UrgentCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // Hospital + meta
+            // ── Hospital + subtitle ────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -610,12 +617,12 @@ class _UrgentCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            // Urgency badge
+            // ── Urgency chip ───────────────────────────────────
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: _urgencyBg,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: _urgencyBorder),
               ),
               child: Text(
@@ -633,6 +640,10 @@ class _UrgentCard extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+//  Empty urgent state (unchanged)
+// ─────────────────────────────────────────────────────────────
 class _EmptyUrgent extends StatelessWidget {
   const _EmptyUrgent();
 

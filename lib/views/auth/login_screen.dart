@@ -9,6 +9,7 @@ import '../../utils/app_theme.dart';
 import '../../utils/app_config.dart';
 import '../../widgets/blood_drop_widget.dart';
 import '../../utils/app_extensions.dart';
+import '../../widgets/app_update_dialog.dart';
 
 enum _LoginView { otp, otpCode, password, forgotPassword }
 
@@ -27,6 +28,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final List<TextEditingController> _otpCtrls =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _otpNodes = List.generate(6, (_) => FocusNode());
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) await AppUpdateDialog.showIfNeeded(context);
+    });
+  }
   Timer? _timer;
   int  _timerSec   = AppConfig.otpTimerSeconds;
   bool _timerActive = false;
