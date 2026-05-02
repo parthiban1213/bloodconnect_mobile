@@ -175,10 +175,10 @@ class AppConfig {
   static const String detailRequiredBy      = 'Required by: ';
   static const String detailAlreadyDonated  = 'Already Donated';
   static const String detailScheduledPending = 'Scheduled — awaiting approval';
-  static const String detailCancelPledgeBtn          = 'Cancel Pledge';
-  static const String detailCancelPledgeConfirmTitle = 'Cancel your pledge?';
+  static const String detailCancelPledgeBtn          = 'Cancel Volunteer';
+  static const String detailCancelPledgeConfirmTitle = 'Cancel your Volunteer?';
   static const String detailCancelPledgeConfirmBody  =
-      'Are you sure you want to withdraw your pledge for this request?';
+      'Are you sure you want to withdraw your Volunteer for this request?';
 
   // ── Directory screen ─────────────────────────────────────────
   static const String directoryTitle       = 'Directory';
@@ -211,7 +211,7 @@ class AppConfig {
   static const String historyCompleted            = 'Completed';
   static const String historyNoDonations          = 'No donations yet';
   static const String historyNoDonationsSubtitle  =
-      'When you pledge to donate blood, your donations will appear here.';
+      'When you Volunteer to donate blood, your donations will appear here.';
   static const String historyNoCompleted          = 'No completed requests';
   static const String historyNoCompletedSubtitle  =
       'Your fulfilled and cancelled blood requests will appear here.';
@@ -410,15 +410,15 @@ class AppConfig {
   static const String myReqCancelAction    = 'Cancel';
 
   // ── Pledge schedule modal ────────────────────────────────────
-  static const String pledgeModalTitle         = 'Confirm Pledge';
+  static const String pledgeModalTitle         = 'Confirm Volunteer';
   static const String pledgeModalSubtitle      = 'Choose when you plan to donate';
-  static const String pledgeModalOptionalNote  = 'Scheduling is optional — you can pledge now and coordinate with the hospital directly.';
+  static const String pledgeModalOptionalNote  = 'Scheduling is optional — you can Volunteer now and coordinate with the hospital directly.';
   static const String pledgeModalScheduleLabel = 'SCHEDULE (OPTIONAL)';
   static const String pledgeModalDateLabel   = 'Donation Date';
   static const String pledgeModalTimeLabel   = 'Preferred Time';
   static const String pledgeModalDateHint    = 'Pick date';
   static const String pledgeModalTimeHint    = 'Pick time';
-  static const String pledgeModalConfirmBtn  = 'Pledge to Donate';
+  static const String pledgeModalConfirmBtn  = 'Volunteer to Donate';
   static const String pledgeModalCancelBtn   = 'Cancel';
   static const String pledgeModalDateError   = 'Please select a donation date.';
   static const String pledgeModalTimeError   = 'Please select a preferred time.';
@@ -430,10 +430,10 @@ class AppConfig {
 
   // ── Donor list in status modal ───────────────────────────────
   static const String donorListSectionTitle  = 'DONORS WHO RESPONDED';
-  static const String donorListEmpty         = 'No donors have pledged yet.';
+  static const String donorListEmpty         = 'No donors have Volunteered yet.';
   static const String donorListLoading       = 'Loading donors…';
   static const String donorListError         = 'Could not load donor list.';
-  static const String donorTabPledged        = 'Pledged Donors';
+  static const String donorTabPledged        = 'Volunteered Donors';
   static const String donorScheduledPrefix   = 'Scheduled: ';
   static const String donorNoSchedule        = 'No date scheduled';
   static const String donorMarkCompleted     = 'Mark Completed';
@@ -507,8 +507,8 @@ class AppConfig {
   static const String homeUrgentSectionTitle = 'Urgent near you';
   static const String homeUrgentSeeAll      = 'See all →';
   static const String homeUrgentEmpty       = 'No urgent requests near you within 25 kms';
-  static const String homePendingAlertSingle = 'pending pledge on your requests — tap to review';
-  static const String homePendingAlertPlural = 'pending pledges on your requests — tap to review';
+  static const String homePendingAlertSingle = 'pending Volunteer on your requests — tap to review';
+  static const String homePendingAlertPlural = 'pending Volunteers on your requests — tap to review';
 
   // ── App Update dialog ────────────────────────────────────────
   static const String updateOptionalTitle       = 'Update Available';
@@ -562,7 +562,7 @@ class AppConfig {
 
   // my_requests_screen
   static const String myReqOpenChip        = 'Open';
-  static const String myReqPledgedDonors   = 'Pledged Donors';
+  static const String myReqPledgedDonors   = 'Volunteer Donors';
 
   // pledged_donors_modal
   static const String pledgedUndoLabel          = 'Undo';
@@ -581,8 +581,8 @@ class AppConfig {
   static const String feedViewMap           = 'Map';
 
   // requirement_detail_screen & requirement_card
-  static const String reqKeepPledge         = 'Keep Pledge';
-  static const String reqCancelPledgeFailed = 'Failed to cancel pledge. Please try again.';
+  static const String reqKeepPledge         = 'Keep Volunteer';
+  static const String reqCancelPledgeFailed = 'Failed to cancel Volunteer. Please try again.';
 
   // history_screen
   static const String historyRequestPrefix  = 'Request: ';
