@@ -220,13 +220,13 @@ class _HomeHeader extends StatelessWidget {
               _StatCard(
                 label: AppConfig.homeStatDonated,
                 value: '$donationCount',
-                valueColor: AppColors.textPrimary,
+                valueColor: AppColors.primaryLight,
               ),
               const SizedBox(width: 10),
               _StatCard(
                 label: AppConfig.homeStatRequests,
                 value: '$activeRequestCount',
-                valueColor: AppColors.textPrimary,
+                valueColor: AppColors.primaryLight,
               ),
               const SizedBox(width: 10),
               _StatCard(
@@ -234,7 +234,7 @@ class _HomeHeader extends StatelessWidget {
                 value: '$pendingCount',
                 valueColor: pendingCount > 0
                     ? AppColors.primary
-                    : AppColors.textPrimary,
+                    : AppColors.primaryLight,
               ),
             ],
           ),
@@ -263,7 +263,7 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.textPrimary,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.borderSoft),
         ),
