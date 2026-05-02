@@ -395,7 +395,7 @@ class _DonorsScreenState extends ConsumerState<DonorsScreen> {
                         if (state.availabilityFilter.isNotEmpty)
                           _ActiveFilterChip(
                             label: state.availabilityFilter == 'true'
-                                ? 'Available'
+                                ? AppConfig.donorsAvailableFilter
                                 : 'Unavailable',
                             onClear: () => vm.setAvailability(''),
                           ),
@@ -862,7 +862,7 @@ class _StatusDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = available ? AppColors.secondary : AppColors.primary;
-    final label = available ? 'Available' : 'Unavailable';
+    final label = available ? AppConfig.donorsAvailableFilter : 'Unavailable';
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

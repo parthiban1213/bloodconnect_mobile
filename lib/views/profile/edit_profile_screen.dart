@@ -137,7 +137,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     } else {
       final err = ref.read(authViewModelProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(err ?? 'Update failed.', style: GoogleFonts.dmSans(color: Colors.white)),
+        content: Text(err ?? AppConfig.editUpdateFailed, style: GoogleFonts.dmSans(color: Colors.white)),
         backgroundColor: AppColors.primary));
     }
   }
@@ -225,11 +225,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         hint: AppConfig.editProfileAddressHint,
                         maxLines: 2)),
                     _Row(
-                      label: 'City',
+                      label: AppConfig.editCityLabel,
                       isLast: true,
                       child: _EditTextField(
                         ctrl: _cityCtrl,
-                        hint: 'e.g. Coimbatore')),
+                        hint: AppConfig.editCityHint)),
                   ]),
                   const SizedBox(height: 12),
 

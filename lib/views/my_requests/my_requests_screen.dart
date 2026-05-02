@@ -164,7 +164,7 @@ class _SummaryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _Chip(count: state.activeRequests.length, label: 'Open',
+        _Chip(count: state.activeRequests.length, label: AppConfig.myReqOpenChip,
             bg: AppColors.urgentBg, tc: AppColors.urgentText),
         const SizedBox(width: 8),
         _Chip(count: state.fulfilledRequests.length,
@@ -417,7 +417,7 @@ class _RequestCard extends ConsumerWidget {
                               const Icon(Icons.people_outline_rounded,
                                   size: 14, color: AppColors.primary),
                               const SizedBox(width: 6),
-                              Text('Pledged Donors',
+                              Text(AppConfig.myReqPledgedDonors,
                                   style: GoogleFonts.syne(fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.primary)),

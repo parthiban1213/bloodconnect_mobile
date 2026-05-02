@@ -9,7 +9,6 @@ import '../../utils/app_theme.dart';
 import '../../utils/app_config.dart';
 import '../../widgets/blood_drop_widget.dart';
 import '../../utils/app_extensions.dart';
-import '../../widgets/app_update_dialog.dart';
 
 enum _LoginView { otp, otpCode, password, forgotPassword }
 
@@ -28,14 +27,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final List<TextEditingController> _otpCtrls =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _otpNodes = List.generate(6, (_) => FocusNode());
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (mounted) await AppUpdateDialog.showIfNeeded(context);
-    });
-  }
   Timer? _timer;
   int  _timerSec   = AppConfig.otpTimerSeconds;
   bool _timerActive = false;
@@ -988,7 +979,7 @@ class _OrDivider extends StatelessWidget {
     Expanded(child: Container(height: 1, color: AppColors.border)),
     Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Text('or',
+      child: Text(AppConfig.loginOrDivider,
         style: GoogleFonts.dmSans(
             fontSize: 11, color: AppColors.textMuted))),
     Expanded(child: Container(height: 1, color: AppColors.border)),
@@ -1043,7 +1034,7 @@ class _RegisterButton extends StatelessWidget {
                 Icon(Icons.person_add_alt_1_outlined,
                     size: 16, color: AppColors.primary),
                 const SizedBox(width: 8),
-                Text('Register',
+                Text(AppConfig.loginRegisterBtn,
                   style: GoogleFonts.dmSans(
                     fontSize: 13, fontWeight: FontWeight.w600,
                     color: AppColors.primary)),

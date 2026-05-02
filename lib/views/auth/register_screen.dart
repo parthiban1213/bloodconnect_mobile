@@ -563,9 +563,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             const SizedBox(height: 12),
 
             _LabeledField(
-              label: 'CITY *',
+              label: AppConfig.regCityLabel,
               child: _PlainField(
-                ctrl: _cityCtrl, hint: 'e.g. Coimbatore',
+                ctrl: _cityCtrl, hint: AppConfig.regCityHint,
                 icon: Icons.location_city_rounded),
             ),
             const SizedBox(height: 12),

@@ -9,6 +9,7 @@ import 'views/auth/splash_screen.dart';
 import 'services/fcm_service.dart';
 import 'services/app_update_service.dart';
 import 'viewmodels/auth_viewmodel.dart';
+import 'package:go_router/go_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -121,6 +122,46 @@ class _BloodConnectAppState extends ConsumerState<BloodConnectApp>
         );
       }
     }
+  }
+
+  // ── Hardware back button handler ─────────────────────────
+  // WidgetsBindingObserver.didPopRoute() is called on every
+  // Android back press BEFORE Flutter's widget tree handles it.
+  // Returning true means "we handled it — don't close the app".
+  //
+  // Rules:
+  //   • /home            → exit the app (return false → OS handles)
+  //   • any other screen → go to /home  (return true  → we handled)
+  //   • genuine sub-page → pop normally (return true  → we handled)
+  @override
+  Future<bool> didPopRoute() async {
+    final router = ref.read(routerProvider);
+    final location = router.routerDelegate.currentConfiguration
+        .matches.last.matchedLocation;
+
+    const homePath = '/home';
+    const topLevelPaths = [
+      '/home', '/feed', '/my-requests', '/donors',
+      '/directory', '/history', '/profile', '/notifications',
+      '/add-requirement', '/edit-profile',
+    ];
+
+    final isTopLevel = topLevelPaths.any((p) => location.startsWith(p));
+
+    // Genuine sub-page on top (dialog, pushed route) — pop normally.
+    if (!isTopLevel && router.canPop()) {
+      router.pop();
+      return true;
+    }
+
+    // On home → let the OS exit the app.
+    if (location.startsWith(homePath)) {
+      return false;
+    }
+
+    // Any other screen → go to home.
+    router.go('/home');
+    return true;
   }
 
   @override

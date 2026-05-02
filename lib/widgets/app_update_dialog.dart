@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/app_update_service.dart';
+import '../utils/app_config.dart';
 import '../utils/app_theme.dart';
 
 /// A bottom-sheet-style dialog shown when a new app version is available.
@@ -25,14 +27,10 @@ class AppUpdateDialog extends StatelessWidget {
   static const _appStoreUrl =
       'https://apps.apple.com/app/bloodconnect/id000000000';
 
-  // ── Session flag ───────────────────────────────────────────────────────────
-  // Set to true when the user taps "Remind Me Later" so the dialog is not
-  // shown again during the same app session (e.g. on the home screen after
-  // being dismissed on the login screen).
-  // Resets to false when the app is fully restarted.
-  static bool _dismissedThisSession = false;
+  static const _snoozeKey      = 'update_snoozed_until';
+  static const _snoozeDuration = Duration(hours: 24);
 
-  /// Shows the update dialog.  When [info.isForced] is true the dialog is
+  /// Shows the update dialog. When [info.isForced] is true the dialog is
   /// not dismissible — the user must tap "Update Now".
   static Future<void> show(BuildContext context, UpdateInfo info) {
     return showDialog<void>(
@@ -42,13 +40,38 @@ class AppUpdateDialog extends StatelessWidget {
     );
   }
 
-  /// Checks Remote Config and shows the dialog if an update is available.
-  /// Skips silently if the user already tapped "Remind Me Later" this session.
+  /// Returns true if the user tapped "Remind Me Later" within the last 24h.
+  /// Force updates are never snoozed.
+  static Future<bool> _isSnoozed(bool isForced) async {
+    if (isForced) return false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final snoozedMs = prefs.getInt(_snoozeKey);
+      if (snoozedMs == null) return false;
+      final snoozedUntil = DateTime.fromMillisecondsSinceEpoch(snoozedMs);
+      return DateTime.now().isBefore(snoozedUntil);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Saves a 24-hour snooze timestamp to shared preferences.
+  static Future<void> _snooze() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final snoozedUntil = DateTime.now().add(_snoozeDuration);
+      await prefs.setInt(_snoozeKey, snoozedUntil.millisecondsSinceEpoch);
+    } catch (_) {}
+  }
+
+  /// Checks Remote Config and shows the dialog if an update is available
+  /// and the user has not snoozed it within the last 24 hours.
+  /// Force updates always show regardless of snooze.
   /// Safe to call from initState via addPostFrameCallback.
   static Future<void> showIfNeeded(BuildContext context) async {
-    if (_dismissedThisSession) return;
     final info = await AppUpdateService.checkForUpdate();
     if (!info.hasUpdate) return;
+    if (await _isSnoozed(info.isForced)) return;
     if (!context.mounted) return;
     await AppUpdateDialog.show(context, info);
   }
@@ -69,21 +92,16 @@ class AppUpdateDialog extends StatelessWidget {
   List<String> get _bullets {
     final notes = info.releaseNotes.trim();
     if (notes.isEmpty) {
-      // Fallback bullets when no release notes are configured in Remote Config.
-      return [
-        'Performance and stability improvements',
-        'Bug fixes',
-        'Security updates',
-      ];
+      return AppConfig.updateDefaultBullets;
     }
     return notes.split('\n').where((l) => l.trim().isNotEmpty).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
+    return PopScope(
       // Prevent back button dismissal when update is forced.
-      onWillPop: () async => !info.isForced,
+      canPop: !info.isForced,
       child: Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 24),
@@ -94,9 +112,9 @@ class AppUpdateDialog extends StatelessWidget {
           onLater: info.isForced
               ? null
               : () {
-            AppUpdateDialog._dismissedThisSession = true;
-            Navigator.of(context).pop();
-          },
+                  AppUpdateDialog._snooze();
+                  Navigator.of(context).pop();
+                },
         ),
       ),
     );
@@ -136,7 +154,7 @@ class _DialogContent extends StatelessWidget {
                 _BloodDropIcon(label: 'NEW'),
                 const SizedBox(height: 12),
                 Text(
-                  info.isForced ? 'Update Required' : 'Update Available',
+                  info.isForced ? AppConfig.updateForceTitle : AppConfig.updateOptionalTitle,
                   style: GoogleFonts.cormorantGaramond(
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
@@ -169,10 +187,8 @@ class _DialogContent extends StatelessWidget {
                 // Description
                 Text(
                   info.isForced
-                      ? 'This version of BloodConnect is no longer supported. '
-                      'Please update to continue using the app.'
-                      : 'A new version of BloodConnect is available on the '
-                      'App Store & Play Store with improvements and fixes.',
+                      ? AppConfig.updateForceDesc
+                      : AppConfig.updateOptionalDesc,
                   style: GoogleFonts.dmSans(
                     fontSize: 13,
                     color: AppColors.textSecondary,
@@ -193,7 +209,7 @@ class _DialogContent extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "WHAT'S NEW",
+                        AppConfig.updateWhatsNewLabel,
                         style: GoogleFonts.syne(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -223,7 +239,7 @@ class _DialogContent extends StatelessWidget {
                       elevation: 0,
                     ),
                     child: Text(
-                      'Update Now',
+                      AppConfig.updateNowBtn,
                       style: GoogleFonts.syne(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -248,7 +264,7 @@ class _DialogContent extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        'Remind Me Later',
+                        AppConfig.updateLaterBtn,
                         style: GoogleFonts.dmSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -262,8 +278,8 @@ class _DialogContent extends StatelessWidget {
                 Center(
                   child: Text(
                     info.isForced
-                        ? 'You must update to continue using BloodConnect'
-                        : 'You can also update later from the App Store',
+                        ? AppConfig.updateForceFooter
+                        : AppConfig.updateOptionalFooter,
                     style: GoogleFonts.dmSans(
                       fontSize: 11,
                       color: AppColors.textMuted,

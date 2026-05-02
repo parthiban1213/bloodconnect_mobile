@@ -37,6 +37,7 @@ dependencies:
   # ── App Update ────────────────────────────────────────────
   firebase_remote_config: ^5.1.3
   package_info_plus: ^8.0.0
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:

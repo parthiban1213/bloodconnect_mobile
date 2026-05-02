@@ -50,45 +50,60 @@ class AppUpdateService {
 
   /// Call once at startup (after Firebase.initializeApp).
   static Future<void> initialize() async {
-    await _rc.setConfigSettings(RemoteConfigSettings(
-      // How long to wait for a network fetch before falling back to cache.
-      fetchTimeout: const Duration(seconds: 10),
-      // How often the config is re-fetched in production.
-      // During development you can lower this to Duration.zero so every
-      // launch fetches fresh values.
-      minimumFetchInterval: const Duration(hours: 1),
-    ));
+    try {
+      await _rc.setConfigSettings(RemoteConfigSettings(
+        fetchTimeout: const Duration(seconds: 10),
+        // 0 seconds during development so Firebase console changes are
+        // picked up on every launch. Change to Duration(hours: 1) before
+        // releasing to production.
+        minimumFetchInterval: const Duration(seconds: 0),
+      ));
 
-    // Set safe defaults so the app works even if Remote Config has never
-    // been configured yet — default values mean "no update needed".
-    await _rc.setDefaults({
-      'latest_version': '1.0.0',
-      'force_update': false,
-      'release_notes': '',
-    });
+      await _rc.setDefaults({
+        'latest_version': '1.0.0',
+        'force_update': false,
+        'release_notes': '',
+      });
 
-    await _rc.fetchAndActivate();
+      await _rc.fetchAndActivate();
+    } catch (_) {
+      // Silently ignore — the app will use cached/default values.
+      // This prevents a Remote Config network error from crashing the app.
+    }
   }
 
   /// Returns [UpdateInfo] describing whether (and how urgently) the user
   /// should update.  Always resolves — never throws.
   static Future<UpdateInfo> checkForUpdate() async {
     try {
-      // Re-fetch so we always act on the freshest values.
-      await _rc.fetchAndActivate();
+      // Re-fetch for freshest values. If the fetch fails (e.g. no network),
+      // we fall through and use whatever is cached from initialize().
+      try { await _rc.fetchAndActivate(); } catch (_) {}
 
       final latestVersion = _rc.getString('latest_version').trim();
-      final isForced      = _rc.getBool('force_update');
+      // Read force_update safely — handles both Boolean and String type in
+      // the Firebase console. If the value was accidentally saved as the
+      // string "true" instead of a Boolean, getBool() returns false, so we
+      // also check the raw string value as a fallback.
+      final forceUpdate = _rc.getBool('force_update') ||
+          _rc.getString('force_update').trim().toLowerCase() == 'true';
       final releaseNotes  = _rc.getString('release_notes').trim();
 
       final info      = await PackageInfo.fromPlatform();
       final current   = info.version.trim();
 
-      final hasUpdate = _isNewer(latestVersion, current);
+      final newerAvailable = _isNewer(latestVersion, current);
+
+      // hasUpdate is true ONLY when a newer version actually exists.
+      // force_update alone (with equal versions) should never trigger the popup.
+      final hasUpdate = newerAvailable;
+
+      // isForced is true when force_update flag is on AND a newer version exists.
+      final isForced = forceUpdate && hasUpdate;
 
       return UpdateInfo(
         hasUpdate: hasUpdate,
-        isForced: isForced && hasUpdate,
+        isForced: isForced,
         latestVersion: latestVersion,
         releaseNotes: releaseNotes,
       );

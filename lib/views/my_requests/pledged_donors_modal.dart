@@ -103,7 +103,7 @@ class _PledgedDonorsModalState extends ConsumerState<PledgedDonorsModal> {
                 borderRadius: BorderRadius.circular(10)),
             duration: const Duration(seconds: 5),
             action: SnackBarAction(
-              label: 'Undo',
+              label: AppConfig.pledgedUndoLabel,
               textColor: Colors.white,
               onPressed: () => _undoCompleted(pledge),
             ),
@@ -238,7 +238,7 @@ class _PledgedDonorsModalState extends ConsumerState<PledgedDonorsModal> {
               Row(children: [
                 _StatusPill(
                   count: pendingCount,
-                  label: 'Pending',
+                  label: AppConfig.pledgedPendingLabel,
                   bg: const Color(0xFFFEF3C7),
                   tc: const Color(0xFF92400E),
                   border: const Color(0xFFFCD34D),
@@ -246,7 +246,7 @@ class _PledgedDonorsModalState extends ConsumerState<PledgedDonorsModal> {
                 const SizedBox(width: 8),
                 _StatusPill(
                   count: completedCount,
-                  label: 'Completed',
+                  label: AppConfig.pledgedCompletedLabel,
                   bg: const Color(0xFFDCFCE7),
                   tc: const Color(0xFF15803D),
                   border: const Color(0xFF86EFAC),
@@ -343,7 +343,7 @@ class _PledgedDonorsModalState extends ConsumerState<PledgedDonorsModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (pending.isNotEmpty) ...[
-          _GroupLabel(label: 'PENDING APPROVAL', color: const Color(0xFF92400E)),
+          _GroupLabel(label: AppConfig.pledgedPendingApprovalGroup, color: const Color(0xFF92400E)),
           const SizedBox(height: 6),
           ...pending.map((p) => _DonorCard(
                 pledge:     p,
@@ -353,7 +353,7 @@ class _PledgedDonorsModalState extends ConsumerState<PledgedDonorsModal> {
           if (completed.isNotEmpty) const SizedBox(height: 12),
         ],
         if (completed.isNotEmpty) ...[
-          _GroupLabel(label: 'COMPLETED', color: const Color(0xFF15803D)),
+          _GroupLabel(label: AppConfig.pledgedCompletedGroup, color: const Color(0xFF15803D)),
           const SizedBox(height: 6),
           ...completed.map((p) => _DonorCard(
                 pledge:     p,

@@ -38,9 +38,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   String _greeting() {
     final h = DateTime.now().hour;
-    if (h < 12) return 'Good morning,';
-    if (h < 17) return 'Good afternoon,';
-    return 'Good evening,';
+    if (h < 12) return AppConfig.homeGreetingMorning;
+    if (h < 17) return AppConfig.homeGreetingAfternoon;
+    return AppConfig.homeGreetingEvening;
   }
 
   @override
@@ -104,7 +104,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                     // ── Urgent near you ───────────────────────────
                     _SectionHeader(
-                      title: 'Urgent near you',
+                      title: AppConfig.homeUrgentSectionTitle,
                       onSeeAll: () => context.go('/feed'),
                     ),
                     const SizedBox(height: 8),
@@ -178,7 +178,7 @@ class _HomeHeader extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      user?.displayName?.split(' ').first ?? 'Welcome',
+                      user?.displayName ?? 'Welcome',
                       style: GoogleFonts.cormorantGaramond(
                         fontSize: 26,
                         fontWeight: FontWeight.w600,
@@ -218,23 +218,23 @@ class _HomeHeader extends StatelessWidget {
           Row(
             children: [
               _StatCard(
-                label: 'DONATED',
+                label: AppConfig.homeStatDonated,
                 value: '$donationCount',
-                valueColor: AppColors.primaryLight,
+                valueColor: AppColors.textPrimary,
               ),
               const SizedBox(width: 10),
               _StatCard(
-                label: 'REQUESTS',
+                label: AppConfig.homeStatRequests,
                 value: '$activeRequestCount',
-                valueColor: AppColors.primaryLight,
+                valueColor: AppColors.textPrimary,
               ),
               const SizedBox(width: 10),
               _StatCard(
-                label: 'PENDING',
+                label: AppConfig.homeStatPending,
                 value: '$pendingCount',
                 valueColor: pendingCount > 0
                     ? AppColors.primary
-                    : AppColors.primaryLight,
+                    : AppColors.textPrimary,
               ),
             ],
           ),
@@ -263,9 +263,9 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF18213A),
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFF4C0D1)),
+          border: Border.all(color: AppColors.borderSoft),
         ),
         child: Column(
           children: [
@@ -284,7 +284,7 @@ class _StatCard extends StatelessWidget {
               style: GoogleFonts.syne(
                 fontSize: 8,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF993556),
+                color: AppColors.textMuted,
                 letterSpacing: 0.08,
               ),
             ),
@@ -441,7 +441,7 @@ class _PendingAlert extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                '$count pending pledge${count == 1 ? '' : 's'} on your requests — tap to review',
+                '$count ${count == 1 ? AppConfig.homePendingAlertSingle : AppConfig.homePendingAlertPlural}',
                 style: GoogleFonts.dmSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -484,7 +484,7 @@ class _SectionHeader extends StatelessWidget {
         GestureDetector(
           onTap: onSeeAll,
           child: Text(
-            'See all →',
+            AppConfig.homeUrgentSeeAll,
             style: GoogleFonts.syne(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -556,23 +556,12 @@ class _UrgentCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // ── Urgency accent bar ─────────────────────────────
             Container(
-              width: 4,
-              height: 44,
-              decoration: BoxDecoration(
-                color: _urgencyColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(width: 10),
-            // ── Blood type badge ───────────────────────────────
-            Container(
-              width: 40,
-              height: 40,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
                 color: _urgencyBg,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: _urgencyBorder),
               ),
               child: Center(
@@ -587,7 +576,6 @@ class _UrgentCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // ── Hospital + subtitle ────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -617,12 +605,11 @@ class _UrgentCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            // ── Urgency chip ───────────────────────────────────
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: _urgencyBg,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: _urgencyBorder),
               ),
               child: Text(
@@ -662,7 +649,7 @@ class _EmptyUrgent extends StatelessWidget {
               size: 28, color: AppColors.textMuted),
           const SizedBox(height: 8),
           Text(
-            'No urgent requests near you within 25 kms',
+            AppConfig.homeUrgentEmpty,
             style: GoogleFonts.dmSans(
               fontSize: 12,
               color: AppColors.textSecondary,

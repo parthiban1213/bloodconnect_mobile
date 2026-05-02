@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/reminder_service.dart';
 import '../utils/app_theme.dart';
+import '../utils/app_config.dart';
 
 // ─────────────────────────────────────────────────────────────
 //  EligibilityCard
@@ -82,7 +83,7 @@ class _EligibilityCardState extends State<EligibilityCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Donation eligibility',
+                  Text(AppConfig.eligibilityTitle,
                     style: GoogleFonts.syne(
                       fontSize: 13, fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary)),
@@ -117,10 +118,10 @@ class _EligibilityCardState extends State<EligibilityCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('0',
+              Text(AppConfig.eligibilityZero,
                 style: GoogleFonts.dmSans(
                     fontSize: 10, color: AppColors.textVeryMuted)),
-              Text('90 days',
+              Text(AppConfig.eligibilityMaxDays,
                 style: GoogleFonts.dmSans(
                     fontSize: 10, color: AppColors.textVeryMuted)),
             ],
@@ -257,11 +258,11 @@ class _EligibleBanner extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Ready to donate!',
+              Text(AppConfig.eligibilityReadyTitle,
                 style: GoogleFonts.syne(
                   fontSize: 13, fontWeight: FontWeight.w700,
                   color: const Color(0xFF085041))),
-              Text('You are currently eligible to donate blood.',
+              Text(AppConfig.eligibilityReadyBody,
                 style: GoogleFonts.dmSans(
                     fontSize: 11, color: const Color(0xFF0F6E56))),
             ],

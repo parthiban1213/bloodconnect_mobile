@@ -231,7 +231,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Location Filter',
+                      Text(AppConfig.feedLocationFilter,
                           style: GoogleFonts.syne(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -875,13 +875,13 @@ class _ViewTogglePill extends StatelessWidget {
         children: [
           _Segment(
             icon: Icons.view_list_rounded,
-            label: 'List',
+            label: AppConfig.feedViewList,
             active: !showMap,
             onTap: () => onToggle(false),
           ),
           _Segment(
             icon: Icons.map_rounded,
-            label: 'Map',
+            label: AppConfig.feedViewMap,
             active: showMap,
             onTap: () => onToggle(true),
           ),

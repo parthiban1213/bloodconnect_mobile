@@ -73,7 +73,7 @@ class RequestStatusModal extends ConsumerWidget {
             // ── Title row ─────────────────────────────────────
             Row(children: [
               Expanded(
-                child: Text('Request Status',
+                child: Text(AppConfig.reqStatusModalTitle,
                     style: GoogleFonts.syne(
                       fontSize: 16, fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -134,7 +134,7 @@ class RequestStatusModal extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // ── Progress ──────────────────────────────────────
-            Text('Donation Progress',
+            Text(AppConfig.reqDonationProgress,
                 style: GoogleFonts.dmSans(
                   fontSize: 11, fontWeight: FontWeight.w500,
                   color: AppColors.textMuted, letterSpacing: 0.5,

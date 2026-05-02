@@ -113,7 +113,7 @@ class _RequirementCardState extends ConsumerState<RequirementCard> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Keep Pledge',
+            child: Text(AppConfig.reqKeepPledge,
                 style: GoogleFonts.dmSans(color: AppColors.textSecondary)),
           ),
           TextButton(
@@ -139,7 +139,7 @@ class _RequirementCardState extends ConsumerState<RequirementCard> {
     if (!ok) {
       final err = ref.read(requirementsViewModelProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(err ?? 'Failed to cancel pledge. Please try again.',
+        content: Text(err ?? AppConfig.reqCancelPledgeFailed,
             style: GoogleFonts.dmSans(fontSize: 13)),
         backgroundColor: AppColors.primary,
         behavior: SnackBarBehavior.floating,

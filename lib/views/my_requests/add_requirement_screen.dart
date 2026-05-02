@@ -191,12 +191,12 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
                   // ── PATIENT card ──────────────────────────────
                   _SectionCard(
                     icon: Icons.person_outline_rounded,
-                    label: 'Patient',
+                    label: AppConfig.addReqPatientLabel,
                     child: Column(
                       children: [
                         Row(children: [
                           Expanded(child: _CompactField(
-                            hint: 'Patient name *',
+                            hint: AppConfig.addReqPatientHint,
                             controller: _patientNameCtrl,
                             focusNode: _patientFocus,
                             nextFocus: _hospitalFocus,
@@ -205,7 +205,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
                           )),
                           const SizedBox(width: 8),
                           Expanded(child: _CompactField(
-                            hint: 'Hospital *',
+                            hint: AppConfig.addReqHospitalHint,
                             controller: _hospitalCtrl,
                             focusNode: _hospitalFocus,
                             nextFocus: _locationFocus,
@@ -215,7 +215,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
                         ]),
                         const SizedBox(height: 7),
                         _CompactField(
-                          hint: 'Location (optional)',
+                          hint: AppConfig.addReqLocationHint,
                           controller: _locationCtrl,
                           focusNode: _locationFocus,
                           nextFocus: _contactPFocus,
@@ -229,10 +229,10 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
                   // ── CONTACT card ──────────────────────────────
                   _SectionCard(
                     icon: Icons.phone_outlined,
-                    label: 'Contact',
+                    label: AppConfig.addReqContactLabel,
                     child: Row(children: [
                       Expanded(child: _CompactField(
-                        hint: 'Contact person *',
+                        hint: AppConfig.addReqContactHint,
                         controller: _contactPersonCtrl,
                         focusNode: _contactPFocus,
                         nextFocus: _contactPhFocus,
@@ -241,7 +241,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
                       )),
                       const SizedBox(width: 8),
                       Expanded(child: _CompactField(
-                        hint: 'Phone *',
+                        hint: AppConfig.addReqPhoneHint,
                         controller: _contactPhoneCtrl,
                         focusNode: _contactPhFocus,
                         keyboardType: TextInputType.phone,
@@ -262,7 +262,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
                   // ── BLOOD DETAILS card ────────────────────────
                   _SectionCard(
                     icon: Icons.bloodtype_outlined,
-                    label: 'Blood details',
+                    label: AppConfig.addReqBloodLabel,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -392,7 +392,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
                                   fontSize: 11,
                                   color: AppColors.textPrimary),
                               decoration: InputDecoration(
-                                hintText: 'Notes (optional)',
+                                hintText: AppConfig.addReqNotesHint,
                                 hintStyle: GoogleFonts.dmSans(
                                     fontSize: 11,
                                     color: AppColors.textMuted),
@@ -427,7 +427,7 @@ class _AddRequirementScreenState extends ConsumerState<AddRequirementScreen> {
                           DropdownButtonFormField<String>(
                             value: _status,
                             decoration: InputDecoration(
-                              labelText: 'Status',
+                              labelText: AppConfig.addReqStatusLabel,
                               labelStyle: GoogleFonts.dmSans(
                                   fontSize: 11,
                                   color: AppColors.textMuted),
@@ -851,7 +851,7 @@ class _CompactDatePickerState extends State<_CompactDatePicker> {
                         border: Border.all(color: AppColors.border),
                       ),
                       alignment: Alignment.center,
-                      child: Text('Cancel',
+                      child: Text(AppConfig.addReqCancelBtn,
                         style: GoogleFonts.syne(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -872,7 +872,7 @@ class _CompactDatePickerState extends State<_CompactDatePicker> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       alignment: Alignment.center,
-                      child: Text('Confirm',
+                      child: Text(AppConfig.addReqConfirmBtn,
                         style: GoogleFonts.syne(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,

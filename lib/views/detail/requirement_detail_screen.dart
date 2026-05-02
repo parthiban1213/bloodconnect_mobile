@@ -123,7 +123,7 @@ class _RequirementDetailScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Keep Pledge',
+            child: Text(AppConfig.reqKeepPledge,
                 style: GoogleFonts.dmSans(color: AppColors.textSecondary)),
           ),
           TextButton(
@@ -152,7 +152,7 @@ class _RequirementDetailScreenState
     } else {
       final err = ref.read(requirementsViewModelProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(err ?? 'Failed to cancel pledge. Please try again.'),
+        content: Text(err ?? AppConfig.reqCancelPledgeFailed),
         backgroundColor: AppColors.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

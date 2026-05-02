@@ -254,14 +254,8 @@ class AppConfig {
   static const String addReqRequiredBy      = 'Required By Date';
   static const String addReqStatus          = 'Status';
   static const String addReqNotes           = 'Additional Notes';
-  static const String addReqPatientHint     = 'e.g. Ravi Kumar';
-  static const String addReqHospitalHint    = 'e.g. PSG Hospital';
-  static const String addReqLocationHint    = 'e.g. Coimbatore, Tamil Nadu';
-  static const String addReqContactHint     = 'Name of coordinator';
-  static const String addReqPhoneHint       = '+91 98765 43210';
   static const String addReqBloodTypeHint   = 'Select blood type';
   static const String addReqDateHint        = 'Select date (optional)';
-  static const String addReqNotesHint       = 'Any special instructions or context…';
   static const String addReqCreatedMsg      = 'Requirement created successfully!';
   static const String addReqUpdatedMsg      = 'Request updated successfully!';
 
@@ -505,6 +499,108 @@ class AppConfig {
         'Please share to help save a life!\n'
         'Download $appName to respond.';
   }
+
+
+  // ── Home screen ─────────────────────────────────────────────
+  static const String homeGreetingMorning   = 'Good morning,';
+  static const String homeGreetingAfternoon = 'Good afternoon,';
+  static const String homeGreetingEvening   = 'Good evening,';
+  static const String homeStatDonated       = 'DONATED';
+  static const String homeStatRequests      = 'REQUESTS';
+  static const String homeStatPending       = 'PENDING';
+  static const String homeUrgentSectionTitle = 'Urgent near you';
+  static const String homeUrgentSeeAll      = 'See all →';
+  static const String homeUrgentEmpty       = 'No urgent requests near you within 25 kms';
+  static const String homePendingAlertSingle = 'pending pledge on your requests — tap to review';
+  static const String homePendingAlertPlural = 'pending pledges on your requests — tap to review';
+
+  // ── App Update dialog ────────────────────────────────────────
+  static const String updateOptionalTitle       = 'Update Available';
+  static const String updateForceTitle          = 'Update Required';
+  static const String updateOptionalVersionSuffix = 'is ready';
+  static const String updateForceVersionSuffix  = 'is required to continue';
+  static const String updateOptionalDesc        =
+      'A new version of BloodConnect is available on the App Store & Play Store with improvements and fixes.';
+  static const String updateForceDesc           =
+      'This version of BloodConnect is no longer supported. Please update to continue using the app.';
+  static const String updateWhatsNewLabel       = "WHAT'S NEW";
+  static const String updateNowBtn              = 'Update Now';
+  static const String updateLaterBtn            = 'Remind Me Later';
+  static const String updateOptionalFooter      = 'You can also update later from the App Store';
+  static const String updateForceFooter         = 'You must update to continue using BloodConnect';
+  static const List<String> updateDefaultBullets = [
+    'Performance and stability improvements',
+    'Bug fixes',
+    'Security updates',
+  ];
+
+  // ── Hardcoded strings moved from views ──────────────────────
+  // login_screen
+  static const String loginOrDivider  = 'or';
+  static const String loginRegisterBtn = 'Register';
+
+  // register_screen
+  static const String regCityLabel    = 'CITY *';
+  static const String regCityHint     = 'e.g. Coimbatore';
+
+  // edit_profile_screen
+  static const String editCityLabel   = 'City';
+  static const String editCityHint    = 'e.g. Coimbatore';
+  static const String editUpdateFailed = 'Update failed.';
+
+  // add_requirement_screen
+  static const String addReqPatientLabel   = 'Patient';
+  static const String addReqPatientHint    = 'Patient name *';
+  static const String addReqHospitalHint   = 'Hospital *';
+  static const String addReqLocationHint   = 'Location (optional)';
+  static const String addReqContactLabel   = 'Contact';
+  static const String addReqContactHint    = 'Contact person *';
+  static const String addReqPhoneHint      = 'Phone *';
+  static const String addReqBloodLabel     = 'Blood details';
+  static const String addReqNotesHint      = 'Notes (optional)';
+  static const String addReqStatusLabel    = 'Status';
+  static const String addReqCancelBtn      = 'Cancel';
+  static const String addReqConfirmBtn     = 'Confirm';
+  static const String addReqUnitSingular   = 'unit';
+  static const String addReqUnitPlural     = 'units';
+
+  // my_requests_screen
+  static const String myReqOpenChip        = 'Open';
+  static const String myReqPledgedDonors   = 'Pledged Donors';
+
+  // pledged_donors_modal
+  static const String pledgedUndoLabel          = 'Undo';
+  static const String pledgedPendingLabel        = 'Pending';
+  static const String pledgedCompletedLabel      = 'Completed';
+  static const String pledgedPendingApprovalGroup = 'PENDING APPROVAL';
+  static const String pledgedCompletedGroup      = 'COMPLETED';
+
+  // request_status_modal
+  static const String reqStatusModalTitle   = 'Request Status';
+  static const String reqDonationProgress   = 'Donation Progress';
+
+  // feed_screen
+  static const String feedLocationFilter    = 'Location Filter';
+  static const String feedViewList          = 'List';
+  static const String feedViewMap           = 'Map';
+
+  // requirement_detail_screen & requirement_card
+  static const String reqKeepPledge         = 'Keep Pledge';
+  static const String reqCancelPledgeFailed = 'Failed to cancel pledge. Please try again.';
+
+  // history_screen
+  static const String historyRequestPrefix  = 'Request: ';
+
+  // eligibility_card
+  static const String eligibilityTitle      = 'Donation eligibility';
+  static const String eligibilityZero       = '0';
+  static const String eligibilityMaxDays    = '90 days';
+  static const String eligibilityReadyTitle = 'Ready to donate!';
+  static const String eligibilityReadyBody  = 'You are currently eligible to donate blood.';
+
+  // donors_screen
+  static const String donorsAvailableFilter    = 'Available';
+  static const String donorsAllFilter          = 'All Donors';
 
   // ── Home screen banner carousel ──────────────────────────────
   // Add or remove image paths here to control what appears in the carousel.

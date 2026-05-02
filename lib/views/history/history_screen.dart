@@ -284,7 +284,7 @@ class _DonationCard extends StatelessWidget {
             const Icon(Icons.local_hospital_outlined,
                 size: 12, color: AppColors.textMuted),
             const SizedBox(width: 6),
-            Text('Request: ',
+            Text(AppConfig.historyRequestPrefix,
                 style: GoogleFonts.dmSans(fontSize: 11, color: AppColors.textMuted)),
             _ReqStatusChip(status: donation.status),
           ]),
