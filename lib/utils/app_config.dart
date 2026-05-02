@@ -11,12 +11,12 @@ class AppConfig {
 
   // ── Branding ────────────────────────────────────────────────
   static const String appName          = 'BloodConnect';
-  static const String orgName          = 'HSBlood';
+  static const String orgName          = 'TNBlood';
   static const String appVersion       = '1.0';
   static const String footerText       = '$appName · $orgName v$appVersion';
 
   // ── Splash ──────────────────────────────────────────────────
-  static const String splashBrandBold  = 'HS';
+  static const String splashBrandBold  = 'TN';
   static const String splashBrandLight = 'Blood';
   static const String splashTagline    = 'Every drop counts.';
 
@@ -24,8 +24,8 @@ class AppConfig {
   static const String otpEyebrow       = 'Blood Donor Registry';
   static const String otpHeading       = 'Welcome\nback';
   static const String otpSubtext       = 'Sign in with your registered mobile\nnumber to see blood requests near you.';
-  static const String otpContinueBtn   = 'Continue with OTP →';
-  static const String otpSwitchBtn     = 'Sign in with Username & Password';
+  static const String otpContinueBtn   = 'Login with OTP →';
+  static const String otpSwitchBtn     = 'Login with Username & Password';
   static const String otpRegisterBtn   = 'Register';
   static const String otpHintTitle     = 'Need any help?';
   static const String otpHintBody      = 'Contact your $orgName administrator. All accounts are managed centrally.';
@@ -142,10 +142,6 @@ class AppConfig {
   // Feed filter chips
   static const List<Map<String, String>> feedFilters = [
     {'label': 'All',        'key': 'All'},
-    {'label': 'Critical',   'key': 'Critical'},
-    {'label': 'High',       'key': 'High'},
-    {'label': 'Medium',     'key': 'Medium'},
-    {'label': 'Low',        'key': 'Low'},
     {'label': 'Open',       'key': 'Open'},
     {'label': 'Fulfilled',  'key': 'Fulfilled'},
     {'label': 'Cancelled',  'key': 'Cancelled'},
@@ -368,8 +364,8 @@ class AppConfig {
   static const String supportMaxFilesError     = 'You can attach a maximum of 5 files.';
   static const String supportPickerError       = 'Could not open file picker. Please try again.';
   static const String supportNoMailApp         = 'No mail app found. Admin email copied to clipboard: ';
-  static const String supportEmailSubjectPrefix = '[HSBlood Support] ';
-  static const String supportEmailBodySuffix    = '\n\n---\nSent via HSBlood Mobile App';
+  static const String supportEmailSubjectPrefix = '[TNBlood Support] ';
+  static const String supportEmailBodySuffix    = '\n\n---\nSent via TNBlood Mobile App';
 
   // ── Common / Shared ──────────────────────────────────────────
   static const String commonCallBtn       = 'Call';
@@ -470,10 +466,10 @@ class AppConfig {
   static const String quickHelpTitle          = 'QUICK HELP';
   static const String quickHelpLoginTitle     = 'Login Issues';
   static const String quickHelpLoginBody      =
-      'Contact your HSBlood administrator to reset your credentials. Accounts are centrally managed.';
+      'Contact your TNBlood administrator to reset your credentials. Accounts are centrally managed.';
   static const String quickHelpNewAccTitle    = 'New Account';
   static const String quickHelpNewAccBody     =
-      'To register as a donor, reach out to your HSBlood administrator. Self-registration is not available.';
+      'To register as a donor, reach out to your TNBlood administrator. Self-registration is not available.';
   static const String quickHelpNotifTitle     = 'Notifications';
   static const String quickHelpNotifBody      =
       'Ensure notifications are enabled in your device Settings for BloodConnect to receive blood request alerts.';

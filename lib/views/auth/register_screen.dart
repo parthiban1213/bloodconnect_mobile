@@ -306,7 +306,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
         children: [
           BloodDropWidget(size: 80),
           const SizedBox(height: 12),
-          Text('HSBlood',
+          Text('TNBlood',
             style: GoogleFonts.cormorantGaramond(
               fontSize: 28, fontWeight: FontWeight.w700,
               color: AppColors.textPrimary)),
