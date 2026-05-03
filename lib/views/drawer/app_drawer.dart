@@ -21,188 +21,202 @@ class AppDrawer extends ConsumerWidget {
           bottomRight: Radius.circular(20),
         ),
       ),
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Header ───────────────────────────────────
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
-              decoration: const BoxDecoration(
-                color: AppColors.navBg,
-                borderRadius:
-                    BorderRadius.only(topRight: Radius.circular(20)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Center(
-                      child: Text(
-                        user?.initials ?? '?',
-                        style: GoogleFonts.syne(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header — extends behind status bar ───────────
+          Container(
+            width: double.infinity,
+            color: AppColors.navBg,
+            child: SafeArea(
+              bottom: false,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
+                decoration: const BoxDecoration(
+                  color: AppColors.navBg,
+                  borderRadius:
+                  BorderRadius.only(topRight: Radius.circular(20)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Center(
+                        child: Text(
+                          user?.initials ?? '?',
+                          style: GoogleFonts.syne(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    user?.displayName ?? 'User',
-                    style: GoogleFonts.syne(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                    const SizedBox(height: 12),
+                    Text(
+                      user?.displayName ?? 'User',
+                      style: GoogleFonts.syne(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      if (user?.bloodType.isNotEmpty == true) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(6),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        if (user?.bloodType.isNotEmpty == true) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              user!.bloodType,
+                              style: GoogleFonts.syne(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
+                          const SizedBox(width: 8),
+                        ],
+                        Flexible(
                           child: Text(
-                            user!.bloodType,
-                            style: GoogleFonts.syne(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
+                            user?.email ?? '',
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.dmSans(
+                              fontSize: 11,
+                              color: const Color(0xFF566080),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
                       ],
-                      Flexible(
-                        child: Text(
-                          user?.email ?? '',
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.dmSans(
-                            fontSize: 11,
-                            color: const Color(0xFF566080),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
+          ),
 
-            const SizedBox(height: 6),
+          const SizedBox(height: 6),
 
-            // ── Nav items ─────────────────────────────────
-            Expanded(
-              child: ListView(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+          // ── Nav items + sign out wrapped in bottom SafeArea ──
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: Column(
                 children: [
-                  _Item(
-                    icon: Icons.grid_view_rounded,
-                    label: AppConfig.drawerFeed,
-                    onTap: () {
-                      Navigator.pop(context);
-                      context.go('/feed');
-                    },
+                  Expanded(
+                    child: ListView(
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                      children: [
+                        _Item(
+                          icon: Icons.grid_view_rounded,
+                          label: AppConfig.drawerFeed,
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.go('/feed');
+                          },
+                        ),
+                        _Item(
+                          icon: Icons.bloodtype_outlined,
+                          label: AppConfig.drawerMyRequests,
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.go('/my-requests');
+                          },
+                        ),
+                        _Item(
+                          icon: Icons.history_rounded,
+                          label: AppConfig.drawerHistory,
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.go('/history');
+                          },
+                        ),
+                        _Item(
+                          icon: Icons.people_outline_rounded,
+                          label: AppConfig.drawerDonorDirectory,
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.go('/directory');
+                          },
+                        ),
+                        _Item(
+                          icon: Icons.notifications_outlined,
+                          label: AppConfig.drawerNotifications,
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.go('/notifications');
+                          },
+                        ),
+                        // Support — navigates to in-app support screen
+                        _Item(
+                          icon: Icons.help_outline_rounded,
+                          label: AppConfig.drawerSupport,
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.push('/support'); // push so user can go back
+                          },
+                        ),
+                        // ── How It Works ─────────────────────────────
+                        _HowItWorksItem(
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.push('/how-it-works');
+                          },
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 6),
+                          child: Divider(
+                              color: AppColors.border, height: 1, thickness: 1),
+                        ),
+                        _Item(
+                          icon: Icons.person_outline_rounded,
+                          label: AppConfig.drawerMyProfile,
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.go('/profile');
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                  _Item(
-                    icon: Icons.bloodtype_outlined,
-                    label: AppConfig.drawerMyRequests,
-                    onTap: () {
-                      Navigator.pop(context);
-                      context.go('/my-requests');
-                    },
-                  ),
-                  _Item(
-                    icon: Icons.history_rounded,
-                    label: AppConfig.drawerHistory,
-                    onTap: () {
-                      Navigator.pop(context);
-                      context.go('/history');
-                    },
-                  ),
-                  _Item(
-                    icon: Icons.people_outline_rounded,
-                    label: AppConfig.drawerDonorDirectory,
-                    onTap: () {
-                      Navigator.pop(context);
-                      context.go('/directory');
-                    },
-                  ),
-                  _Item(
-                    icon: Icons.notifications_outlined,
-                    label: AppConfig.drawerNotifications,
-                    onTap: () {
-                      Navigator.pop(context);
-                      context.go('/notifications');
-                    },
-                  ),
-                  // Support — navigates to in-app support screen
-                  _Item(
-                    icon: Icons.help_outline_rounded,
-                    label: AppConfig.drawerSupport,
-                    onTap: () {
-                      Navigator.pop(context);
-                      context.push('/support'); // push so user can go back
-                    },
-                  ),
-                  // ── How It Works ─────────────────────────────
-                  _HowItWorksItem(
-                    onTap: () {
-                      Navigator.pop(context);
-                      context.push('/how-it-works');
-                    },
-                  ),
+
+                  // ── Sign Out ────────────────────────────────
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Divider(
                         color: AppColors.border, height: 1, thickness: 1),
                   ),
                   _Item(
-                    icon: Icons.person_outline_rounded,
-                    label: AppConfig.drawerMyProfile,
-                    onTap: () {
+                    icon: Icons.logout_rounded,
+                    label: AppConfig.drawerSignOut,
+                    textColor: AppColors.primary,
+                    iconColor: AppColors.primary,
+                    onTap: () async {
                       Navigator.pop(context);
-                      context.go('/profile');
+                      await ref.read(authViewModelProvider.notifier).logout();
                     },
                   ),
+                  const SizedBox(height: 6),
                 ],
               ),
             ),
-
-            // ── Sign Out ────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Divider(
-                  color: AppColors.border, height: 1, thickness: 1),
-            ),
-            _Item(
-              icon: Icons.logout_rounded,
-              label: AppConfig.drawerSignOut,
-              textColor: AppColors.primary,
-              iconColor: AppColors.primary,
-              onTap: () async {
-                Navigator.pop(context);
-                await ref.read(authViewModelProvider.notifier).logout();
-              },
-            ),
-            const SizedBox(height: 6),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

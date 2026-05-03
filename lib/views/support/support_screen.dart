@@ -208,84 +208,97 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ── App bar ──────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 8, 16, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.chevron_left_rounded,
-                        color: AppColors.textPrimary, size: 26),
-                  ),
-                  Text(
-                    AppConfig.supportScreenTitle,
-                    style: GoogleFonts.syne(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
+      appBar: AppBar(
+        backgroundColor: AppColors.navBg,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        toolbarHeight: 52,
+        centerTitle: true,
+        leadingWidth: 60,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 14),
+          child: Center(
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 32, height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Icon(
+                  Icons.chevron_left_rounded,
+                  color: Color(0xFF9BA3BC),
+                  size: 20,
+                ),
               ),
             ),
+          ),
+        ),
+        title: Text(
+          AppConfig.supportScreenTitle,
+          style: GoogleFonts.syne(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _InfoBanner(),
+              const SizedBox(height: 20),
 
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _InfoBanner(),
-                    const SizedBox(height: 20),
+              if (_error != null) ...[
+                _FeedbackPill(msg: _error!, isError: true),
+                const SizedBox(height: 14),
+              ],
 
-                    if (_error != null) ...[
-                      _FeedbackPill(msg: _error!, isError: true),
-                      const SizedBox(height: 14),
-                    ],
+              _SectionLabel(AppConfig.supportNameLabel),
+              const SizedBox(height: 8),
+              _InputField(
+                ctrl: _nameCtrl,
+                hint: AppConfig.supportNameHint,
+                icon: Icons.person_outline_rounded,
+                action: TextInputAction.next,
+              ),
+              const SizedBox(height: 16),
 
-                    _SectionLabel(AppConfig.supportNameLabel),
-                    const SizedBox(height: 8),
-                    _InputField(
-                      ctrl: _nameCtrl,
-                      hint: AppConfig.supportNameHint,
-                      icon: Icons.person_outline_rounded,
-                      action: TextInputAction.next,
-                    ),
-                    const SizedBox(height: 16),
+              _SectionLabel(AppConfig.supportEmailLabel),
+              const SizedBox(height: 8),
+              _InputField(
+                ctrl: _emailCtrl,
+                hint: AppConfig.supportEmailHint,
+                icon: Icons.mail_outline_rounded,
+                keyboard: TextInputType.emailAddress,
+                action: TextInputAction.next,
+                autocorrect: false,
+              ),
+              const SizedBox(height: 16),
 
-                    _SectionLabel(AppConfig.supportEmailLabel),
-                    const SizedBox(height: 8),
-                    _InputField(
-                      ctrl: _emailCtrl,
-                      hint: AppConfig.supportEmailHint,
-                      icon: Icons.mail_outline_rounded,
-                      keyboard: TextInputType.emailAddress,
-                      action: TextInputAction.next,
-                      autocorrect: false,
-                    ),
-                    const SizedBox(height: 16),
+              _SectionLabel(AppConfig.supportSubjectLabel),
+              const SizedBox(height: 8),
+              _InputField(
+                ctrl: _subjectCtrl,
+                hint: AppConfig.supportSubjectHint,
+                icon: Icons.topic_outlined,
+                action: TextInputAction.next,
+              ),
+              const SizedBox(height: 16),
 
-                    _SectionLabel(AppConfig.supportSubjectLabel),
-                    const SizedBox(height: 8),
-                    _InputField(
-                      ctrl: _subjectCtrl,
-                      hint: AppConfig.supportSubjectHint,
-                      icon: Icons.topic_outlined,
-                      action: TextInputAction.next,
-                    ),
-                    const SizedBox(height: 16),
-
-                    _SectionLabel(AppConfig.supportMessageLabel),
-                    const SizedBox(height: 8),
-                    _MultilineField(
-                      ctrl: _messageCtrl,
-                      hint: AppConfig.supportMessageHint,
-                    ),
-                    const SizedBox(height: 16),
+              _SectionLabel(AppConfig.supportMessageLabel),
+              const SizedBox(height: 8),
+              _MultilineField(
+                ctrl: _messageCtrl,
+                hint: AppConfig.supportMessageHint,
+              ),
+              const SizedBox(height: 16),
 
                     // ── Attachment section ─────────────────────
                     _AttachmentSection(
@@ -298,12 +311,9 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                     _SendButton(isLoading: _loading, onTap: _loading ? null : _send),
                     const SizedBox(height: 20),
 
-                    // _QuickHelpSection(),
-                  ],
-                ),
-              ),
-            ),
-          ],
+              // _QuickHelpSection(),
+            ],
+          ),
         ),
       ),
     );

@@ -111,7 +111,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           systemNavigationBarColor:          Colors.transparent,
           systemNavigationBarIconBrightness: Brightness.dark,
           statusBarColor:                    Colors.transparent,
-          statusBarIconBrightness:           Brightness.dark,
+          statusBarIconBrightness:           Brightness.light,
         ),
         child: Scaffold(
           backgroundColor: AppColors.background,
@@ -364,59 +364,80 @@ class _GlobalAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(54);
+  Size get preferredSize => const Size.fromHeight(52);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.navBg,
       elevation: 0,
       scrolledUnderElevation: 0,
-      leadingWidth: 52,
-      leading: showBack
-          ? GestureDetector(
-              onTap: onBack,
-              behavior: HitTestBehavior.opaque,
-              child: const Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Icon(Icons.arrow_back_ios_new_rounded,
-                    size: 20, color: AppColors.textPrimary),
+      toolbarHeight: 52,
+      centerTitle: true,
+      leadingWidth: 60,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 14),
+        child: Center(
+          child: showBack
+              ? GestureDetector(
+            onTap: onBack,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              width: 32, height: 32,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(9),
               ),
-            )
-          : Builder(
-              builder: (ctx) => GestureDetector(
-                onTap: () => Scaffold.of(ctx).openDrawer(),
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 16),
+              child: const Icon(
+                Icons.chevron_left_rounded,
+                color: AppColors.navInactive,
+                size: 20,
+              ),
+            ),
+          )
+              : Builder(
+            builder: (ctx) => GestureDetector(
+              onTap: () => Scaffold.of(ctx).openDrawer(),
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 32, height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Center(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _Bar(18), const SizedBox(height: 4),
-                      _Bar(13), const SizedBox(height: 4),
-                      _Bar(18),
+                      _Bar(14), const SizedBox(height: 3),
+                      _Bar(10), const SizedBox(height: 3),
+                      _Bar(14),
                     ],
                   ),
                 ),
               ),
             ),
+          ),
+        ),
+      ),
       title: Text(
         title,
         style: GoogleFonts.syne(
-          fontSize: 18,
+          fontSize: 15,
           fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
+          color: Colors.white,
         ),
       ),
-      centerTitle: true,
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 14),
-          child: GestureDetector(
-            onTap: () => context.push('/notifications'),
-            behavior: HitTestBehavior.opaque,
-            child: _BellWithBadge(unreadCount: unreadCount),
+          child: Center(
+            child: GestureDetector(
+              onTap: () => context.push('/notifications'),
+              behavior: HitTestBehavior.opaque,
+              child: _BellWithBadge(unreadCount: unreadCount),
+            ),
           ),
         ),
       ],
@@ -429,9 +450,9 @@ class _Bar extends StatelessWidget {
   const _Bar(this.width);
   @override
   Widget build(BuildContext context) => Container(
-    width: width, height: 2,
+    width: width, height: 1.5,
     decoration: BoxDecoration(
-      color: AppColors.textPrimary,
+      color: AppColors.navInactive,
       borderRadius: BorderRadius.circular(1),
     ),
   );
@@ -443,29 +464,28 @@ class _BellWithBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 36, height: 36,
+      width: 32, height: 32,
       child: Stack(clipBehavior: Clip.none, children: [
         Container(
-          width: 36, height: 36,
+          width: 32, height: 32,
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(11),
-            border: Border.all(color: AppColors.border),
+            color: Colors.white.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(9),
           ),
           child: const Center(
             child: Icon(Icons.notifications_outlined,
-                size: 18, color: AppColors.textSecondary),
+                size: 17, color: AppColors.navInactive),
           ),
         ),
         if (unreadCount > 0)
           Positioned(
-            top: 4, right: 4,
+            top: 5, right: 5,
             child: Container(
               width: 7, height: 7,
               decoration: BoxDecoration(
                 color: AppColors.primary,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.background, width: 1),
+                border: Border.all(color: AppColors.navBg, width: 1.5),
               ),
             ),
           ),

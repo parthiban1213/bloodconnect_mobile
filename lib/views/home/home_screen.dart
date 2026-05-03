@@ -178,7 +178,7 @@ class _HomeHeader extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      user?.firstName ?? user?.displayName ?? 'Welcome',
+                      user?.firstName?.toUpperCase() ?? user?.displayName.toUpperCase() ?? 'Welcome',
                       style: GoogleFonts.cormorantGaramond(
                         fontSize: 26,
                         fontWeight: FontWeight.w600,

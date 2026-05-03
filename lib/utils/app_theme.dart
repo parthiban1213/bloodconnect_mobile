@@ -146,11 +146,12 @@ class AppTheme {
             color: AppColors.textMuted, letterSpacing: 0.08),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.navBg,
         elevation: 0,
         scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.navInactive),
         titleTextStyle: GoogleFonts.syne(
-            fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
       ),
       inputDecorationTheme: const InputDecorationTheme(
         filled: false,
