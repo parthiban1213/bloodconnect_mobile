@@ -313,7 +313,7 @@ class AppConfig {
   static const String drawerFeed           = 'Feed';
   static const String drawerMyRequests     = 'My Requests';
   static const String drawerHistory        = 'History';
-  static const String drawerDonorDirectory = 'Donor Directory';
+  static const String drawerDonorDirectory = 'Hospital Directory';
   static const String drawerNotifications  = 'Notifications';
   static const String drawerSupport        = 'Support';
   static const String drawerMyProfile      = 'My Profile';
