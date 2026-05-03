@@ -55,7 +55,7 @@ class _RequirementDetailScreenState
     setState(() {
       _requirement = detail;
       _isLoading = false;
-      if (detail == null) _error = 'Could not load request details.';
+      if (detail == null) _error = AppConfig.errLoadDetail;
     });
   }
 
@@ -540,7 +540,7 @@ class _RequirementDetailScreenState
                                         color: AppColors.primary),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'Directions',
+                                      AppConfig.detailDirectionsBtn,
                                       style: GoogleFonts.dmSans(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w500,

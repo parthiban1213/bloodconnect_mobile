@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../utils/app_config.dart';
 import 'package:latlong2/latlong.dart';
 import '../../models/blood_requirement.dart';
 import '../../utils/app_theme.dart';
@@ -207,7 +208,7 @@ class _FeedMapViewState extends ConsumerState<FeedMapView> {
                 Icon(Icons.map_outlined, size: 36, color: AppColors.textMuted),
                 const SizedBox(height: 12),
                 Text(
-                  'No requests on map',
+                  AppConfig.feedMapNoRequests,
                   style: GoogleFonts.syne(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,

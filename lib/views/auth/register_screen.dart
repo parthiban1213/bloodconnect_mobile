@@ -201,7 +201,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     }
     final city = _cityCtrl.text.trim();
     if (city.isEmpty) {
-      setState(() => _error = 'Please enter your city for location-based matching.');
+      setState(() => _error = AppConfig.errCityRequired);
       return;
     }
 

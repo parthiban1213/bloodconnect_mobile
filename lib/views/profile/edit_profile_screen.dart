@@ -207,7 +207,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         keyboard: TextInputType.emailAddress,
                         validator: (v) {
                           if (v != null && v.isNotEmpty && !v.contains('@'))
-                            return 'Enter a valid email';
+                            return AppConfig.valEditEmailInvalid;
                           return null;
                         })),
                     _Row(

@@ -1,3 +1,4 @@
+import '../utils/app_config.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/info_entry.dart';
 import '../services/info_service.dart';

@@ -1,3 +1,4 @@
+import '../utils/app_config.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/blood_requirement.dart';
@@ -19,12 +20,12 @@ enum LocationFilterRadius {
 extension LocationFilterRadiusExt on LocationFilterRadius {
   String get label {
     switch (this) {
-      case LocationFilterRadius.nearby5km:    return '5 km';
-      case LocationFilterRadius.nearby10km:   return '10 km';
-      case LocationFilterRadius.nearby25km:   return '25 km';
-      case LocationFilterRadius.nearby50km:   return '50 km';
-      case LocationFilterRadius.sameCity:     return 'My City';
-      case LocationFilterRadius.allLocations: return 'All Locations';
+      case LocationFilterRadius.nearby5km:    return AppConfig.locationFilter5km;
+      case LocationFilterRadius.nearby10km:   return AppConfig.locationFilter10km;
+      case LocationFilterRadius.nearby25km:   return AppConfig.locationFilter25km;
+      case LocationFilterRadius.nearby50km:   return AppConfig.locationFilter50km;
+      case LocationFilterRadius.sameCity:     return AppConfig.locationFilterMyCity;
+      case LocationFilterRadius.allLocations: return AppConfig.locationFilterAll;
     }
   }
 

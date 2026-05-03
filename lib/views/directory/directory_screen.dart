@@ -100,7 +100,7 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Filter Directory',
+                          AppConfig.dirFilterTitle,
                           style: GoogleFonts.syne(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -192,7 +192,7 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
 
                     // ── Availability ───────────────────────────────
                     Text(
-                      'AVAILABILITY',
+                      AppConfig.dirAvailability,
                       style: GoogleFonts.syne(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -204,7 +204,7 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
                     Row(
                       children: [
                         _AvailChip(
-                          label: '24h Open',
+                          label: AppConfig.dirAvail24h,
                           value: 'true',
                           selected: selAvail,
                           dotColor: AppColors.secondary,
@@ -213,7 +213,7 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
                         ),
                         const SizedBox(width: 8),
                         _AvailChip(
-                          label: 'Not 24h',
+                          label: AppConfig.dirNotAvail24h,
                           value: 'false',
                           selected: selAvail,
                           dotColor: AppColors.textMuted,
@@ -331,7 +331,7 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
       parts.add(_categoryLabels[state.selectedCategory] ?? state.selectedCategory);
     }
     if (state.availabilityFilter == 'true') parts.add('24h');
-    if (state.availabilityFilter == 'false') parts.add('Not 24h');
+    if (state.availabilityFilter == 'false') parts.add(AppConfig.dirNotAvail24h);
     return parts.join(' · ');
   }
 
@@ -521,7 +521,7 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
                                 color: AppColors.border),
                           ),
                           child: Text(
-                            'Clear filters',
+                            AppConfig.dirClearFilters,
                             style: GoogleFonts.dmSans(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
@@ -862,7 +862,7 @@ class _EntryDetailPopup extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Location Details',
+                AppConfig.dirLocationDetails,
                 style: GoogleFonts.syne(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -1016,7 +1016,7 @@ class _EntryDetailPopup extends StatelessWidget {
                         size: 16, color: AppColors.textSecondary),
                     const SizedBox(width: 8),
                     Text(
-                      'Get Directions',
+                      AppConfig.dirGetDirections,
                       style: GoogleFonts.dmSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -1246,7 +1246,7 @@ class _DirectoryMapViewState extends State<_DirectoryMapView> {
                       size: 32, color: AppColors.textMuted),
                   const SizedBox(height: 10),
                   Text(
-                    'No locations available for map view',
+                    AppConfig.dirNoLocations,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.dmSans(
                         fontSize: 13,
@@ -1318,7 +1318,7 @@ class _DirectoryMapViewState extends State<_DirectoryMapView> {
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      'View details',
+                      AppConfig.dirViewDetails,
                       style: GoogleFonts.dmSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,

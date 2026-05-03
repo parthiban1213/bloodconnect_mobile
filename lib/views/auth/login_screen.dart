@@ -84,10 +84,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _sendOtp() async {
     final m = _mobileCtrl.text.trim();
     if (m.isEmpty) {
-      setState(() => _mobileError = 'Please enter your mobile number.'); return;
+      setState(() => _mobileError = AppConfig.valMobileRequired); return;
     }
     if (!RegExp(r'^[6-9]\d{9}$').hasMatch(m)) {
-      setState(() => _mobileError = 'Enter a valid 10-digit Indian mobile number.'); return;
+      setState(() => _mobileError = AppConfig.valMobileInvalid); return;
     }
     setState(() => _mobileError = null);
     context.dismissKeyboard();
@@ -151,13 +151,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final n = _fpNewCtrl.text;
     final c = _fpCfmCtrl.text;
     if (u.isEmpty || e.isEmpty || n.isEmpty || c.isEmpty) {
-      setState(() => _fpError = 'Please fill in all fields.'); return;
+      setState(() => _fpError = AppConfig.valFillAllFields); return;
     }
     if (!RegExp(r'^[\w.-]+@[\w.-]+\.\w{2,}$').hasMatch(e)) {
-      setState(() => _fpError = 'Please enter a valid email.'); return;
+      setState(() => _fpError = AppConfig.valEmailInvalid); return;
     }
     if (n.length < 6) {
-      setState(() => _fpError = 'Password must be at least 6 characters.'); return;
+      setState(() => _fpError = AppConfig.valPasswordTooShort); return;
     }
     if (n != c) { setState(() => _fpError = 'Passwords do not match.'); return; }
     setState(() => _fpLoading = true);

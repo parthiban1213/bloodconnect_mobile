@@ -18,6 +18,7 @@ import '../views/history/history_screen.dart';
 import '../views/home/home_screen.dart';
 import '../views/shell/main_shell.dart';
 import '../views/support/support_screen.dart';
+import '../views/how_it_works/how_it_works_screen.dart';
 
 class _AuthRouterNotifier extends ChangeNotifier {
   _AuthRouterNotifier(this._ref) {
@@ -123,6 +124,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/support',
         name: 'support',
         builder: (_, __) => const SupportScreen(),
+      ),
+
+      // ── How It Works ───────────────────────────────────────────────
+      GoRoute(
+        path: '/how-it-works',
+        name: 'how_it_works',
+        builder: (_, __) => const HowItWorksScreen(),
       ),
 
       // ── Shell (bottom bar shown on ALL routes inside) ─────────────

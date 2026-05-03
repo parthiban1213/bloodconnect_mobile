@@ -159,6 +159,13 @@ class AppDrawer extends ConsumerWidget {
                       context.push('/support'); // push so user can go back
                     },
                   ),
+                  // ── How It Works ─────────────────────────────
+                  _HowItWorksItem(
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push('/how-it-works');
+                    },
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 6),
@@ -195,6 +202,77 @@ class AppDrawer extends ConsumerWidget {
             ),
             const SizedBox(height: 6),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── How It Works special drawer item ─────────────────────────
+
+class _HowItWorksItem extends StatelessWidget {
+  final VoidCallback onTap;
+  const _HowItWorksItem({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.urgentBg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.urgentBorder),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.route_rounded,
+                  size: 15,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppConfig.drawerHowItWorks,
+                      style: GoogleFonts.syne(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    Text(
+                      AppConfig.drawerHowItWorksSub,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 10,
+                        color: AppColors.urgentText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 16,
+                color: AppColors.primary,
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -276,16 +276,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'This will permanently:',
+              AppConfig.profileDeleteWarning,
               style: GoogleFonts.dmSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary),
             ),
             const SizedBox(height: 8),
-            _BulletRow(text: 'Delete your login account'),
-            _BulletRow(text: 'Remove you from the donor list'),
-            _BulletRow(text: 'Delete all your notifications'),
+            _BulletRow(text: AppConfig.profileDeleteBullet1),
+            _BulletRow(text: AppConfig.profileDeleteBullet2),
+            _BulletRow(text: AppConfig.profileDeleteBullet3),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(10),
@@ -295,7 +295,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 border: Border.all(color: AppColors.urgentBorder),
               ),
               child: Text(
-                'This action cannot be undone.',
+                AppConfig.profileDeleteIrreversible,
                 style: GoogleFonts.dmSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -409,7 +409,7 @@ class _DeleteAccountSection extends StatelessWidget {
                     color: AppColors.textPrimary),
               ),
               Text(
-                'Removes your account and donor record',
+                AppConfig.profileDeleteRemoves,
                 style: GoogleFonts.dmSans(
                     fontSize: 11, color: AppColors.textSecondary),
               ),
@@ -779,7 +779,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
             controller: _confirmCtrl,
             label: AppConfig.profileConfirmPwdLabel,
             validator: (v) =>
-                v != _newCtrl.text ? 'Passwords do not match' : null,
+                v != _newCtrl.text ? AppConfig.valPasswordMismatch : null,
           ),
         ]),
       ),
@@ -852,8 +852,8 @@ class _PwdFieldState extends State<_PwdField> {
       ),
       validator: widget.validator ??
           (v) {
-            if (v == null || v.isEmpty) return 'Required';
-            if (v.length < 6) return 'Min 6 characters';
+            if (v == null || v.isEmpty) return AppConfig.valFieldRequired;
+            if (v.length < 6) return AppConfig.valMinSixChars;
             return null;
           },
     );

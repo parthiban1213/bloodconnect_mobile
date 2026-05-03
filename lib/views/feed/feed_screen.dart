@@ -55,9 +55,9 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
   String _greeting() {
     final h = DateTime.now().hour;
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (h < 12) return AppConfig.homeGreetingMorning.replaceAll(', ', '');
+    if (h < 17) return AppConfig.homeGreetingAfternoon.replaceAll(', ', '');
+    return AppConfig.homeGreetingEvening.replaceAll(', ', '');
   }
 
   // ── Filter popup (urgency/status filters) ───────────────────────
@@ -267,7 +267,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Location access not granted. Distance-based filters use your profile city.',
+                            AppConfig.feedLocationWarning,
                             style: GoogleFonts.dmSans(
                                 fontSize: 11, color: const Color(0xFF92400E)),
                           ),
@@ -468,7 +468,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                                         ),
                                         const SizedBox(width: 3),
                                         Text(
-                                          'open',
+                                          AppConfig.feedOpenLabel,
                                           style: GoogleFonts.syne(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,

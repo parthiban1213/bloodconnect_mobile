@@ -47,7 +47,7 @@ class AcceptedScreen extends StatelessWidget {
                           const Icon(Icons.chevron_left_rounded,
                               size: 18, color: AppColors.primary),
                           Text(
-                            'Back to feed',
+                            AppConfig.acceptedBackToFeed,
                             style: GoogleFonts.dmSans(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,

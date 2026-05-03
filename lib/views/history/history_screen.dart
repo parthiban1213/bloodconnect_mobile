@@ -219,7 +219,7 @@ class _DonationCard extends StatelessWidget {
                     Text(
                       donation.hospital.isNotEmpty
                           ? donation.hospital
-                          : 'Blood Donation',
+                          : AppConfig.historyBloodDonation,
                       style: GoogleFonts.dmSans(
                         fontSize: 14, fontWeight: FontWeight.w500,
                         color: AppColors.textPrimary,

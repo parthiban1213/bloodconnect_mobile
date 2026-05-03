@@ -1,3 +1,4 @@
+import '../utils/app_config.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -69,8 +70,8 @@ class ReminderService {
 
     const androidDetails = AndroidNotificationDetails(
       'bloodconnect_reminders',
-      'Donation Reminders',
-      channelDescription: 'Reminders for when you can donate blood again',
+      AppConfig.reminderChannelName,
+      channelDescription: AppConfig.reminderChannelDesc,
       importance: Importance.high,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
@@ -81,9 +82,8 @@ class ReminderService {
 
     await _plugin.zonedSchedule(
       _eligibilityNotifId,
-      'You can donate blood soon! 🩸',
-      'You\'ll be eligible to donate again in $_daysBeforeReminder days. '
-          'Check BloodConnect for active requests.',
+      AppConfig.reminderTitle,
+      "You'll be eligible to donate again in $_daysBeforeReminder days. ${AppConfig.reminderBody}",
       scheduledTime,
       details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

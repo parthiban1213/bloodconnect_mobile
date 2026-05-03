@@ -316,6 +316,8 @@ class AppConfig {
   static const String drawerDonorDirectory = 'Hospital Directory';
   static const String drawerNotifications  = 'Notifications';
   static const String drawerSupport        = 'Support';
+  static const String drawerHowItWorks     = 'How It Works';
+  static const String drawerHowItWorksSub  = '5-step donation flow guide';
   static const String drawerMyProfile      = 'My Profile';
   static const String drawerSignOut        = 'Sign Out';
 
@@ -608,4 +610,190 @@ class AppConfig {
     'assets/images/banner_3.png',
     'assets/images/banner_4.png',
   ];
+
+  // ── How It Works screen ──────────────────────────────────────
+  static const String hiwScreenTitle        = 'How It Works';
+  static const String hiwSkipBtn            = 'Skip';
+  static const String hiwPrevBtn            = '← Previous';
+  static const String hiwNextBtn            = 'Next →';
+  static const String hiwDoneBtn            = 'Got it ✓';
+  static const String hiwImagePlaceholder   = 'Screenshot coming soon';
+  static const List<Map<String, String>> hiwSlides = [
+    {
+      'step':     'STEP 1 OF 5',
+      'title':    'Post a Blood Request',
+      'desc':     'A requester creates a post with blood type, hospital, urgency level and number of units needed. The request goes live immediately on everyone\'s Feed.',
+      'image':    'assets/images/how_it_works_1.png',
+      'tipTitle': 'What happens next',
+      'tipBody':  'The request is broadcast to all nearby eligible donors in real time.',
+    },
+    {
+      'step':     'STEP 2 OF 5',
+      'title':    'Nearby Donors Get Notified',
+      'desc':     'Donors with a matching blood type receive a push notification and see the request card in their Feed with the "I\'ll Donate" button.',
+      'image':    'assets/images/how_it_works_2.png',
+      'tipTitle': 'Only eligible donors see this',
+      'tipBody':  'Donors outside the 90-day cooldown period with a matching blood type receive the alert.',
+    },
+    {
+      'step':     'STEP 3 OF 5',
+      'title':    'Donor Volunteers & Schedules',
+      'desc':     'Tapping "I\'ll Donate" opens the Schedule Pledge sheet. The donor optionally picks a date & time, then confirms their pledge.',
+      'image':    'assets/images/how_it_works_3.png',
+      'tipTitle': 'Status: Awaiting approval',
+      'tipBody':  'The pledge shows as Pending until the requester confirms the donation was completed.',
+    },
+    {
+      'step':     'STEP 4 OF 5',
+      'title':    'Requester Confirms Donation',
+      'desc':     'From My Requests, the requester taps "View Donors" and marks the pledge as Completed after the actual donation is done.',
+      'image':    'assets/images/how_it_works_4.png',
+      'tipTitle': 'Only the requester can confirm',
+      'tipBody':  'The "Mark as Completed" button only appears in My Requests for the person who created the request.',
+    },
+    {
+      'step':     'STEP 5 OF 5',
+      'title':    'Request Fulfilled & History Saved',
+      'desc':     'Once all units are confirmed, the request closes as Fulfilled. Both parties see it in History. The donor enters a 90-day cooldown.',
+      'image':    'assets/images/how_it_works_5.png',
+      'tipTitle': 'The cycle is complete',
+      'tipBody':  'The blood bank is replenished and the community grows stronger with every donation.',
+    },
+  ];
+
+  // ── Viewmodel error messages ─────────────────────────────────
+  static const String errLoadRequirements   = 'Failed to load requirements.';
+  static const String errLoadHistory        = 'Failed to load history. Please try again.';
+  static const String errLoadNotifications  = 'Failed to load notifications.';
+  static const String errLoadDonors         = 'Failed to load donors. Please try again.';
+  static const String errLoadDirectory      = 'Failed to load directory.';
+  static const String errLoadStats          = 'Failed to load stats.';
+  static const String errLoadMyRequests     = 'Failed to load your requests.';
+  static const String errUpdateRequest      = 'Failed to update request.';
+  static const String errCloseRequest       = 'Failed to close request.';
+  static const String errDeleteAccount      = 'Could not delete account. Please try again.';
+  static const String errLoginFailed        = 'Login failed. Please try again.';
+  static const String errInvalidCredentials = 'Invalid username or password.';
+  static const String errLoadDetail         = 'Could not load request details.';
+  static const String errCityRequired       = 'Please enter your city for location-based matching.';
+
+  // ── Auth validation messages (login/register in-screen) ──────
+  static const String valMobileRequired     = 'Please enter your mobile number.';
+  static const String valMobileInvalid      = 'Enter a valid 10-digit Indian mobile number.';
+  static const String valFillAllFields      = 'Please fill in all fields.';
+  static const String valEmailInvalid       = 'Please enter a valid email.';
+  static const String valPasswordTooShort   = 'Password must be at least 6 characters.';
+  static const String valEmailRequired      = 'Enter a valid email address.';
+  static const String valNameRequired       = 'Your name is required.';
+  static const String valSubjectRequired    = 'Subject is required.';
+  static const String valMessageRequired    = 'Message is required.';
+  static const String valEditEmailInvalid   = 'Enter a valid email';
+  static const String valPasswordMismatch   = 'Passwords do not match';
+  static const String valFieldRequired      = 'Required';
+  static const String valMinSixChars        = 'Min 6 characters';
+
+  // ── Feed screen inline strings ───────────────────────────────
+  static const String feedNearby            = 'Nearby';
+  static const String feedNoResults         = 'No results';
+  static const String feedNoRequestsForType = 'No {type} requests';
+  static const String feedNoRequestsFound   = 'No requests found';
+  static const String feedTryDifferent      = 'Try a different hospital name or blood type.';
+  static const String feedExpandLocation    = 'No requests nearby. Try expanding the location filter.';
+  static const String feedNoneNow           = 'No open requests for {type} right now.';
+  static const String feedNoneAtAll         = 'No open blood requests right now.';
+  static const String feedLocationWarning   = 'Location access not granted. Distance-based filters use your profile city.';
+  static const String feedOpenLabel         = 'open';
+  static const String feedNotMyType         = 'Not my type';
+
+  // ── Requirement card inline strings ─────────────────────────
+  static const String cardStillNeeded       = '{n} unit{s} still needed';
+  static const String cardUpdateAvailability = 'Update availability in Profile';
+  static const String cardDonorsResponded   = '{n} donor{s} responded';
+
+  // ── Accepted screen ──────────────────────────────────────────
+  static const String acceptedBackToFeed    = 'Back to feed';
+
+  // ── Requirement detail screen ────────────────────────────────
+  static const String detailDirectionsBtn   = 'Directions';
+
+  // ── History screen ───────────────────────────────────────────
+  static const String historyBloodDonation  = 'Blood Donation';
+
+  // ── Directory screen ─────────────────────────────────────────
+  static const String dirFilterTitle        = 'Filter Directory';
+  static const String dirAvailability       = 'AVAILABILITY';
+  static const String dirAvail24h           = '24h Open';
+  static const String dirNotAvail24h        = 'Not 24h';
+  static const String dirClearFilters       = 'Clear filters';
+  static const String dirNoLocations        = 'No locations available for map view';
+  static const String dirLocationDetails    = 'Location Details';
+  static const String dirGetDirections      = 'Get Directions';
+  static const String dirDetailPhone        = 'Phone';
+  static const String dirDetailAddress      = 'Address';
+  static const String dirDetailArea         = 'Area';
+  static const String dirDetailAvailable    = 'Available';
+  static const String dirDetailNotes        = 'Notes';
+  static const String dirAvail24hValue      = '24 hours';
+  static const String dirCheckTimings       = 'Check timings';
+  static const String dirViewDetails        = 'View details';
+
+  // ── Profile screen inline strings ───────────────────────────
+  static const String profileDeleteBullet1  = 'Delete your login account';
+  static const String profileDeleteBullet2  = 'Remove you from the donor list';
+  static const String profileDeleteBullet3  = 'Delete all your notifications';
+  static const String profileDeleteWarning  = 'This will permanently:';
+  static const String profileDeleteIrreversible = 'This action cannot be undone.';
+  static const String profileDeleteBtn      = 'Delete';
+  static const String profileDeleteRemoves  = 'Removes your account and donor record';
+  static const String profileUnitSuffix     = 'unit';
+  static const String profileUnitPluralSuffix = 'units';
+  static const String profileSuccessDialog  = 'Message Sent!';
+  static const String profileSupportDone    = 'Done';
+
+  // ── Donors screen inline strings ─────────────────────────────
+  static const String donorUnavailableLabel = 'Unavailable';
+  static const String donorNoScheduleSet    = 'No schedule set';
+
+  // ── Pledged donors modal inline ───────────────────────────────
+  static const String pledgedDonorCompleted = 'Completed';
+  static const String pledgedDonorTotal     = '{n} total';
+
+  // ── Request status modal inline ───────────────────────────────
+  static const String reqStatusAwaitingApproval = '{n} donor{s} scheduled — awaiting your approval';
+  static const String reqStatusFulfilled    = 'Fulfilled';
+  static const String reqStatusCancelled    = 'Cancelled';
+  static const String reqStatusOpen         = 'Open';
+
+  // ── My requests screen section headers ───────────────────────
+  static const String myReqSectionActive    = 'Active';
+
+  // ── Schedule pledge modal ────────────────────────────────────
+  static const String pledgeClearBtn        = 'Clear';
+
+  // ── FCM / notification channel ────────────────────────────────
+  static const String fcmChannelName        = 'Blood Alerts';
+  static const String fcmChannelDesc        = 'Notifications for blood donation requests';
+  static const String reminderChannelName   = 'Donation Reminders';
+  static const String reminderChannelDesc   = 'Reminders for when you can donate blood again';
+  static const String reminderTitle         = 'You can donate blood soon! 🩸';
+  static const String reminderBody          = 'Check BloodConnect for active blood requests.';
+
+  // ── Location filter labels ───────────────────────────────────
+  static const String locationFilter5km     = '5 km';
+  static const String locationFilter10km    = '10 km';
+  static const String locationFilter25km    = '25 km';
+  static const String locationFilter50km    = '50 km';
+  static const String locationFilterMyCity  = 'My City';
+  static const String locationFilterAll     = 'All Locations';
+
+  // ── Feed map view ─────────────────────────────────────────────
+  static const String feedMapNoRequests     = 'No requests on map';
+  static const String feedMapNoLocation     = 'Requests without location data won\'t appear on the map.';
+
+  // ── App name (used in main.dart) ─────────────────────────────
+  static const String mainAppTitle          = 'BloodConnect';
+
+  // ── Support screen validation messages ───────────────────────
+  static const String supportSupportDone    = 'Done';
+  static const String supportMsgSent        = 'Message Sent!';
 }

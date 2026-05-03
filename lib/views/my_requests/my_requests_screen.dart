@@ -126,7 +126,7 @@ class _MyRequestsScreenState extends ConsumerState<MyRequestsScreen>
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
       children: [
         if (state.activeRequests.isNotEmpty) ...[
-          _SectionHeader('Active', state.activeRequests.length, AppColors.primary),
+          _SectionHeader(AppConfig.myReqSectionActive, state.activeRequests.length, AppColors.primary),
           const SizedBox(height: 8),
           ...state.activeRequests.map((r) => _RequestCard(requirement: r)),
           const SizedBox(height: 12),

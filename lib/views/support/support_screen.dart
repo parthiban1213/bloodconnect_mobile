@@ -86,16 +86,16 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
     setState(() { _error = null; });
 
     if (name.isEmpty) {
-      setState(() => _error = 'Your name is required.'); return;
+      setState(() => _error = AppConfig.valNameRequired); return;
     }
     if (email.isEmpty || !RegExp(r'^[\w.-]+@[\w.-]+\.\w{2,}$').hasMatch(email)) {
-      setState(() => _error = 'A valid email address is required.'); return;
+      setState(() => _error = AppConfig.valEmailRequired); return;
     }
     if (subject.isEmpty) {
-      setState(() => _error = 'Subject is required.'); return;
+      setState(() => _error = AppConfig.valSubjectRequired); return;
     }
     if (message.isEmpty) {
-      setState(() => _error = 'Message is required.'); return;
+      setState(() => _error = AppConfig.valMessageRequired); return;
     }
 
     setState(() => _loading = true);
@@ -152,7 +152,7 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
               ),
               const SizedBox(height: 20),
               Text(
-                'Message Sent!',
+                AppConfig.supportMsgSent,
                 style: GoogleFonts.syne(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -190,7 +190,7 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                     elevation: 0,
                   ),
                   child: Text(
-                    'Done',
+                    AppConfig.supportSupportDone,
                     style: GoogleFonts.dmSans(
                         fontSize: 14, fontWeight: FontWeight.w600),
                   ),

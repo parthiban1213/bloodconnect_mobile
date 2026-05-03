@@ -435,7 +435,7 @@ class _RequirementCardState extends ConsumerState<RequirementCard> {
                                 size: 14, color: AppColors.closedAccent),
                             const SizedBox(width: 6),
                             Text(
-                              'Update availability in Profile',
+                              AppConfig.cardUpdateAvailability,
                               style: GoogleFonts.syne(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -494,7 +494,7 @@ class _RequirementCardState extends ConsumerState<RequirementCard> {
                               ),
                               child: Center(
                                 child: Text(
-                                  "Not my type",
+                                  AppConfig.feedNotMyType,
                                   style: GoogleFonts.syne(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,

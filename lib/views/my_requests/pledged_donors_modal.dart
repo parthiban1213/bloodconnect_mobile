@@ -75,7 +75,7 @@ class _PledgedDonorsModalState extends ConsumerState<PledgedDonorsModal> {
         .updateDonationStatus(
           requirementId: widget.requirement.id,
           donorUsername: pledge.donorUsername,
-          newStatus: 'Completed',
+          newStatus: AppConfig.pledgedDonorCompleted,
         );
 
     if (!mounted) return;
@@ -465,7 +465,7 @@ class _DonorCard extends StatelessWidget {
         : pledge.donorUsername;
     final avatar = displayName[0].toUpperCase();
 
-    String scheduleText = 'No schedule set';
+    String scheduleText = AppConfig.donorNoScheduleSet;
     if (pledge.scheduledDate.isNotEmpty) {
       try {
         final d = DateTime.parse(pledge.scheduledDate);
@@ -609,7 +609,7 @@ class _DonorCard extends StatelessWidget {
                               size: 12, color: statusColor),
                           const SizedBox(width: 4),
                           Text(
-                            'Completed',
+                            AppConfig.pledgedDonorCompleted,
                             style: GoogleFonts.syne(
                               fontSize: 9,
                               fontWeight: FontWeight.w700,

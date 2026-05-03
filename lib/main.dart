@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'utils/app_theme.dart';
 import 'utils/app_router.dart';
+import 'utils/app_config.dart';
 import 'utils/firebase_options.dart';
 import 'views/auth/splash_screen.dart';
 import 'services/fcm_service.dart';
@@ -171,7 +172,7 @@ class _BloodConnectAppState extends ConsumerState<BloodConnectApp>
     return SplashScreen(
       isCheckingAuth: isCheckingAuth,
       child: MaterialApp.router(
-        title: 'BloodConnect',
+        title: AppConfig.mainAppTitle,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.theme,
         routerConfig: router,

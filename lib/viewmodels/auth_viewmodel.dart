@@ -1,3 +1,4 @@
+import '../utils/app_config.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -134,17 +135,17 @@ class AuthViewModel extends StateNotifier<AuthState> {
     } on UnauthorizedException {
       state = state.copyWith(
         isLoading: false,
-        error: 'Invalid username or password.',
+        error: AppConfig.errInvalidCredentials,
       );
       return false;
     } on ApiException catch (e) {
       final msg = (e.statusCode == 401)
-          ? 'Invalid username or password.'
+          ? AppConfig.errInvalidCredentials
           : e.message;
       state = state.copyWith(isLoading: false, error: msg);
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Login failed. Please try again.');
+      state = state.copyWith(isLoading: false, error: AppConfig.errLoginFailed);
       return false;
     }
   }
@@ -333,7 +334,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
     } catch (_) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Could not delete account. Please try again.',
+        error: AppConfig.errDeleteAccount,
       );
       return false;
     }

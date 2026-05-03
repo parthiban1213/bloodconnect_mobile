@@ -1,3 +1,4 @@
+import '../utils/app_config.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart' show Color;
@@ -40,8 +41,8 @@ class FcmService {
       FlutterLocalNotificationsPlugin();
 
   static const String _channelId   = 'bloodconnect_alerts';
-  static const String _channelName = 'Blood Alerts';
-  static const String _channelDesc = 'Notifications for blood donation requests';
+  static const String _channelName = AppConfig.fcmChannelName;
+  static const String _channelDesc = AppConfig.fcmChannelDesc;
 
   bool    _listenersRegistered = false; // permission + listeners done once per login
   String? _subscribedTopic;            // topic currently confirmed on device
