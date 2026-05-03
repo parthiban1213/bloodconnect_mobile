@@ -37,6 +37,7 @@ class _RequirementDetailScreenState
   bool _isLoading = false;
   bool _isConfirming = false;
   bool _isCancellingPledge = false;
+  bool _isOpeningDirections = false; // guard: prevents concurrent launchUrl calls
   String? _error;
 
   @override
@@ -61,6 +62,54 @@ class _RequirementDetailScreenState
   Future<void> _callPhone(String phone) async {
     final uri = Uri.parse('tel:$phone');
     await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  /// Opens Google Maps (or Apple Maps on iOS) with the hospital address
+  /// as the destination. Falls back to a geo URI so any maps app can handle it.
+  ///
+  /// Priority:
+  ///   1. Lat/Lng coordinates   → most precise, works offline maps too
+  ///   2. Hospital + city text  → geocoded by Maps on the fly
+  Future<void> _openDirections(BloodRequirement req) async {
+    // Prevent crash from rapid double-taps launching two concurrent launchUrl calls
+    if (_isOpeningDirections) return;
+    setState(() => _isOpeningDirections = true);
+    try {
+      Uri mapsUri;
+
+      if (req.latitude != null && req.longitude != null) {
+        final lat = req.latitude!;
+        final lng = req.longitude!;
+        final label = Uri.encodeComponent(req.hospital);
+        mapsUri = Uri.parse('https://www.google.com/maps/dir/?api=1'
+            '&destination=$lat,$lng'
+            '&destination_place_id=$label'
+            '&travelmode=driving');
+      } else {
+        final query = Uri.encodeComponent(
+          [req.hospital, req.location, req.city]
+              .where((s) => s.isNotEmpty)
+              .join(', '),
+        );
+        mapsUri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+      }
+
+      if (!await launchUrl(mapsUri, mode: LaunchMode.externalApplication)) {
+        final fallbackQuery = Uri.encodeComponent(
+          [req.hospital, req.location, req.city]
+              .where((s) => s.isNotEmpty)
+              .join(' '),
+        );
+        await launchUrl(
+          Uri.parse('geo:0,0?q=$fallbackQuery'),
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (e) {
+      debugPrint('Directions error: $e');
+    } finally {
+      if (mounted) setState(() => _isOpeningDirections = false);
+    }
   }
 
   Future<void> _confirmDonation() async {
@@ -437,32 +486,72 @@ class _RequirementDetailScreenState
                             ],
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () => _callPhone(req.contactPhone),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 9),
-                            decoration: BoxDecoration(
-                              color: AppColors.plannedBg,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.call_rounded,
-                                    size: 13,
-                                    color: AppColors.plannedText),
-                                const SizedBox(width: 6),
-                                Text(
-                                  AppConfig.commonCallBtn,
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.plannedText,
-                                  ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // ── Call button ────────────────────────
+                            GestureDetector(
+                              onTap: () => _callPhone(req.contactPhone),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 9),
+                                decoration: BoxDecoration(
+                                  color: AppColors.plannedBg,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              ],
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.call_rounded,
+                                        size: 13,
+                                        color: AppColors.plannedText),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      AppConfig.commonCallBtn,
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.plannedText,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            // ── Directions button ──────────────────
+                            GestureDetector(
+                              onTap: () => _openDirections(req),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 9),
+                                decoration: BoxDecoration(
+                                  color: AppColors.urgentBg,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                      color: AppColors.urgentBorder),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                        Icons.directions_rounded,
+                                        size: 13,
+                                        color: AppColors.primary),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Directions',
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

@@ -461,7 +461,7 @@ class _DonorCard extends StatelessWidget {
         : const Color(0xFF15803D);
 
     final displayName = pledge.donorName.isNotEmpty
-        ? pledge.donorName
+        ? pledge.donorName.split(' ').first
         : pledge.donorUsername;
     final avatar = displayName[0].toUpperCase();
 
@@ -523,11 +523,6 @@ class _DonorCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
-              ),
-              Text(
-                '@${pledge.donorUsername}',
-                style: GoogleFonts.dmSans(
-                    fontSize: 11, color: AppColors.textMuted),
               ),
               const SizedBox(height: 3),
               Row(children: [

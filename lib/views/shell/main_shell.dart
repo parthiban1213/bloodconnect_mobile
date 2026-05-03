@@ -118,6 +118,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           resizeToAvoidBottomInset: false,
           extendBody: true,
           drawer: const AppDrawer(),
+          drawerEnableOpenDragGesture: false,
           appBar: _GlobalAppBar(
             title: _titleFor(location),
             unreadCount: unreadCount,

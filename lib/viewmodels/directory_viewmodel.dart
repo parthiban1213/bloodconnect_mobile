@@ -9,6 +9,7 @@ class DirectoryState {
   final String? error;
   final String selectedCategory; // 'All', 'Hospital', 'Blood Bank', 'Ambulance'
   final String searchQuery;
+  final String availabilityFilter; // '' = all, 'true' = 24h only, 'false' = non-24h
 
   const DirectoryState({
     this.isLoading = false,
@@ -16,6 +17,7 @@ class DirectoryState {
     this.error,
     this.selectedCategory = 'All',
     this.searchQuery = '',
+    this.availabilityFilter = '',
   });
 
   DirectoryState copyWith({
@@ -24,6 +26,7 @@ class DirectoryState {
     String? error,
     String? selectedCategory,
     String? searchQuery,
+    String? availabilityFilter,
     bool clearError = false,
   }) {
     return DirectoryState(
@@ -32,23 +35,36 @@ class DirectoryState {
       error: clearError ? null : (error ?? this.error),
       selectedCategory: selectedCategory ?? this.selectedCategory,
       searchQuery: searchQuery ?? this.searchQuery,
+      availabilityFilter: availabilityFilter ?? this.availabilityFilter,
     );
   }
 
+  bool get hasActiveFilter =>
+      selectedCategory != 'All' || availabilityFilter.isNotEmpty;
+
   List<InfoEntry> get filtered {
     var result = entries;
+
     if (selectedCategory != 'All') {
       result = result.where((e) => e.category == selectedCategory).toList();
     }
+
+    if (availabilityFilter == 'true') {
+      result = result.where((e) => e.available24h).toList();
+    } else if (availabilityFilter == 'false') {
+      result = result.where((e) => !e.available24h).toList();
+    }
+
     if (searchQuery.isNotEmpty) {
       final q = searchQuery.toLowerCase();
       result = result
           .where((e) =>
-              e.name.toLowerCase().contains(q) ||
-              e.area.toLowerCase().contains(q) ||
-              e.address.toLowerCase().contains(q))
+      e.name.toLowerCase().contains(q) ||
+          e.area.toLowerCase().contains(q) ||
+          e.address.toLowerCase().contains(q))
           .toList();
     }
+
     return result;
   }
 }
@@ -68,8 +84,8 @@ class DirectoryViewModel extends StateNotifier<DirectoryState> {
     } on ApiException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
     } catch (e) {
-      state =
-          state.copyWith(isLoading: false, error: 'Failed to load directory.');
+      state = state.copyWith(
+          isLoading: false, error: 'Failed to load directory.');
     }
   }
 
@@ -80,9 +96,20 @@ class DirectoryViewModel extends StateNotifier<DirectoryState> {
   void setSearch(String query) {
     state = state.copyWith(searchQuery: query);
   }
+
+  void setAvailability(String value) {
+    state = state.copyWith(availabilityFilter: value);
+  }
+
+  void clearFilters() {
+    state = state.copyWith(
+      selectedCategory: 'All',
+      availabilityFilter: '',
+    );
+  }
 }
 
 final directoryViewModelProvider =
-    StateNotifierProvider<DirectoryViewModel, DirectoryState>((ref) {
+StateNotifierProvider<DirectoryViewModel, DirectoryState>((ref) {
   return DirectoryViewModel();
 });
