@@ -10,6 +10,9 @@ import '../../utils/app_config.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/app_widgets.dart';
 import '../../services/reminder_service.dart';
+import 'package:go_router/go_router.dart';
+import '../../viewmodels/gamification_viewmodel.dart';
+import '../../models/gamification_model.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -48,8 +51,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(14, 8, 14, 110),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -131,6 +134,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _DonationStatCard(count: user?.donationCount ?? 0),
               const SizedBox(height: 10),
 
+              // ── Gamification — XP, badges, rank ───────────
+              _ProfileGamificationSection(
+                  donationCount: user?.donationCount ?? 0),
+              const SizedBox(height: 10),
+
               // ── Menu ─────────────────────────────────────
               Container(
                 decoration: BoxDecoration(
@@ -170,7 +178,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ]),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 10),
 
               // ── Sign out ─────────────────────────────────
               GestureDetector(
@@ -338,7 +346,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context.go('/login');
     } else {
       final errMsg = ref.read(authViewModelProvider).error ??
-          'Failed to delete account. Please try again.';
+          AppConfig.profileDeleteFailed;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(errMsg),
         backgroundColor: AppColors.primary,
@@ -579,7 +587,7 @@ class _DonationEligibilityCard extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Donation Eligibility',
+                AppConfig.profileGamDonationElig,
                 style: GoogleFonts.syne(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -603,7 +611,7 @@ class _DonationEligibilityCard extends StatelessWidget {
             icon: Icons.event_available_rounded,
             label: AppConfig.profileNextEligible,
             value: isEligible
-                ? 'Now'
+                ? AppConfig.profileGamNow
                 : (nextDate != null
                     ? DateFormat('d MMM yyyy').format(nextDate)
                     : '—'),
@@ -613,7 +621,7 @@ class _DonationEligibilityCard extends StatelessWidget {
           _EligibilityRow(
             icon: Icons.timer_outlined,
             label: AppConfig.profileDaysUntil,
-            value: isEligible ? 'Eligible now!' : '$daysLeft days',
+            value: isEligible ? AppConfig.profileGamEligibleNow : '$daysLeft days',
             valueColor: isEligible ? AppColors.secondary : AppColors.moderateAccent,
           ),
         ],
@@ -857,5 +865,276 @@ class _PwdFieldState extends State<_PwdField> {
             return null;
           },
     );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Profile Gamification Section
+//  Inserted below _DonationStatCard — additive, no existing
+//  profile content touched.
+// ─────────────────────────────────────────────────────────────
+class _ProfileGamificationSection extends ConsumerWidget {
+  final int donationCount;
+  const _ProfileGamificationSection({required this.donationCount});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gamState = ref.watch(gamificationViewModelProvider);
+    final data     = gamState.data;
+
+    if (gamState.isLoading || data == null) {
+      return Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppColors.primary),
+          ),
+        ),
+      );
+    }
+
+    final nextTier  = data.nextTier;
+    final xpForNext = data.xpForNextTier;
+    final progress  = xpForNext > 0
+        ? (data.xp / xpForNext).clamp(0.0, 1.0)
+        : 1.0;
+    final earnedBadges = data.earnedBadges;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── XP progress card ──────────────────────────────────
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(children: [
+                    Text(
+                      data.tier.name,
+                      style: GoogleFonts.syne(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.urgentBg,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        AppConfig.profileGamDonor,
+                        style: GoogleFonts.syne(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ]),
+                  Text(
+                    '${data.xp} XP',
+                    style: GoogleFonts.syne(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+              if (nextTier != null) ...[
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 7,
+                    backgroundColor: AppColors.border,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '${(xpForNext - data.xp).clamp(0, xpForNext)} XP to ${nextTier.name}',
+                  style: GoogleFonts.dmSans(
+                      fontSize: 11, color: AppColors.textSecondary),
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // ── Badges row ────────────────────────────────────────
+        if (earnedBadges.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppConfig.profileGamBadges,
+                      style: GoogleFonts.syne(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.05,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => context.go('/rewards'),
+                      child: Text(
+                        AppConfig.profileGamSeeAll,
+                        style: GoogleFonts.syne(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: earnedBadges.map((badge) {
+                      final icon = _badgeIcon(badge.icon);
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: AppColors.urgentBg,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: AppColors.urgentBorder),
+                              ),
+                              child: Icon(icon,
+                                  size: 20, color: AppColors.primary),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              badge.name,
+                              style: GoogleFonts.dmSans(
+                                  fontSize: 10,
+                                  color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        const SizedBox(height: 10),
+
+        // ── Rank card ─────────────────────────────────────────
+        GestureDetector(
+          onTap: () => context.go('/rewards'),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.urgentBg,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Center(
+                  child: Text(
+                    data.cityRank > 0 ? '#${data.cityRank}' : '—',
+                    style: GoogleFonts.syne(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data.cityName.isNotEmpty
+                          ? '${data.cityName} leaderboard'
+                          : AppConfig.profileGamCityLb,
+                      style: GoogleFonts.syne(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      AppConfig.profileGamThisMonth,
+                      style: GoogleFonts.dmSans(
+                          fontSize: 11, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded,
+                  size: 18, color: AppColors.textMuted),
+            ]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  IconData _badgeIcon(BadgeIcon icon) {
+    switch (icon) {
+      case BadgeIcon.heart:  return Icons.favorite_rounded;
+      case BadgeIcon.bolt:   return Icons.bolt_rounded;
+      case BadgeIcon.clock:  return Icons.access_time_rounded;
+      case BadgeIcon.shield: return Icons.shield_rounded;
+      case BadgeIcon.people: return Icons.people_rounded;
+      case BadgeIcon.lock:   return Icons.lock_outline_rounded;
+      case BadgeIcon.trophy: return Icons.emoji_events_rounded;
+      default:               return Icons.star_rounded;
+    }
   }
 }

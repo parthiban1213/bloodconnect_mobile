@@ -23,10 +23,10 @@ class MainShell extends ConsumerStatefulWidget {
 class _MainShellState extends ConsumerState<MainShell> {
 
   static const _allTabs = [
-    _Tab('/home',        Icons.home_outlined,               Icons.home_rounded,               'Home'),
-    _Tab('/feed',        Icons.grid_view_outlined,          Icons.grid_view_rounded,          'Feed'),
-    _Tab('/my-requests', Icons.bloodtype_outlined,          Icons.bloodtype_rounded,          'Requests'),
-    _Tab('/donors',      Icons.volunteer_activism_outlined, Icons.volunteer_activism_rounded, 'Donors'),
+    _Tab('/home',        Icons.home_outlined,               Icons.home_rounded,               AppConfig.navHome),
+    _Tab('/feed',        Icons.grid_view_outlined,          Icons.grid_view_rounded,          AppConfig.navFeed),
+    _Tab('/my-requests', Icons.bloodtype_outlined,          Icons.bloodtype_rounded,          AppConfig.navRequests),
+    _Tab('/donors',      Icons.volunteer_activism_outlined, Icons.volunteer_activism_rounded, AppConfig.navDonors),
   ];
 
   static Map<String, String> get _titles => AppConfig.shellTitles;
@@ -119,7 +119,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           extendBody: true,
           drawer: const AppDrawer(),
           drawerEnableOpenDragGesture: false,
-          appBar: _GlobalAppBar(
+          appBar: GlobalAppBar(
             title: _titleFor(location),
             unreadCount: unreadCount,
             showBack: !isOnHome,
@@ -351,20 +351,25 @@ class _PillTab extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────
 //  App Bar
 // ─────────────────────────────────────────────────────────────
-class _GlobalAppBar extends StatelessWidget implements PreferredSizeWidget {
+class GlobalAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final int unreadCount;
   final bool showBack;
   final VoidCallback? onBack;
-  const _GlobalAppBar({
+  final PreferredSizeWidget? bottom;
+
+  const GlobalAppBar({
     required this.title,
     required this.unreadCount,
     this.showBack = false,
     this.onBack,
+    this.bottom,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(52);
+  Size get preferredSize => Size.fromHeight(
+        52 + (bottom?.preferredSize.height ?? 0),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -375,6 +380,7 @@ class _GlobalAppBar extends StatelessWidget implements PreferredSizeWidget {
       toolbarHeight: 52,
       centerTitle: true,
       leadingWidth: 60,
+      bottom: bottom,
       leading: Padding(
         padding: const EdgeInsets.only(left: 14),
         child: Center(
@@ -410,9 +416,9 @@ class _GlobalAppBar extends StatelessWidget implements PreferredSizeWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _Bar(14), const SizedBox(height: 3),
-                      _Bar(10), const SizedBox(height: 3),
-                      _Bar(14),
+                      AppBarDivider(14), const SizedBox(height: 3),
+                      AppBarDivider(10), const SizedBox(height: 3),
+                      AppBarDivider(14),
                     ],
                   ),
                 ),
@@ -436,7 +442,7 @@ class _GlobalAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: GestureDetector(
               onTap: () => context.push('/notifications'),
               behavior: HitTestBehavior.opaque,
-              child: _BellWithBadge(unreadCount: unreadCount),
+              child: BellWithBadge(unreadCount: unreadCount),
             ),
           ),
         ),
@@ -445,9 +451,9 @@ class _GlobalAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-class _Bar extends StatelessWidget {
+class AppBarDivider extends StatelessWidget {
   final double width;
-  const _Bar(this.width);
+  const AppBarDivider(this.width);
   @override
   Widget build(BuildContext context) => Container(
     width: width, height: 1.5,
@@ -458,9 +464,9 @@ class _Bar extends StatelessWidget {
   );
 }
 
-class _BellWithBadge extends StatelessWidget {
+class BellWithBadge extends StatelessWidget {
   final int unreadCount;
-  const _BellWithBadge({required this.unreadCount});
+  const BellWithBadge({required this.unreadCount});
   @override
   Widget build(BuildContext context) {
     return SizedBox(

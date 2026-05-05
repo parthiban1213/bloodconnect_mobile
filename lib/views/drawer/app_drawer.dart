@@ -61,7 +61,7 @@ class AppDrawer extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      user?.displayName ?? 'User',
+                      user?.displayName ?? AppConfig.widgetUser,
                       style: GoogleFonts.syne(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -144,6 +144,15 @@ class AppDrawer extends ConsumerWidget {
                             Navigator.pop(context);
                             context.go('/history');
                           },
+                        ),
+                        _Item(
+                          icon: Icons.star_rounded,
+                          label: AppConfig.drawerRewards,
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.go('/rewards');
+                          },
+                          isNew: true,
                         ),
                         _Item(
                           icon: Icons.people_outline_rounded,
@@ -299,6 +308,7 @@ class _Item extends StatelessWidget {
   final VoidCallback onTap;
   final Color? textColor;
   final Color? iconColor;
+  final bool isNew;
 
   const _Item({
     required this.icon,
@@ -306,6 +316,7 @@ class _Item extends StatelessWidget {
     required this.onTap,
     this.textColor,
     this.iconColor,
+    this.isNew = false,
   });
 
   @override
@@ -321,14 +332,33 @@ class _Item extends StatelessWidget {
                 size: 18,
                 color: iconColor ?? AppColors.textSecondary),
             const SizedBox(width: 14),
-            Text(
-              label,
-              style: GoogleFonts.syne(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: textColor ?? AppColors.textPrimary,
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.syne(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textColor ?? AppColors.textPrimary,
+                ),
               ),
             ),
+            if (isNew)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'NEW',
+                  style: GoogleFonts.syne(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.04,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

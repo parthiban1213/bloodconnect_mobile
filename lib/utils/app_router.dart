@@ -19,6 +19,7 @@ import '../views/home/home_screen.dart';
 import '../views/shell/main_shell.dart';
 import '../views/support/support_screen.dart';
 import '../views/how_it_works/how_it_works_screen.dart';
+import '../views/rewards/rewards_screen.dart';
 
 class _AuthRouterNotifier extends ChangeNotifier {
   _AuthRouterNotifier(this._ref) {
@@ -191,6 +192,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/edit-profile',
             name: 'edit_profile',
             builder: (_, __) => const EditProfileScreen(),
+          ),
+          GoRoute(
+            path: '/rewards',
+            name: 'rewards',
+            builder: (_, __) => const RewardsScreen(),
           ),
         ],
       ),

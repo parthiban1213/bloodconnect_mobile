@@ -313,6 +313,7 @@ class AppConfig {
   static const String drawerFeed           = 'Feed';
   static const String drawerMyRequests     = 'My Requests';
   static const String drawerHistory        = 'History';
+  static const String drawerRewards        = 'Rewards';
   static const String drawerDonorDirectory = 'Hospital Directory';
   static const String drawerNotifications  = 'Notifications';
   static const String drawerSupport        = 'Support';
@@ -333,6 +334,7 @@ class AppConfig {
     '/notifications':   'Notifications',
     '/add-requirement': 'New Blood Request',
     '/edit-profile':    'Edit Profile',
+    '/rewards':         'Rewards',
   };
   static const String shellDefaultTitle = 'BloodConnect';
 
@@ -796,4 +798,140 @@ class AppConfig {
   // ── Support screen validation messages ───────────────────────
   static const String supportSupportDone    = 'Done';
   static const String supportMsgSent        = 'Message Sent!';
+
+  // ── Gamification — model strings ─────────────────────────────
+  // Tiers
+  static const String tierBronze   = 'Bronze';
+  static const String tierSilver   = 'Silver';
+  static const String tierGold     = 'Gold';
+  static const String tierPlatinum = 'Platinum';
+  static const String tierLegend   = 'Legend';
+
+  // Badge names & descriptions
+  static const String badgeFirstDropName        = 'First drop';
+  static const String badgeFirstDropDesc        = 'Completed your first donation';
+  static const String badgeFirstDropEarn        = 'Complete your first donation';
+  static const String badgeLifeSaverName        = 'Life saver';
+  static const String badgeLifeSaverDesc        = 'Helped 3 patients get their required blood';
+  static const String badgeLifeSaverEarn        = 'Help 3 patients by donating';
+  static const String badgeStreak3Name          = 'Streak 3';
+  static const String badgeStreak3Desc          = 'Donated for 3 consecutive eligible months';
+  static const String badgeStreak3Earn          = 'Donate for 3 months in a row';
+  static const String badgeOnTimeName           = 'On time';
+  static const String badgeOnTimeDesc           = 'Showed up on the exact scheduled date';
+  static const String badgeOnTimeEarn           = 'Complete a donation on the scheduled date';
+  static const String badgeRapidName            = 'Rapid responder';
+  static const String badgeRapidDesc            = 'Pledged to a Critical request within 1 hour';
+  static const String badgeRapidEarn            = 'Pledge to a Critical request within 1 hour';
+  static const String badgePlatinumName         = 'Platinum';
+  static const String badgePlatinumDesc         = 'Reached Platinum donor tier (15 donations)';
+  static const String badgePlatinumEarn         = 'Reach 15 donations to unlock Platinum';
+  static const String badgeLegendName           = 'Legend';
+  static const String badgeLegendDesc           = 'Reached Legend tier (25+ donations)';
+  static const String badgeLegendEarn           = 'Reach 25 donations to become a Legend';
+
+  // Challenge names & descriptions
+  static const String challengeCityChampionTitle     = 'City champion';
+  static const String challengeCityChampionDesc      = 'Reach #1 on your city leaderboard this month';
+  static const String challengeBloodTypeHeroTitle    = 'Blood type hero';
+  static const String challengeBloodTypeHeroDesc     = 'Donate to requests from 3 different blood types in a month';
+  static const String challengeEmergencyTitle        = 'Emergency responder';
+  static const String challengeEmergencyDesc         = 'Pledge to a Critical-urgency request within 1 hour of it being posted';
+  static const String challengeRapidPledgeTitle      = 'Rapid pledge';
+  static const String challengeRapidPledgeDesc       = 'Complete a scheduled donation within the agreed date and time';
+  static const String challengeFirstPledgeTitle      = 'First pledge';
+  static const String challengeFirstPledgeDesc       = 'Make your very first donation pledge on BloodConnect';
+  static const String challengeLifeSaverTitle        = 'Life saver';
+  static const String challengeLifeSaverDesc         = 'Help 3 patients by completing donations';
+
+  // Gamification UI strings
+  static const String gamificationRewardsTitle   = 'Rewards';
+  static const String gamificationLeaderboard    = 'Leaderboard';
+  static const String gamificationChallenges     = 'Challenges';
+  static const String gamificationBadges         = 'Badges';
+  static const String gamificationMyCity         = 'My city';
+  static const String gamificationState          = 'State';
+  static const String gamificationAllIndia       = 'All India';
+  static const String gamificationDonor          = 'Donor';
+  static const String gamificationDonations      = 'Donations';
+  static const String gamificationXp             = 'XP';
+  static const String gamificationYou            = 'You';
+  static const String gamificationYouTag         = 'you';
+  static const String gamificationDaysLeft       = 'days left';
+  static const String gamificationOngoing        = 'Ongoing';
+  static const String gamificationEarned         = 'Earned';
+  static const String gamificationLocked         = 'Locked';
+  static const String gamificationAll            = 'All';
+  static const String gamificationActive         = 'Active';
+  static const String gamificationCompleted      = 'Completed';
+  static const String gamificationLegendReached  = 'Legend tier reached!';
+  static const String gamificationFailedLoad     = 'Failed to load rewards';
+  static const String gamificationFailedLoadVM   = 'Failed to load rewards. Please try again.';
+  static const String gamificationTryAgain       = 'Try again';
+  static const String gamificationStreakKeep     = 'Donate before {date} to keep it';
+  static const String gamificationDonateToKeep   = 'days left';
+
+  // Home screen — rewards tab
+  static const String homeTabFeed              = 'Feed';
+  static const String homeTabRewards           = 'Rewards';
+  static const String homeRewardsLeaderboard   = 'Leaderboard';
+  static const String homeRewardsChallenges    = 'Active challenges';
+  static const String homeRewardsWelcome       = 'Welcome';
+  static const String homeRewardsStreakKeep    = 'Donate before {date} to keep it';
+  static const String homeRewardsXpToTier      = '{xp} XP to {tier}';
+  static const String homeRewardsLegendReached = 'Legend tier reached!';
+  static const String homeRewardsYou           = 'You';
+  static const String homeRewardsDaysLeft      = 'days left';
+  static const String homeRewardsCityLb        = 'City leaderboard';
+
+  // Profile screen — gamification section
+  static const String profileGamBadges         = 'Badges';
+  static const String profileGamSeeAll         = 'See all';
+  static const String profileGamCityLb         = 'City leaderboard';
+  static const String profileGamThisMonth      = 'This month';
+  static const String profileGamDonor          = 'Donor';
+  static const String profileGamEligibleNow    = 'Eligible now!';
+  static const String profileGamNow            = 'Now';
+  static const String profileGamDonationElig   = 'Donation Eligibility';
+  static const String profileDeleteFailed       = 'Failed to delete account. Please try again.';
+
+  // Bottom nav shell labels (main_shell.dart)
+
+  // Directory screen inline strings
+  static const String directoryPhone    = 'Phone';
+  static const String directoryAddress  = 'Address';
+  static const String directoryArea     = 'Area';
+  static const String directoryAvail    = 'Available';
+  static const String directoryNotes    = 'Notes';
+
+  // Feed/home inline
+
+  // Widgets
+  static const String widgetTryAgain   = 'Try again';
+  static const String widgetUser       = 'User';
+
+  // Password prompt dialog
+  static const String pwdPromptTitle    = 'Secure Your Account';
+  static const String pwdPromptBody     = 'You registered using a one-time code. Sign in with your username.';
+  static const String pwdPromptUpdate   = 'Update Password';
+  static const String pwdPromptSkip     = 'Skip for Now';
+
+  // Eligibility card
+  static const String eligCalc          = 'Calculating…';
+  static const String eligReEligible    = 're eligible.';
+
+  // Add requirement screen blood type labels
+  static const String bloodTypeAPosLabel = 'Type A Positive';
+  static const String bloodTypeANegLabel = 'Type A Negative';
+  static const String bloodTypeBPosLabel = 'Type B Positive';
+  static const String bloodTypeBNegLabel = 'Type B Negative';
+  static const String bloodTypeOPosLabel = 'Type O Positive';
+  static const String bloodTypeONegLabel = 'Type O Negative';
+  static const String bloodTypeABPos     = 'AB+';
+  static const String bloodTypeABNeg     = 'AB-';
+  static const String addReqTooShort     = 'Too short';
+  static const String addReqRequired     = 'Required';
+  static const String addReqSelectBT     = 'Select blood type';
+  static const String addReqUnitLabel    = 'unit';
+  static const String addReqUnitsLabel   = 'units';
 }

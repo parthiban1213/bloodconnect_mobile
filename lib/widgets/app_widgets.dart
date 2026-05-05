@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/app_config.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../utils/app_theme.dart';
@@ -62,7 +63,7 @@ class ErrorView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'Try again',
+                    AppConfig.widgetTryAgain,
                     style: GoogleFonts.dmSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
